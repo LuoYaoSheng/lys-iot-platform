@@ -4,10 +4,11 @@ ESP32-S3 USB 键盘模拟器 - 用于远程唤醒休眠的电脑
 
 ## 功能说明
 
-- 通过 MQTT 接收唤醒命令
-- 使用 USB HID 模拟键盘按键唤醒电脑
-- BLE 配网支持
-- 设备自动注册和激活
+- **BLE 配网**: 使用手机 APP 配置 WiFi 和平台地址
+- **设备激活**: 自动注册到 IoT 平台
+- **MQTT 控制**: 通过 MQTT 接收唤醒命令
+- **USB HID**: 模拟键盘按键唤醒休眠的电脑
+- **状态指示**: LED 显示当前工作状态
 
 ## 硬件
 
@@ -28,9 +29,11 @@ ESP32-S3 USB 键盘模拟器 - 用于远程唤醒休眠的电脑
 | 模式 | 说明 |
 |------|------|
 | 常亮 | 启动/初始化 |
+| 五次快闪 | BLE 配网模式 (等待 APP 连接) |
+| 三次快闪 | WiFi 连接中 |
+| 二次快闪 | API 激活/MQTT 连接中 |
 | 慢闪 (1秒) | 正常运行 |
-| 快闪 (200ms) | WiFi/MQTT 连接中 |
-| 快闪 (50ms) | 错误状态 |
+| 极快闪 (50ms) | 错误状态 |
 
 ## 编译和上传
 
@@ -40,6 +43,14 @@ pio run
 pio run --target upload
 pio device monitor
 ```
+
+## 使用流程
+
+1. **上电**: 设备自动进入 BLE 配网模式 (LED 五次快闪)
+2. **配网**: 使用手机 APP 连接 BLE 设备 "IoT-Wakeup-XXXX"
+3. **激活**: 设备自动连接 WiFi 并激活到平台
+4. **运行**: LED 慢闪，设备就绪
+5. **唤醒**: 发送 MQTT 命令唤醒电脑
 
 ## MQTT 命令格式
 
@@ -55,27 +66,13 @@ pio device monitor
 }
 ```
 
-发送指定按键:
+## BLE 配网格式
 
 ```json
 {
-  "method": "thing.service.property.set",
-  "id": "123",
-  "params": {
-    "key": "SPACE"
-  }
-}
-```
-
-发送组合键:
-
-```json
-{
-  "method": "thing.service.property.set",
-  "id": "123",
-  "params": {
-    "key_combo": "CTRL+SHIFT+ESC"
-  }
+  "ssid": "YourWiFi",
+  "password": "YourPassword",
+  "apiUrl": "http://192.168.1.100:48080"
 }
 ```
 
@@ -85,13 +82,13 @@ pio device monitor
 
 ## 开发状态
 
-- [x] 基础框架
+- [x] BLE 配网
+- [x] WiFi 连接
+- [x] 设备激活
+- [x] MQTT 通信
 - [x] USB HID 键盘
-- [x] MQTT 连接
 - [x] 状态机管理
-- [ ] BLE 配网 (TODO)
-- [ ] 设备激活 (TODO)
-- [ ] 完整按键支持 (TODO)
+- [x] LED 状态指示
 
 ## 作者
 
