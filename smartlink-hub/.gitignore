@@ -1,0 +1,29 @@
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+*.log
+*.tmp
+*.bak
+
+# Node.js (如果后续添加构建工具)
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# 不要忽略 releases 目录下的文件 (APK/固件等)
+!releases/**/*.apk
+!releases/**/*.bin

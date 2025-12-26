@@ -1,0 +1,36 @@
+# 编译产物
+*.exe
+*.out
+*.test
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 依赖
+vendor/
+
+# 日志
+*.log
+logs/
+
+# 配置文件（敏感信息）
+.env
+.env.local
+.env.production
+
+# 备份文件
+backups/
+*.sql
+*.dump
+
+# Docker 数据卷
+mysql_data/
+redis_data/
+emqx_data/
+
+# 临时文件
+*.tmp
+*.bak

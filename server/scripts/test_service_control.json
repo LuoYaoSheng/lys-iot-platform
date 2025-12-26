@@ -1,0 +1,6 @@
+{
+  "service": "toggle",
+  "params": {
+    "position": "up"
+  }
+}

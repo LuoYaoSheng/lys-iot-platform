@@ -1,0 +1,142 @@
+# ========================================
+# IoT Platform Core - Docker Compose 一键部署配置
+# 作者: 罗耀生
+# 日期: 2025-12-16
+# ========================================
+#
+# 使用说明:
+# 1. 确保Docker已安装并启动
+# 2. 修改 .env 文件中的 MQTT_BROKER_EXTERNAL（改为你的IP或域名）
+# 3. 启动所有服务: docker compose up -d
+# 4. 查看服务状态: docker compose ps
+# 5. 查看日志: docker compose logs -f
+#
+# 访问地址:
+# - API服务: http://localhost:48080
+# - EMQX Dashboard: http://localhost:49084 (admin/public)
+#
+# 端口规范: 全部使用 4 开头，避免端口冲突
+# ========================================
+
+name: iot-platform
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: iot-platform_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: iot_platform
+      MYSQL_USER: iot_user
+      MYSQL_PASSWORD: iot123456
+    ports:
+      - "44306:3306"    # MySQL: 44306
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: iot-platform_redis
+    ports:
+      - "47379:6379"    # Redis: 47379
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # ==================== IoT Platform Core 后端服务 ====================
+  iot-platform-core:
+    image: luoyaosheng/iot-platform-core:latest
+    container_name: iot-platform_core
+    env_file:
+      - .env
+    environment:
+      # 容器内数据库连接（使用服务名而非localhost）
+      DB_HOST: mysql
+      DB_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MQTT_BROKER: emqx
+      MQTT_PORT: 1883
+      # MQTT外部地址从 .env 读取（设备连接用）
+      # JWT和EMQX配置从 .env 读取
+      TZ: Asia/Shanghai
+    ports:
+      - "48080:48080"    # API服务端口
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:48080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # EMQX MQTT Broker
+  emqx:
+    image: emqx/emqx:5.3.0
+    container_name: iot-platform_emqx
+    environment:
+      EMQX_NAME: iot-emqx
+      EMQX_HOST: 127.0.0.1
+      # 启用 HTTP 认证（连接后端API进行设备认证）
+      EMQX_AUTHENTICATION__1__MECHANISM: password_based
+      EMQX_AUTHENTICATION__1__BACKEND: http
+      EMQX_AUTHENTICATION__1__ENABLE: "true"
+      EMQX_AUTHENTICATION__1__METHOD: post
+      EMQX_AUTHENTICATION__1__URL: http://iot-platform-core:48080/api/v1/mqtt/auth
+      EMQX_AUTHENTICATION__1__BODY__USERNAME: $${username}
+      EMQX_AUTHENTICATION__1__BODY__PASSWORD: $${password}
+      EMQX_AUTHENTICATION__1__BODY__CLIENTID: $${clientid}
+      EMQX_AUTHENTICATION__1__HEADERS__CONTENT-TYPE: application/json
+      # 开发模式: 允许未匹配的 ACL
+      EMQX_AUTHORIZATION__NO_MATCH: allow
+    ports:
+      - "42883:1883"    # MQTT: 42883
+      - "49083:8083"    # MQTT WebSocket: 49083
+      - "49084:18083"   # Dashboard: 49084 (admin/public)
+    volumes:
+      - emqx_data:/opt/emqx/data
+    depends_on:
+      iot-platform-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+  emqx_data:
+
+networks:
+  iot-network:
+    driver: bridge

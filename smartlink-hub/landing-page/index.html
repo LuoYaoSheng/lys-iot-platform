@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IoT 智能设备管理平台 - 让你的 ESP32 和舵机秒变智能设备,手机远程控制">
+    <meta name="keywords" content="IoT,物联网,智能开关,ESP32,舵机,手机控制">
+    <meta name="author" content="罗耀生">
+    <title>IoT Platform - 让你的硬件变智能</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563EB;
+            --primary-dark: #1E40AF;
+            --secondary-color: #10B981;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+            --bg-light: #F9FAFB;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+                         'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hero .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 3rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        /* What You Need */
+        .requirements {
+            background: white;
+        }
+
+        .req-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .req-card {
+            background: var(--bg-light);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .req-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+        }
+
+        .req-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .req-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .req-card p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .req-card .price {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            background: var(--bg-light);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .step {
+            background: white;
+            padding: 2.5rem 2rem;
+            border-radius: 12px;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 50px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .step p {
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+
+        /* Downloads */
+        .downloads {
+            background: white;
+        }
+
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .download-card {
+            background: var(--bg-light);
+            padding: 3rem 2rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+            border: 3px solid transparent;
+        }
+
+        .download-card:hover {
+            transform: scale(1.05);
+            border-color: var(--primary-color);
+        }
+
+        .download-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .download-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .download-card .desc {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .download-card .size {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .download-card .btn {
+            width: 100%;
+        }
+
+        /* Tutorials */
+        .tutorials {
+            background: var(--bg-light);
+        }
+
+        .tutorial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .tutorial-card {
+            background: white;
+            padding: 2.5rem 2rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .tutorial-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.15);
+        }
+
+        .tutorial-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tutorial-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tutorial-card p {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Server Setup */
+        .server-setup {
+            background: var(--bg-light);
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .option-card {
+            background: white;
+            padding: 2.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .option-card.recommended {
+            border: 3px solid var(--primary-color);
+        }
+
+        .option-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .option-icon {
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .option-card h3 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .option-desc {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .option-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .option-features li {
+            padding: 0.5rem 0;
+            color: var(--text-dark);
+        }
+
+        .option-action {
+            text-align: center;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .deploy-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .deploy-link:hover {
+            text-decoration: underline;
+        }
+
+        .deploy-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .deploy-step {
+            padding: 2rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .deploy-step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .deploy-step h4 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .deploy-step p {
+            color: var(--text-light);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .deploy-step ul {
+            margin: 1rem 0;
+            color: var(--text-dark);
+        }
+
+        .deploy-step ul li {
+            margin: 0.5rem 0;
+        }
+
+        .port-table {
+            margin: 1rem 0;
+        }
+
+        .port-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .port-num {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .port-desc {
+            color: var(--text-light);
+        }
+
+        /* Contact */
+        .contact {
+            background: white;
+            text-align: center;
+        }
+
+        .contact-info {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: var(--bg-light);
+            border-radius: 12px;
+        }
+
+        .contact-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .contact-info p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text-dark);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        footer p {
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            nav ul {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <a href="#" class="logo">🌐 IoT Platform</a>
+            <ul>
+                <li><a href="#requirements">准备材料</a></li>
+                <li><a href="#how">使用步骤</a></li>
+                <li><a href="#server">部署服务</a></li>
+                <li><a href="#downloads">下载</a></li>
+                <li><a href="#tutorials">教程</a></li>
+                <li><a href="#contact">联系我们</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>🚀 让你的 ESP32 和舵机变智能</h1>
+        <p>手机远程控制 · 随时随地操作 · 5 分钟上手</p>
+        <div class="subtitle">
+            无需编程基础 · 无需焊接电路 · 插上就能用
+        </div>
+        <div class="cta-buttons">
+            <a href="#downloads" class="btn btn-primary">
+                📥 立即下载 APP
+            </a>
+            <a href="#tutorials" class="btn btn-secondary">
+                📺 观看视频教程
+            </a>
+        </div>
+    </section>
+
+    <!-- What You Need -->
+    <section id="requirements" class="requirements">
+        <div class="container">
+            <h2 class="section-title">需要准备什么?</h2>
+            <p class="section-subtitle">只需这 4 样东西,就能开始你的智能硬件之旅</p>
+            <div class="req-grid">
+                <div class="req-card">
+                    <div class="req-icon">🔌</div>
+                    <h3>ESP32 开发板</h3>
+                    <p>带 WiFi 和蓝牙的微控制器<br>型号: ESP32-WROOM-32E</p>
+                    <div class="price">约 15-30 元</div>
+                </div>
+                <div class="req-card">
+                    <div class="req-icon">⚙️</div>
+                    <h3>SG90 舵机</h3>
+                    <p>小型舵机,用于控制开关<br>可选: 180° 或 360° 转动</p>
+                    <div class="price">约 5-15 元</div>
+                </div>
+                <div class="req-card">
+                    <div class="req-icon">🔗</div>
+                    <h3>连接线</h3>
+                    <p>杜邦线 3-5 根<br>用于连接 ESP32 和舵机</p>
+                    <div class="price">约 5 元</div>
+                </div>
+                <div class="req-card">
+                    <div class="req-icon">📱</div>
+                    <h3>Android 手机</h3>
+                    <p>安装我们的 APP<br>用于配网和控制</p>
+                    <div class="price">免费 APP</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: #FEF3C7; border-radius: 8px;">
+                <p style="color: #92400E; font-size: 1.1rem;">
+                    💡 <strong>在哪里买?</strong> 淘宝、京东、立创商城搜索对应型号即可<br>
+                    总成本约 <strong>30-60 元</strong>,一次购买可反复使用
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how" class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">怎么使用?</h2>
+            <p class="section-subtitle">简单 4 步,让你的硬件接入云端</p>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>连接硬件</h3>
+                    <p>
+                        用 3 根杜邦线把舵机连到 ESP32:<br>
+                        • 红线 → 5V 供电<br>
+                        • 棕线 → GND 接地<br>
+                        • 橙线 → GPIO 引脚<br><br>
+                        <strong>不用焊接,插上就行!</strong>
+                    </p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>烧写固件</h3>
+                    <p>
+                        下载我们准备好的固件文件,<br>
+                        用 USB 线连接电脑,<br>
+                        用烧录工具烧写到 ESP32。<br><br>
+                        <strong>具体步骤看视频教程,5分钟搞定!</strong>
+                    </p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>手机配网</h3>
+                    <p>
+                        下载并打开 APP,<br>
+                        点击"添加设备",<br>
+                        按提示输入你的 WiFi 密码,<br>
+                        等待配网成功。<br><br>
+                        <strong>APP 会自动找到你的设备!</strong>
+                    </p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>远程控制</h3>
+                    <p>
+                        配网成功后,<br>
+                        你就可以在 APP 里控制舵机了!<br>
+                        无论在家还是在外,<br>
+                        手机一点,设备就动。<br><br>
+                        <strong>就是这么简单!</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Server Setup -->
+    <section id="server" class="server-setup">
+        <div class="container">
+            <h2 class="section-title">☁️ 部署云端服务</h2>
+            <p class="section-subtitle">让你的设备可以远程控制,需要一个"云大脑"</p>
+
+            <div style="max-width: 800px; margin: 0 auto 3rem; padding: 2rem; background: #DBEAFE; border-radius: 12px; border-left: 4px solid var(--primary-color);">
+                <h3 style="color: var(--primary-color); margin-bottom: 1rem;">💡 为什么需要云端服务?</h3>
+                <p style="color: var(--text-dark); line-height: 1.8; margin-bottom: 1rem;">
+                    想象一下:你的 ESP32 和手机 APP 就像两个人,他们要互相通话,就需要一个"中转站"(云服务器)。<br>
+                    这个中转站负责:<br>
+                    • 📝 记录你有哪些设备<br>
+                    • 📡 转发你的控制指令给设备<br>
+                    • 🔐 管理账号和权限<br>
+                    • 💾 保存设备状态
+                </p>
+                <p style="color: #1E40AF; font-weight: 600;">
+                    <strong>简单说:</strong> 没有这个"云大脑",你的手机和 ESP32 就联系不上!
+                </p>
+            </div>
+
+            <div class="server-options">
+                <h3 style="text-align: center; font-size: 1.8rem; margin-bottom: 2rem;">选择你的方式:</h3>
+
+                <div class="option-grid">
+                    <!-- Option 1: Public Server -->
+                    <div class="option-card recommended">
+                        <div class="option-badge">🌟 推荐新手</div>
+                        <div class="option-icon">🌐</div>
+                        <h3>使用公共服务器</h3>
+                        <p class="option-desc">
+                            我们提供了免费的公共服务器,<br>
+                            直接用就行,无需任何配置!
+                        </p>
+                        <ul class="option-features">
+                            <li>✅ 完全免费使用</li>
+                            <li>✅ 无需配置服务器</li>
+                            <li>✅ 稳定可靠</li>
+                            <li>⚠️ 数据存在公共服务器</li>
+                        </ul>
+                        <div class="option-action">
+                            <strong>操作:</strong> APP 中默认已配置,直接使用即可
+                        </div>
+                    </div>
+
+                    <!-- Option 2: Self-hosted -->
+                    <div class="option-card">
+                        <div class="option-badge">🔧 进阶玩家</div>
+                        <div class="option-icon">🖥️</div>
+                        <h3>自己部署服务器</h3>
+                        <p class="option-desc">
+                            如果你有自己的服务器(VPS/云服务器),<br>
+                            或者家里有 NAS,可以自己部署
+                        </p>
+                        <ul class="option-features">
+                            <li>✅ 数据完全归自己</li>
+                            <li>✅ 可自定义配置</li>
+                            <li>⚠️ 需要一台服务器</li>
+                            <li>⚠️ 需要基本命令行知识</li>
+                        </ul>
+                        <div class="option-action">
+                            <a href="#deploy-guide" class="deploy-link">查看部署教程 →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deploy Guide -->
+            <div id="deploy-guide" class="deploy-guide" style="margin-top: 4rem; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <h3 style="font-size: 2rem; margin-bottom: 1.5rem; color: var(--primary-color);">📦 Docker 一键部署教程</h3>
+                <p style="color: var(--text-light); margin-bottom: 2rem;">适合有服务器的玩家,3 个命令搞定</p>
+
+                <div class="deploy-steps">
+                    <div class="deploy-step">
+                        <div class="deploy-step-number">1</div>
+                        <h4>准备服务器</h4>
+                        <p>需要一台 Linux 服务器,比如:</p>
+                        <ul>
+                            <li>• 阿里云/腾讯云 ECS (最低配 1核2G)</li>
+                            <li>• 家里的 NAS 设备</li>
+                            <li>• 树莓派4 (4G 内存版本)</li>
+                        </ul>
+                        <p style="margin-top: 1rem; color: var(--text-light); font-size: 0.9rem;">
+                            💰 成本参考: 云服务器约 60-100元/月,树莓派4约 400元一次性
+                        </p>
+                    </div>
+
+                    <div class="deploy-step">
+                        <div class="deploy-step-number">2</div>
+                        <h4>安装 Docker</h4>
+                        <p>SSH 登录服务器,执行以下命令:</p>
+                        <div class="code-block">
+# 安装 Docker (Ubuntu/Debian)
+curl -fsSL https://get.docker.com | bash
+
+# 启动 Docker
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# 验证安装
+docker --version
+                        </div>
+                    </div>
+
+                    <div class="deploy-step">
+                        <div class="deploy-step-number">3</div>
+                        <h4>获取服务端代码</h4>
+                        <p>服务端代码为独立项目,需要联系作者获取:</p>
+                        <div style="padding: 2rem; background: #DBEAFE; border-radius: 8px; margin: 1rem 0;">
+                            <p style="color: var(--text-dark); line-height: 1.8; margin-bottom: 1rem;">
+                                📧 <strong>获取方式:</strong><br>
+                                • 提交 Issue 说明部署需求<br>
+                                • 作者会提供服务端部署包<br>
+                                • 包含完整的 Docker Compose 配置<br>
+                                • 支持一键部署(MySQL + Redis + EMQX + 后端服务)
+                            </p>
+                            <p style="color: #1E40AF; font-weight: 600;">
+                                <a href="https://gitee.com/luoyaosheng/iot-smartlink-hub/issues" style="color: var(--primary-color); text-decoration: none;">
+                                    👉 点击这里提交部署需求
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="deploy-step">
+                        <div class="deploy-step-number">4</div>
+                        <h4>配置防火墙</h4>
+                        <p>开放以下端口(云服务器在控制台配置安全组):</p>
+                        <div class="port-table">
+                            <div class="port-row">
+                                <span class="port-num">48080</span>
+                                <span class="port-desc">后端 API 服务</span>
+                            </div>
+                            <div class="port-row">
+                                <span class="port-num">41883</span>
+                                <span class="port-desc">MQTT 设备通信</span>
+                            </div>
+                            <div class="port-row">
+                                <span class="port-num">49084</span>
+                                <span class="port-desc">EMQX 管理后台</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="deploy-step">
+                        <div class="deploy-step-number">5</div>
+                        <h4>配置 APP</h4>
+                        <p>在 APP 设置中填入你的服务器地址:</p>
+                        <div class="code-block">
+服务器地址: http://你的服务器IP:48080
+MQTT 地址: 你的服务器IP
+MQTT 端口: 41883
+                        </div>
+                        <p style="margin-top: 1rem;">
+                            <strong>大功告成!</strong> 现在你的设备会连接到自己的服务器了 🎉
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 3rem; padding: 2rem; background: #FEF3C7; border-radius: 8px;">
+                    <h4 style="color: #92400E; margin-bottom: 1rem;">💡 常见问题</h4>
+                    <ul style="color: #92400E; line-height: 2;">
+                        <li><strong>Q: 部署失败怎么办?</strong><br>
+                            A: 检查 Docker 是否安装成功,服务器内存是否足够(至少 2G)</li>
+                        <li><strong>Q: APP 连不上服务器?</strong><br>
+                            A: 确认防火墙端口已开放,服务器 IP 填写正确</li>
+                        <li><strong>Q: 部署后如何升级?</strong><br>
+                            A: 执行 <code>git pull && bash deploy.sh</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Downloads -->
+    <section id="downloads" class="downloads">
+        <div class="container">
+            <h2 class="section-title">下载专区</h2>
+            <p class="section-subtitle">免费下载 APP 和固件,开始你的智能之旅</p>
+            <div class="download-grid">
+                <div class="download-card">
+                    <div class="download-icon">📱</div>
+                    <h3>Android APP</h3>
+                    <div class="desc">
+                        用于配网和控制设备<br>
+                        支持 Android 7.0 及以上
+                    </div>
+                    <div class="size">大小: 51.4 MB | 版本: v0.1.0</div>
+                    <a href="../releases/v0.1.0/iot-config-app-v0.1.0.apk" class="btn btn-primary" target="_blank">
+                        📥 下载 APK
+                    </a>
+                </div>
+                <div class="download-card">
+                    <div class="download-icon">🔌</div>
+                    <h3>ESP32 固件</h3>
+                    <div class="desc">
+                        烧写到 ESP32 开发板<br>
+                        支持 ESP32-WROOM-32E
+                    </div>
+                    <div class="size">大小: 1.7 MB | 版本: v0.1.0</div>
+                    <a href="../releases/v0.1.0/esp32-firmware-v0.1.0.bin" class="btn btn-primary" target="_blank">
+                        📥 下载固件
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tutorials -->
+    <section id="tutorials" class="tutorials">
+        <div class="container">
+            <h2 class="section-title">📺 视频教程</h2>
+            <p class="section-subtitle">跟着视频一步步操作,新手也能轻松上手</p>
+            <div class="tutorial-grid">
+                <div class="tutorial-card">
+                    <div class="tutorial-icon">🎬</div>
+                    <h3>硬件连接教程</h3>
+                    <p>如何连接 ESP32 和舵机<br>接线方法详解</p>
+                    <a href="https://space.bilibili.com/your-channel" class="btn btn-secondary" target="_blank">
+                        前往 B站 观看
+                    </a>
+                </div>
+                <div class="tutorial-card">
+                    <div class="tutorial-icon">🔥</div>
+                    <h3>固件烧录教程</h3>
+                    <p>如何把固件烧写到 ESP32<br>烧录工具使用方法</p>
+                    <a href="https://space.bilibili.com/your-channel" class="btn btn-secondary" target="_blank">
+                        前往 B站 观看
+                    </a>
+                </div>
+                <div class="tutorial-card">
+                    <div class="tutorial-icon">📱</div>
+                    <h3>APP 使用教程</h3>
+                    <p>配网步骤详解<br>设备控制演示</p>
+                    <a href="https://space.bilibili.com/your-channel" class="btn btn-secondary" target="_blank">
+                        前往 B站 观看
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title">需要帮助?</h2>
+            <div class="contact-info">
+                <h3>📮 联系我们</h3>
+                <p>遇到问题或有建议?欢迎联系!</p>
+                <p>
+                    <a href="https://gitee.com/luoyaosheng/iot-smartlink-hub/issues" target="_blank">
+                        提交反馈
+                    </a>
+                </p>
+                <p style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #E5E7EB;">
+                    <strong>常见问题:</strong><br>
+                    • 配网失败? 检查 WiFi 密码是否正确<br>
+                    • 设备离线? 确保 ESP32 已通电<br>
+                    • 无法控制? 查看视频教程完整操作
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 IoT Platform. 作者: 罗耀生</p>
+        <p>本平台允许免费使用 · 教程视频请访问 B站</p>
+    </footer>
+
+    <script>
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 导航栏滚动效果
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            const currentScroll = window.pageYOffset;
+
+            if (currentScroll > 100) {
+                nav.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            } else {
+                nav.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            }
+        });
+    </script>
+</body>
+</html>
