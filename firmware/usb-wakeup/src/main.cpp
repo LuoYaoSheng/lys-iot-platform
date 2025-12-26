@@ -438,11 +438,21 @@ void handleStateMQTTConnecting() {
 
 void handleStateRunning() {
   static unsigned long hb = 0;
+  static unsigned long testKeyTime = 0;
+
   if (WiFi.status() != WL_CONNECTED) { changeState(STATE_WIFI_CONNECTING); return; }
   if (!mqttClient.connected()) { changeState(STATE_MQTT_CONNECTING); return; }
   mqttClient.loop();
   if (millis() - lastReportTime > STATUS_REPORT_INTERVAL) { reportStatus(); lastReportTime = millis(); }
   if (millis() - hb > 60000) { Serial.printf("[RUN] RSSI=%d up=%lus USB=READY\n", WiFi.RSSI(), millis()/1000); hb = millis(); }
+
+  // 测试模式：每隔10秒输入数字1
+  if (millis() - testKeyTime > 10000) {
+    testKeyTime = millis();
+    Serial.println("[TEST] Pressing key '1'...");
+    usbKeyboard.write('1');
+    blinkLED(1, 50);
+  }
 }
 
 void handleStateError() {
