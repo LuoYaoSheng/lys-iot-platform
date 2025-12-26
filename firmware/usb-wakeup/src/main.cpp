@@ -12,7 +12,7 @@
  *   - USB HID 模拟键盘唤醒休眠电脑
  *
  * 硬件连接:
- *   - USB: 直接连接到电脑 (USB CDC + 可切换 HID)
+ *   - USB: 直接连接到电脑 (USB CDC + HID)
  *   - LED: GPIO45 (板载 LED)
  *   - 按钮: GPIO0 (BOOT 按钮用于重置配置)
  *
@@ -29,12 +29,19 @@
  * 分时使用说明:
  *   - 配网阶段: 使用 BLE 进行 WiFi 配置
  *   - 运行阶段: BLE 停止，USB HID 就绪
+ *
+ * USB HID 说明:
+ *   使用 Arduino ESP32 Core v3.0+ 内置的 USBHIDKeyboard 库
+ *   参考: https://github.com/espressif/arduino-esp32/issues/10296
  */
 
 #include <Arduino.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <USB.h>
+#include <USBHIDKeyboard.h>
+#include <USBCDC.h>
 #include "config.h"
 #include "ble_config.h"
 #include "nvs_storage.h"
@@ -47,6 +54,10 @@ DeviceAPI deviceAPI;
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
+
+// USB HID 对象
+USBHIDKeyboard usbKeyboard;
+USBCDC usbSerial;
 
 // ========== 状态变量 ==========
 DeviceState currentState = STATE_BOOT;
@@ -65,61 +76,37 @@ unsigned long ledTime = 0;
 int ledStep = 0;
 bool ledState = false;
 
-// ========== USB HID 键盘 (ESP32-S3 原生支持) ==========
-// ESP32-S3 使用 USB HID 乔装协议发送键盘事件
-
-// HID 报告描述符 (键盘)
-static const uint8_t report_descriptor[] = {
-    0x05, 0x01,        // Usage Page (Generic Desktop)
-    0x09, 0x06,        // Usage (Keyboard)
-    0xA1, 0x01,        // Collection (Application)
-    0x05, 0x07,        //   Usage Page (Keyboard)
-    0x19, 0xE0,        //   Usage Minimum (224)
-    0x29, 0xE7,        //   Usage Maximum (231)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x25, 0x01,        //   Logical Maximum (1)
-    0x75, 0x01,        //   Report Size (1 bit)
-    0x95, 0x08,        //   Report Count (8)
-    0x81, 0x02,        //   Input (Data, Variable, Absolute)
-    0x95, 0x01,        //   Report Count (1)
-    0x75, 0x08,        //   Report Size (8 bits)
-    0x81, 0x01,        //   Input (Constant)
-    0x95, 0x06,        //   Report Count (6)
-    0x75, 0x08,        //   Report Size (8 bits)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x25, 0x65,        //   Logical Maximum (101)
-    0x05, 0x07,        //   Usage Page (Keyboard)
-    0x19, 0x00,        //   Usage Minimum (0)
-    0x29, 0x65,        //   Usage Maximum (101)
-    0x81, 0x00,        //   Output (Data, Variable, Absolute)
-    0xC0               // End Collection
-};
-
-// USB HID 键盘报告 (8 字节)
-// [修饰键(1), 保留(1), 键码1...6(6)]
-struct KeyboardReport {
-    uint8_t modifier;
-    uint8_t reserved;
-    uint8_t keycode[6];
-};
-
-// 简化的 USB HID 实现 - 发送空格键唤醒
-void sendUSBWakeup() {
-    // ESP32-S3 USB HID 实现
-    // 使用 tinyUSB 库或直接调用 ESP USB HID API
-
-    // 方法1: 使用 Arduino ESP32 v3.0+ 的 USBHID 库
-    #if defined(ARDUINO_USB_MODE)
-        // ESP32-S3 原生 USB HID
-        // TODO: 需要添加 USBHID 库支持
-        // 目前先通过串口输出，实际使用时需要实现 HID
-        Serial.println("[USB] HID: Pressing SPACE key...");
-
-        // 简化方案: 使用 GPIO 模拟 PS/2 或其他唤醒方式
-        // 或者等待 tinyUSB 库支持
-    #else
-        Serial.println("[USB] HID not supported on this board");
-    #endif
+// USB HID 事件回调
+void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+  if (event_base == ARDUINO_USB_EVENTS) {
+    arduino_usb_event_data_t* data = (arduino_usb_event_data_t*)event_data;
+    switch (event_id) {
+      case ARDUINO_USB_STARTED_EVENT:
+        usbSerial.println("[USB] USB PLUGGED");
+        break;
+      case ARDUINO_USB_STOPPED_EVENT:
+        usbSerial.println("[USB] USB UNPLUGGED");
+        break;
+      case ARDUINO_USB_SUSPEND_EVENT:
+        usbSerial.printf("[USB] SUSPENDED: remote_wakeup_en: %u\n", data->suspend.remote_wakeup_en);
+        break;
+      case ARDUINO_USB_RESUME_EVENT:
+        usbSerial.println("[USB] RESUMED");
+        break;
+      default:
+        break;
+    }
+  } else if (event_base == ARDUINO_USB_HID_KEYBOARD_EVENTS) {
+    arduino_usb_hid_keyboard_event_data_t* data = (arduino_usb_hid_keyboard_event_data_t*)event_data;
+    switch (event_id) {
+      case ARDUINO_USB_HID_KEYBOARD_LED_EVENT:
+        usbSerial.printf("[USB] KEYBOARD LED: NumLock:%u, CapsLock:%u, ScrollLock:%u\n",
+                        data->numlock, data->capslock, data->scrolllock);
+        break;
+      default:
+        break;
+    }
+  }
 }
 
 // ========== 函数声明 ==========
@@ -157,7 +144,6 @@ void updateLED() {
     case LED_OFF: digitalWrite(LED_BUILTIN, LOW); break;
     case LED_ON: digitalWrite(LED_BUILTIN, HIGH); break;
     case LED_CONFIG:
-      // 五次快闪 + 暂停
       if (ledStep < 10) {
         if (now - ledTime >= 100) {
           ledState = !ledState;
@@ -174,7 +160,6 @@ void updateLED() {
       }
       break;
     case LED_WIFI:
-      // 三次快闪 + 暂停
       if (ledStep < 6) {
         if (now - ledTime >= 150) {
           ledState = !ledState;
@@ -191,7 +176,6 @@ void updateLED() {
       }
       break;
     case LED_API:
-      // 二次快闪 + 暂停
       if (ledStep < 4) {
         if (now - ledTime >= 150) {
           ledState = !ledState;
@@ -208,7 +192,6 @@ void updateLED() {
       }
       break;
     case LED_MQTT:
-      // 二次快闪 + 暂停
       if (ledStep < 4) {
         if (now - ledTime >= 150) {
           ledState = !ledState;
@@ -273,8 +256,18 @@ void setup() {
   pinMode(CONFIG_BUTTON, INPUT_PULLUP);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  // 初始化 USB HID (ESP32-S3 原生支持)
-  Serial.println("[INIT] USB CDC ready");
+  // 初始化 USB HID 和 USB CDC
+  USB.onEvent(usbEventCallback);
+  usbKeyboard.onEvent(usbEventCallback);
+  usbSerial.onEvent(usbEventCallback);
+
+  usbKeyboard.begin();
+  usbSerial.begin(115200);
+  USB.manufacturerName("Luo Yaosheng");
+  USB.productName("ESP32-Wakeup");
+  USB.begin();
+
+  Serial.println("[INIT] USB HID + CDC ready");
 
   // 初始化存储
   if (!storage.begin()) {
@@ -405,7 +398,7 @@ void handleStateActivating() {
   bleConfig.notifyActivated(r.deviceId);
   delay(1000);
 
-  // 停止 BLE，释放资源，准备切换到 USB HID 模式
+  // 停止 BLE，释放资源，切换到 USB HID 模式
   Serial.println("[USB] Stopping BLE, switching to USB HID mode...");
   bleConfig.stop();
   Serial.println("[USB] USB HID ready for wakeup commands");
@@ -512,7 +505,9 @@ void processCommand(JsonDocument& doc) {
 
 void sendWakeupSignal() {
   Serial.println("[USB] Sending wakeup key...");
-  sendUSBWakeup();
+  // 发送空格键唤醒电脑
+  usbKeyboard.write(KEY_SPACE);
+  delay(100);
   Serial.println("[USB] Done!");
   blinkLED(2, 100);
 }
