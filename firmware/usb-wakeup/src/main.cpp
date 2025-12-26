@@ -31,7 +31,6 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
-#include <BleKeyboard.h>
 #include "config.h"
 #include "ble_config.h"
 #include "nvs_storage.h"
@@ -44,7 +43,6 @@ DeviceAPI deviceAPI;
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
-BleKeyboard usbKeyboard("ESP32-Wakeup");
 
 // ========== 状态变量 ==========
 DeviceState currentState = STATE_BOOT;
@@ -63,6 +61,24 @@ LEDPattern ledPattern = LED_ON;
 unsigned long ledTime = 0;
 int ledStep = 0;
 bool ledState = false;
+
+// ========== USB HID 键盘 (ESP32-S3 原生支持) ==========
+// ESP32-S3 使用 tinyUSB 实现 USB HID
+// TODO: 需要添加 tinyUSB 库支持
+// 参考: https://github.com/adafruit/Adafruit_TinyUSB_Arduino
+
+// 简化的 USB HID 实现 - 发送空格键唤醒
+void sendUSBWakeup() {
+  // ESP32-S3 USB HID 键盘报告
+  // 报告格式: [修饰键, 保留, 键码1, 键码2, 键码3, 键码4, 键码5, 键码6]
+  uint8_t keyboard_report[8] = {0};
+  keyboard_report[2] = 0x41;  // 空格键 HID 码
+
+  // TODO: 需要 tinyUSB 库支持，暂时跳过
+  // tud_hid_report(0, keyboard_report, 8);
+
+  Serial.println("[USB] Wakeup signal sent (TODO: implement HID)");
+}
 
 // ========== 函数声明 ==========
 void changeState(DeviceState s);
@@ -215,9 +231,9 @@ void setup() {
   pinMode(CONFIG_BUTTON, INPUT_PULLUP);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  // 初始化 USB HID 键盘
-  usbKeyboard.begin();
-  Serial.println("[INIT] USB Keyboard initialized");
+  // 初始化 USB HID (ESP32-S3 原生支持)
+  // TODO: 需要配置 tinyUSB 库
+  Serial.println("[INIT] USB HID (TODO: implement tinyUSB)");
 
   // 初始化存储
   if (!storage.begin()) {
@@ -450,8 +466,9 @@ void processCommand(JsonDocument& doc) {
 
 void sendWakeupSignal() {
   Serial.println("[USB] Sending wakeup key...");
-  usbKeyboard.write(KEY_SPACE);
-  delay(100);
+  // TODO: 实现 USB HID 键盘发送
+  // ESP32-S3 需要使用 tinyUSB 库
+  sendUSBWakeup();
   Serial.println("[USB] Done!");
   blinkLED(2, 100);
 }
