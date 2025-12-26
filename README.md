@@ -1,6 +1,6 @@
 # Open IoT Platform
 
-> 开源 IoT 设备管理平台
+> 开源 IoT 设备管理平台 - 完整的物联网解决方案
 
 **作者**: 罗耀生
 **协议**: GPL v3
@@ -10,15 +10,16 @@
 
 ## 项目简介
 
-一个轻量级的开源 IoT 平台，专注于设备连接和管理。适用于个人开发者、创客和小型项目。
+一个轻量级的开源 IoT 平台，提供从硬件固件、云端服务到移动端配网的完整解决方案。
 
 ### 核心功能
 
-- **产品管理**: 定义设备型号和物模型
 - **设备管理**: 设备注册、激活、生命周期管理
+- **产品管理**: 定义设备型号和物模型
 - **MQTT 服务**: 设备认证与消息路由
 - **物模型**: 属性、服务、事件定义
-- **配网工具**: BLE 配网 + SmartLink Hub
+- **移动配网**: BLE 蓝牙配网 APP
+- **硬件固件**: ESP32/ESP32-S3 设备固件
 
 ---
 
@@ -26,11 +27,13 @@
 
 ```
 open-iot-platform/
-├── server/              # 设备引擎 (Go + Gin + MySQL + Redis + EMQX)
+├── server/              # 后端服务 (Go + Gin + MySQL + Redis + EMQX)
+├── mobile-app/          # 移动端配网 APP (Flutter)
+├── iot-libs-common/     # 公共库 (Flutter SDK + 嵌入式库)
 ├── smartlink-hub/       # SmartLink 配网服务
 ├── firmware/            # 硬件固件
 │   ├── switch/         # ESP32 智能开关固件
-│   └── usb-wakeup/     # USB 键盘唤醒固件 (开发中)
+│   └── usb-wakeup/     # ESP32-S3 USB 键盘唤醒固件
 └── docker/             # Docker 部署配置
 ```
 
@@ -57,7 +60,36 @@ docker compose up -d
 
 ---
 
-## 硬件接入
+## 移动端 APP
+
+### 安装依赖
+
+```bash
+cd mobile-app
+flutter pub get
+```
+
+### 运行 APP
+
+```bash
+# Android 真机/模拟器
+flutter run
+
+# iOS 模拟器 (需要 macOS)
+flutter run -d iPhone
+```
+
+### 构建 APK
+
+```bash
+flutter build apk --release
+```
+
+详细说明请查看 [mobile-app/README.md](mobile-app/README.md)
+
+---
+
+## 硬件固件
 
 ### 1. ESP32 智能开关
 
@@ -67,9 +99,42 @@ pio run
 pio run --target upload
 ```
 
-### 2. USB 唤醒设备 (开发中)
+### 2. ESP32-S3 USB 唤醒设备
 
-基于 ESP32-S3 的 USB HID 设备，通过远程命令唤醒电脑。
+通过 MQTT 命令模拟键盘唤醒休眠的电脑。
+
+```bash
+cd firmware/usb-wakeup
+pio run
+pio run --target upload
+```
+
+详细说明请查看:
+- [firmware/switch/README.md](firmware/switch/README.md)
+- [firmware/usb-wakeup/README.md](firmware/usb-wakeup/README.md)
+
+---
+
+## 配网流程
+
+### BLE 蓝牙配网
+
+1. 设备上电进入配网模式（LED 五次快闪）
+2. 打开移动端 APP，扫描蓝牙设备
+3. 选择设备并配置 WiFi 信息
+4. 设备自动连接 WiFi 并激活到平台
+5. 配网完成，可远程控制设备
+
+**设备蓝牙名称格式**: `IoT-Wakeup-XXXX` 或 `IoT-Switch-XXXX`
+
+**配置数据格式**:
+```json
+{
+  "ssid": "YourWiFi",
+  "password": "YourPassword",
+  "apiUrl": "http://192.168.1.100:48080"
+}
+```
 
 ---
 
@@ -81,7 +146,8 @@ pio run --target upload
 | 数据库 | MySQL |
 | 缓存 | Redis |
 | MQTT | EMQX |
-| 固件 | ESP32 (PlatformIO + Arduino) |
+| 移动端 | Flutter + Dart |
+| 固件 | ESP32/ESP32-S3 (PlatformIO + Arduino) |
 | 部署 | Docker + Docker Compose |
 
 ---
@@ -118,8 +184,10 @@ curl -X POST http://localhost:48080/api/v1/devices/register \
 - [x] MQTT 认证与消息路由
 - [x] 物模型管理
 - [x] BLE 配网
-- [x] Docker 部署
-- [ ] USB 唤醒固件开发
+- [x] 移动端 APP
+- [x] ESP32 智能开关固件
+- [x] ESP32-S3 USB 唤醒固件
+- [ ] Web 管理界面
 - [ ] 更多硬件支持
 
 ---

@@ -1,0 +1,29 @@
+name: iot_platform_sdk
+description: IoT Platform Flutter SDK - 提供设备连接、数据上报、命令下发等功能
+version: 1.0.0
+# author: 罗耀生
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.4.0              # HTTP 客户端
+  mqtt_client: ^10.0.0      # MQTT 客户端
+  shared_preferences: ^2.2.2  # 本地存储
+  crypto: ^3.0.3            # 加密工具
+  uuid: ^4.2.1              # UUID 生成
+  json_annotation: ^4.8.1   # JSON 序列化注解
+  equatable: ^2.0.5         # 对象比较
+  rxdart: ^0.27.7           # 响应式编程
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  flutter_lints: ^3.0.1
+
+flutter:
