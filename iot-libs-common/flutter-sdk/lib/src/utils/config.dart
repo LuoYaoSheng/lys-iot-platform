@@ -1,7 +1,7 @@
 /// SDK 配置
-/// 作者: 罗耀生
+/// 作�? 罗耀�?
 /// 日期: 2025-12-14
-/// 更新: 2025-12-15 - 添加构建时配置支持
+/// 更新: 2025-12-15 - 添加构建时配置支�?
 
 /// 环境配置常量
 /// 使用方法: flutter run --dart-define=ENV=natapp
@@ -28,10 +28,10 @@ class IoTConfig {
   /// 是否使用 SSL
   final bool useSSL;
 
-  /// 连接超时时间 (秒)
+  /// 连接超时时间 (�?
   final int connectTimeout;
 
-  /// 接收超时时间 (秒)
+  /// 接收超时时间 (�?
   final int receiveTimeout;
 
   /// 是否启用日志
@@ -48,11 +48,11 @@ class IoTConfig {
     this.enableLogging = true,
   });
 
-  /// 开发环境配置（本机）
+  /// 开发环境配置（本机�?
   factory IoTConfig.development() {
     return const IoTConfig(
-      apiBaseUrl: 'http://localhost:48080',
-      mqttHost: 'localhost',
+      apiBaseUrl: 'http://192.168.1.9:48080',
+      mqttHost: '192.168.1.9',
       mqttPort: 42883,
       mqttWsPort: 49083,
       enableLogging: true,
@@ -100,10 +100,10 @@ class IoTConfig {
 
   /// 从环境变量自动选择配置
   /// 使用方法: flutter run --dart-define=ENV=natapp
-  /// 支持的环境: development, natapp, production
-  /// 也可以通过 --dart-define=API_BASE_URL=xxx 等直接指定
+  /// 支持的环�? development, natapp, production
+  /// 也可以通过 --dart-define=API_BASE_URL=xxx 等直接指�?
   factory IoTConfig.fromEnvironment() {
-    // 如果指定了具体的 URL，优先使用
+    // 如果指定了具体的 URL，优先使�?
     if (Env.apiBaseUrl.isNotEmpty && Env.mqttHost.isNotEmpty) {
       return IoTConfig(
         apiBaseUrl: Env.apiBaseUrl,
@@ -124,7 +124,7 @@ class IoTConfig {
       case 'prod':
         // 生产环境必须指定 URL
         throw ArgumentError(
-          '生产环境必须通过 --dart-define 指定 API_BASE_URL 和 MQTT_HOST',
+          '生产环境必须通过 --dart-define 指定 API_BASE_URL �?MQTT_HOST',
         );
       default:
         // 默认使用 natapp 配置（方便真机调试）

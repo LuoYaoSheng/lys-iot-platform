@@ -1,6 +1,7 @@
 /// BLE 配网服务
 /// 作者: 罗耀生
 /// 日期: 2025-12-13
+/// 更新: 2025-12-30 - 支持多种设备类型 (Switch/Wakeup) + 调试日志
 
 import 'dart:async';
 import 'dart:convert';
@@ -11,7 +12,11 @@ class BleUuids {
   static const String serviceUuid = '0000ffe0-0000-1000-8000-00805f9b34fb';
   static const String wifiCharUuid = '0000ffe1-0000-1000-8000-00805f9b34fb';
   static const String statusCharUuid = '0000ffe2-0000-1000-8000-00805f9b34fb';
-  static const String devicePrefix = 'IoT-Switch-';
+  /// 支持的设备前缀列表
+  static const List<String> devicePrefixes = [
+    'IoT-Switch-',  // 开关设备
+    'IoT-Wakeup-',  // USB 唤醒设备
+  ];
 }
 
 /// 配网状态通知
@@ -58,35 +63,54 @@ class BleService {
     return await FlutterBluePlus.adapterState.first == BluetoothAdapterState.on;
   }
 
-  /// 扫描设备
+  /// 扫描设备（带调试）
   Stream<List<ScanResult>> scan({Duration timeout = const Duration(seconds: 10)}) {
     // 开始扫描
-    FlutterBluePlus.startScan(
-      timeout: timeout,
-    );
+    FlutterBluePlus.startScan(timeout: timeout);
+    print('BLE: ========== Scan started ==========');
 
     return FlutterBluePlus.scanResults.map((results) {
-      // 过滤出 IoT-Switch- 前缀的设备
-      return results.where((r) {
+      print('BLE: ========== Found ${results.length} devices ==========');
+      
+      // 打印所有扫描到的设备名称（调试用）
+      for (final r in results) {
         final name = r.device.platformName;
-        return name.startsWith(BleUuids.devicePrefix);
+        final deviceId = r.device.remoteId.str;
+        print('BLE: [DEBUG] Found device: "$name" ($deviceId)');
+      }
+      
+      // 过滤出支持的 IoT 设备
+      final filtered = results.where((r) {
+        final name = r.device.platformName;
+        final matched = BleUuids.devicePrefixes.any((prefix) => name.startsWith(prefix));
+        if (name.isNotEmpty && !matched) {
+          print('BLE: [DEBUG] Skipped "$name" (prefix not match)');
+        }
+        return matched;
       }).toList();
+      
+      print('BLE: ========== Filtered to ${filtered.length} IoT devices ==========');
+      return filtered;
     });
   }
 
   /// 停止扫描
   Future<void> stopScan() async {
     await FlutterBluePlus.stopScan();
+    print('BLE: ========== Scan stopped ==========');
   }
 
   /// 连接设备
   Future<bool> connect(BluetoothDevice device) async {
     try {
-      print('BLE: Connecting...'); await device.connect(timeout: const Duration(seconds: 30));
-      _connectedDevice = device; print('BLE: Connected!');
+      print('BLE: ========== Connecting to ${device.platformName} ==========');
+      await device.connect(timeout: const Duration(seconds: 30));
+      _connectedDevice = device;
+      print('BLE: Connected!');
 
       // 发现服务
-      final services = await device.discoverServices(); print('BLE: Found services');
+      final services = await device.discoverServices();
+      print('BLE: ========== Found ${services.length} services ==========');
 
       // 查找配网服务
       print('BLE: Searching for service: ${BleUuids.serviceUuid.toLowerCase()}');
@@ -95,7 +119,7 @@ class BleService {
         print('BLE: Found service UUID: $serviceUuid');
 
         if (serviceUuid.contains('ffe0') || serviceUuid == BleUuids.serviceUuid.toLowerCase()) {
-          print('BLE: Found config service (matched)');
+          print('BLE: ✓ Found config service (matched)');
           print('BLE: Looking for WiFi char: ${BleUuids.wifiCharUuid.toLowerCase()}');
           print('BLE: Looking for Status char: ${BleUuids.statusCharUuid.toLowerCase()}');
 
@@ -115,7 +139,9 @@ class BleService {
       }
 
       if (_wifiChar == null || _statusChar == null) {
-        print('BLE: ERROR - Chars not found'); await disconnect(); return false;
+        print('BLE: ✗ ERROR - Required characteristics not found');
+        await disconnect();
+        return false;
       }
 
       // 订阅状态通知
@@ -126,15 +152,17 @@ class BleService {
             final json = jsonDecode(utf8.decode(value));
             final notification = ConfigStatusNotification.fromJson(json);
             _statusController.add(notification);
+            print('BLE: Status notification: $json');
           } catch (e) {
             print('BLE: Failed to parse status: $e');
           }
         }
       });
 
+      print('BLE: ========== Setup complete ==========');
       return true;
     } catch (e) {
-      print('BLE: Connect failed: $e');
+      print('BLE: ✗ Connect failed: $e');
       return false;
     }
   }
@@ -147,6 +175,7 @@ class BleService {
     if (_connectedDevice != null) {
       try {
         await _connectedDevice!.disconnect();
+        print('BLE: Disconnected');
       } catch (e) {
         print('BLE: Disconnect error: $e');
       }
@@ -160,6 +189,7 @@ class BleService {
   /// 发送 WiFi 配置（含 API 地址）
   Future<bool> sendWifiConfig(String ssid, String password, {String? apiUrl}) async {
     if (_wifiChar == null) {
+      print('BLE: ✗ WiFi characteristic not available');
       return false;
     }
 
@@ -182,10 +212,10 @@ class BleService {
         withoutResponse: false,
         timeout: 10,  // 10秒超时
       );
-      print('BLE: Config sent successfully');
+      print('BLE: ✓ Config sent successfully');
       return true;
     } catch (e) {
-      print('BLE: Send WiFi config failed: $e');
+      print('BLE: ✗ Send WiFi config failed: $e');
       return false;
     }
   }

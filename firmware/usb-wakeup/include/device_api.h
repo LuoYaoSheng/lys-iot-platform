@@ -10,7 +10,6 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
-#include <base64.h>
 #include "config.h"
 
 // 激活结果结构
@@ -84,7 +83,9 @@ public:
     // 请求体
     StaticJsonDocument<256> reqDoc;
     reqDoc["productKey"] = PRODUCT_KEY;
-    reqDoc["deviceSn"] = deviceSN;
+    reqDoc["deviceSN"] = deviceSN;
+    reqDoc["firmwareVersion"] = FIRMWARE_VERSION;
+    reqDoc["chipModel"] = CHIP_MODEL;
 
     String reqBody;
     serializeJson(reqDoc, reqBody);

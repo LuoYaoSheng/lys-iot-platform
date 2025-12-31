@@ -14,12 +14,12 @@
 #define CHIP_MODEL          "ESP32-S3-N16R8"    // 芯片型号
 
 // ==================== 平台 API ====================
-#define API_BASE_URL        "http://192.168.1.100:48080"  // 平台API地址（需修改为实际地址）
+#define API_BASE_URL        "http://192.168.1.9:48080"  // 平台API地址
 #define API_ACTIVATE_PATH   "/api/v1/devices/activate"    // 激活接口
 #define API_TIMEOUT         10000                         // API超时（毫秒）
 
 // ==================== GPIO 配置 (ESP32-S3-DevKitC-1) ====================
-#define LED_BUILTIN         45    // 板载 RGB LED
+#define WAKEUP_LED_PIN      45    // 板载 RGB LED
 #define CONFIG_BUTTON       0     // BOOT 按钮
 
 // ==================== BLE 配网配置 ====================

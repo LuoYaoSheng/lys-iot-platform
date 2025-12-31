@@ -75,8 +75,42 @@ class _ScanPageState extends State<ScanPage> {
     // 等待权限完全生效（MIUI需要）
     await Future.delayed(const Duration(milliseconds: 800));
 
+    // 检查蓝牙是否开启
+    final btState = await FlutterBluePlus.adapterState.first;
+    if (btState != BluetoothAdapterState.on) {
+      if (!mounted) return;
+      setState(() {
+        _error = '请开启蓝牙后重试';
+      });
+      // 弹窗提示
+      _showBluetoothDialog();
+      return;
+    }
 
     _startScan();
+  }
+
+  void _showBluetoothDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('蓝牙未开启'),
+        content: const Text('扫描设备需要开启蓝牙，请在系统设置中开启蓝牙后重试。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              FlutterBluePlus.turnOn();
+            },
+            child: const Text('开启蓝牙'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _startScan() {
