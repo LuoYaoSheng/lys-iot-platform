@@ -8,6 +8,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"iot-platform-core/internal/config"
 	"iot-platform-core/internal/handler"
@@ -104,6 +105,25 @@ func main() {
 			log.Printf("[MQTT] Device status updated: %s -> %v", deviceID, map[bool]string{true: "online", false: "offline"}[online])
 		}
 	})
+
+	// 设置最后在线时间更新回调
+	mqttBroker.SetLastOnlineUpdate(func(deviceID string) {
+		if err := deviceService.UpdateLastOnline(deviceID); err != nil {
+			log.Printf("[MQTT] Failed to update last online: %s, %v", deviceID, err)
+		}
+	})
+
+	// 启动定时检查离线设备的任务（每30秒检查一次）
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			// 检查超过2分钟未活动的设备
+			if _, err := deviceService.CheckOfflineDevices(2 * time.Minute); err != nil {
+				log.Printf("[Device] Failed to check offline devices: %v", err)
+			}
+		}
+	}()
 
 	tcpAddr := fmt.Sprintf(":%d", cfg.MQTT.Port)
 	wsAddr := fmt.Sprintf(":%d", cfg.MQTT.WSPort)

@@ -21,10 +21,11 @@ type DeviceStatusUpdateFunc func(clientID string, online bool)
 
 // Broker 内置MQTT Broker
 type Broker struct {
-	server       *mqtt.Server
-	authFunc     DeviceAuthFunc
-	statusUpdate DeviceStatusUpdateFunc // 设备状态更新回调
-	mu           sync.RWMutex
+	server          *mqtt.Server
+	authFunc        DeviceAuthFunc
+	statusUpdate    DeviceStatusUpdateFunc // 设备状态更新回调
+	lastOnlineUpdate func(deviceID string)   // 最后在线时间更新回调
+	mu              sync.RWMutex
 	// 在线设备 clientID -> true
 	onlineDevices map[string]bool
 }
@@ -136,6 +137,14 @@ func (b *Broker) setOnline(clientID string, online bool) {
 			go b.statusUpdate(deviceID, online)
 		}
 	}
+
+	// 更新最后在线时间（仅在线时）
+	if online && b.lastOnlineUpdate != nil {
+		deviceID := extractDeviceID(clientID)
+		if deviceID != "" {
+			go b.lastOnlineUpdate(deviceID)
+		}
+	}
 }
 
 // SetStatusUpdate 设置状态更新回调
@@ -143,6 +152,13 @@ func (b *Broker) SetStatusUpdate(fn DeviceStatusUpdateFunc) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.statusUpdate = fn
+}
+
+// SetLastOnlineUpdate 设置最后在线时间更新回调
+func (b *Broker) SetLastOnlineUpdate(fn func(deviceID string)) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.lastOnlineUpdate = fn
 }
 
 // extractDeviceID 从 clientID 中提取 deviceID

@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"iot-platform-core/internal/model"
@@ -241,6 +242,43 @@ func (s *DeviceService) UpdateDeviceOnline(deviceID string, online bool) error {
 		status = model.DeviceStatusOffline
 	}
 	return s.deviceRepo.UpdateStatus(deviceID, status)
+}
+
+// UpdateLastOnline 更新设备最后在线时间
+func (s *DeviceService) UpdateLastOnline(deviceID string) error {
+	return s.deviceRepo.UpdateLastOnline(deviceID)
+}
+
+// CheckOfflineDevices 检查离线设备（超过 timeout 时间未活动的设备标记为离线）
+func (s *DeviceService) CheckOfflineDevices(timeout time.Duration) ([]string, error) {
+	// 获取所有在线设备
+	devices, err := s.deviceRepo.FindByStatus(model.DeviceStatusOnline)
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	offlineDevices := make([]string, 0)
+
+	for _, device := range devices {
+		// 检查最后在线时间
+		if device.LastOnlineAt == nil {
+			// 没有最后在线时间记录，标记为离线
+			offlineDevices = append(offlineDevices, device.DeviceID)
+			s.deviceRepo.UpdateStatus(device.DeviceID, model.DeviceStatusOffline)
+			log.Printf("[Device] Device %s marked offline (no last_online)", device.DeviceID)
+			continue
+		}
+
+		// 如果超过 timeout 时间未活动，标记为离线
+		if now.Sub(*device.LastOnlineAt) > timeout {
+			offlineDevices = append(offlineDevices, device.DeviceID)
+			s.deviceRepo.UpdateStatus(device.DeviceID, model.DeviceStatusOffline)
+			log.Printf("[Device] Device %s marked offline (inactive for %v)", device.DeviceID, now.Sub(*device.LastOnlineAt))
+		}
+	}
+
+	return offlineDevices, nil
 }
 
 // ========== 新增：设备列表和详情 ==========
