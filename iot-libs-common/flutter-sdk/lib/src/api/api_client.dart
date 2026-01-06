@@ -62,6 +62,9 @@ class ApiClient {
     _onUnauthorized = callback;
   }
 
+  /// 获取当前401回调
+  OnUnauthorizedCallback? get onUnauthorized => _onUnauthorized;
+
   /// 设置认证 Token
   void setToken(String? token) {
     _token = token;

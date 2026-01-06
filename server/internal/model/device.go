@@ -25,9 +25,20 @@ type Product struct {
 	Name        string    `gorm:"size:128" json:"name"`
 	Description string    `gorm:"type:text" json:"description"`
 	Category    string    `gorm:"size:64" json:"category"`
-	Status      int       `gorm:"default:1" json:"status"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+
+	// v0.2.0 UI控制相关字段
+	ControlMode  string `gorm:"size:32" json:"controlMode"`           // toggle/pulse/dimmer/readonly/generic
+	UITemplate   string `gorm:"size:64" json:"uiTemplate"`            // UI模板名称
+	IconName     string `gorm:"size:64" json:"iconName"`              // 图标名称(Material Icons)
+	IconColor    string `gorm:"size:16" json:"iconColor"`             // 图标颜色(HEX，如 #FF6B35)
+	Capabilities string `gorm:"type:text" json:"capabilities"`        // 产品能力定义(JSON)
+	MQTTTopics   string `gorm:"type:text" json:"mqttTopics"`          // MQTT主题配置(JSON)
+	Manufacturer string `gorm:"size:128" json:"manufacturer"`         // 制造商
+	Model        string `gorm:"size:64" json:"model"`                 // 硬件型号
+
+	Status    int       `gorm:"default:1" json:"status"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (Product) TableName() string {

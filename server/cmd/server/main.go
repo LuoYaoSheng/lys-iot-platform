@@ -239,42 +239,78 @@ func autoMigrate(db *gorm.DB) error {
 	)
 }
 
-// initDefaultData 初始化默认数据（仅在数据为空时执行）
+// initDefaultData 初始化默认数据（仅在数据为空时执行，或更新缺失字段）
 func initDefaultData(db *gorm.DB) error {
 	log.Println("Checking default data...")
 
-	// 检查产品表是否为空
-	var productCount int64
-	if err := db.Model(&model.Product{}).Count(&productCount).Error; err != nil {
-		return fmt.Errorf("failed to count products: %w", err)
+	// 默认产品配置
+	defaultProducts := []model.Product{
+		{
+			ProductKey:   "SW-SERVO-001",
+			Name:         "Smart Servo Switch",
+			Description:  "ESP32 Smart Servo Switch with BLE provisioning",
+			Category:     "switch",
+			ControlMode:  "pulse",     // 脉冲触发模式
+			UITemplate:   "servo",     // 舵机UI模板
+			IconName:     "bolt",      // 闪电图标
+			IconColor:    "#FF6B35",   // 橙色
+			Manufacturer: "SmartLink",
+			Model:        "ESP32-Servo-Switch-v1",
+			Status:       1,
+		},
 	}
 
-	// 如果产品表为空，插入默认产品
-	if productCount == 0 {
-		log.Println("Product table is empty, initializing default products...")
-
-		defaultProducts := []model.Product{
-			{
-				ProductKey:  "SW-SERVO-001",
-				Name:        "智能开关(舵机版)",
-				Description: "ESP32智能舵机开关，支持BLE配网和MQTT控制",
-				Category:    "switch",
-				Status:      1,
-			},
-		}
-
-		for _, product := range defaultProducts {
-			if err := db.Create(&product).Error; err != nil {
-				log.Printf("Failed to create product %s: %v", product.ProductKey, err)
+	for _, defaultProduct := range defaultProducts {
+		var existingProduct model.Product
+		if err := db.Where("product_key = ?", defaultProduct.ProductKey).First(&existingProduct).Error; err != nil {
+			// 产品不存在，创建新记录
+			if err := db.Create(&defaultProduct).Error; err != nil {
+				log.Printf("Failed to create product %s: %v", defaultProduct.ProductKey, err)
 			} else {
-				log.Printf("✓ Created product: %s (%s)", product.ProductKey, product.Name)
+				log.Printf("✓ Created product: %s (%s)", defaultProduct.ProductKey, defaultProduct.Name)
+			}
+		} else {
+			// 产品存在，更新缺失字段
+			updated := false
+			updates := map[string]interface{}{}
+
+			if existingProduct.ControlMode == "" {
+				updates["control_mode"] = defaultProduct.ControlMode
+				updated = true
+			}
+			if existingProduct.UITemplate == "" {
+				updates["ui_template"] = defaultProduct.UITemplate
+				updated = true
+			}
+			if existingProduct.IconName == "" {
+				updates["icon_name"] = defaultProduct.IconName
+				updated = true
+			}
+			if existingProduct.IconColor == "" {
+				updates["icon_color"] = defaultProduct.IconColor
+				updated = true
+			}
+			if existingProduct.Manufacturer == "" {
+				updates["manufacturer"] = defaultProduct.Manufacturer
+				updated = true
+			}
+			if existingProduct.Model == "" {
+				updates["model"] = defaultProduct.Model
+				updated = true
+			}
+
+			if updated {
+				if err := db.Model(&existingProduct).Updates(updates).Error; err != nil {
+					log.Printf("Failed to update product %s: %v", defaultProduct.ProductKey, err)
+				} else {
+					log.Printf("✓ Updated product fields: %s", defaultProduct.ProductKey)
+				}
+			} else {
+				log.Printf("Product %s already up to date", defaultProduct.ProductKey)
 			}
 		}
-
-		log.Println("Default products initialized successfully")
-	} else {
-		log.Printf("Product table already has %d products, skipping initialization", productCount)
 	}
 
+	log.Println("Default products check completed")
 	return nil
 }

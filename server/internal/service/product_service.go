@@ -6,6 +6,7 @@ package service
 
 import (
 	"errors"
+	"time"
 
 	"iot-platform-core/internal/model"
 	"iot-platform-core/internal/repository"
@@ -36,14 +37,21 @@ type CreateProductRequest struct {
 
 // ProductInfo 产品信息
 type ProductInfo struct {
-	ID          int64  `json:"id"`
-	ProductKey  string `json:"productKey"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Category    string `json:"category"`
-	DeviceCount int64  `json:"deviceCount"`
-	Status      int    `json:"status"`
-	CreatedAt   string `json:"createdAt"`
+	ID           int64  `json:"id"`
+	ProductKey   string `json:"productKey"`
+	Name         string `json:"name"`
+	Description  string `json:"description,omitempty"`
+	Category     string `json:"category,omitempty"`
+	DeviceCount  int64  `json:"deviceCount,omitempty"`
+	Status       int    `json:"status,omitempty"`
+	CreatedAt    string `json:"createdAt,omitempty"`
+	// v0.2.0: UI控制相关字段
+	ControlMode  string `json:"controlMode,omitempty"`  // toggle/pulse/dimmer/readonly/generic
+	UITemplate   string `json:"uiTemplate,omitempty"`   // UI模板名称
+	IconName     string `json:"iconName,omitempty"`     // 图标名称(Material Icons)
+	IconColor    string `json:"iconColor,omitempty"`    // 图标颜色(HEX，如 #FF6B35)
+	Manufacturer string `json:"manufacturer,omitempty"` // 制造商
+	Model        string `json:"model,omitempty"`        // 硬件型号
 }
 
 // CreateProduct 创建产品
@@ -76,7 +84,7 @@ func (s *ProductService) CreateProduct(req *CreateProductRequest) (*ProductInfo,
 		Description: product.Description,
 		Category:    product.Category,
 		Status:      product.Status,
-		CreatedAt:   product.CreatedAt.Format("2006-01-02 15:04:05"),
+		CreatedAt:   product.CreatedAt.Format(time.RFC3339),
 	}, nil
 }
 
@@ -107,14 +115,20 @@ func (s *ProductService) GetProductList(category string, status *int, page, size
 	for i, p := range products {
 		deviceCount, _ := s.productRepo.CountDevices(p.ProductKey)
 		productInfos[i] = ProductInfo{
-			ID:          p.ID,
-			ProductKey:  p.ProductKey,
-			Name:        p.Name,
-			Description: p.Description,
-			Category:    p.Category,
-			DeviceCount: deviceCount,
-			Status:      p.Status,
-			CreatedAt:   p.CreatedAt.Format("2006-01-02 15:04:05"),
+			ID:           p.ID,
+			ProductKey:   p.ProductKey,
+			Name:         p.Name,
+			Description:  p.Description,
+			Category:     p.Category,
+			DeviceCount:  deviceCount,
+			Status:       p.Status,
+			CreatedAt:    p.CreatedAt.Format(time.RFC3339),
+			ControlMode:  p.ControlMode,
+			UITemplate:   p.UITemplate,
+			IconName:     p.IconName,
+			IconColor:    p.IconColor,
+			Manufacturer: p.Manufacturer,
+			Model:        p.Model,
 		}
 	}
 
@@ -139,14 +153,20 @@ func (s *ProductService) GetProductByKey(productKey string) (*ProductInfo, error
 	deviceCount, _ := s.productRepo.CountDevices(productKey)
 
 	return &ProductInfo{
-		ID:          product.ID,
-		ProductKey:  product.ProductKey,
-		Name:        product.Name,
-		Description: product.Description,
-		Category:    product.Category,
-		DeviceCount: deviceCount,
-		Status:      product.Status,
-		CreatedAt:   product.CreatedAt.Format("2006-01-02 15:04:05"),
+		ID:           product.ID,
+		ProductKey:   product.ProductKey,
+		Name:         product.Name,
+		Description:  product.Description,
+		Category:     product.Category,
+		DeviceCount:  deviceCount,
+		Status:       product.Status,
+		CreatedAt:    product.CreatedAt.Format(time.RFC3339),
+		ControlMode:  product.ControlMode,
+		UITemplate:   product.UITemplate,
+		IconName:     product.IconName,
+		IconColor:    product.IconColor,
+		Manufacturer: product.Manufacturer,
+		Model:        product.Model,
 	}, nil
 }
 
@@ -185,14 +205,20 @@ func (s *ProductService) UpdateProduct(productKey string, req *UpdateProductRequ
 	deviceCount, _ := s.productRepo.CountDevices(productKey)
 
 	return &ProductInfo{
-		ID:          product.ID,
-		ProductKey:  product.ProductKey,
-		Name:        product.Name,
-		Description: product.Description,
-		Category:    product.Category,
-		DeviceCount: deviceCount,
-		Status:      product.Status,
-		CreatedAt:   product.CreatedAt.Format("2006-01-02 15:04:05"),
+		ID:           product.ID,
+		ProductKey:   product.ProductKey,
+		Name:         product.Name,
+		Description:  product.Description,
+		Category:     product.Category,
+		DeviceCount:  deviceCount,
+		Status:       product.Status,
+		CreatedAt:    product.CreatedAt.Format(time.RFC3339),
+		ControlMode:  product.ControlMode,
+		UITemplate:   product.UITemplate,
+		IconName:     product.IconName,
+		IconColor:    product.IconColor,
+		Manufacturer: product.Manufacturer,
+		Model:        product.Model,
 	}, nil
 }
 

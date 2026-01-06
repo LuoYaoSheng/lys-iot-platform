@@ -118,8 +118,29 @@ class IoTSdk {
       // 恢复 token
       if (token != null && token.isNotEmpty) {
         _apiClient.setToken(token);
-        IoTLogger.info('Token已恢复，跳过登录', 'SDK');
-        return true;
+
+        // 验证 token 是否有效（临时禁用401回调，避免验证失败时触发跳转）
+        final savedCallback = _apiClient.onUnauthorized;
+        _apiClient.setOnUnauthorized(null);
+
+        try {
+          final response = await _authApi.getCurrentUser();
+          _apiClient.setOnUnauthorized(savedCallback); // 恢复回调
+
+          if (response.isSuccess) {
+            IoTLogger.info('Token验证成功，跳过登录', 'SDK');
+            return true;
+          }
+        } catch (e) {
+          _apiClient.setOnUnauthorized(savedCallback); // 恢复回调
+          IoTLogger.warning('Token验证失败: $e', 'SDK');
+        }
+
+        // Token 无效，清除
+        _apiClient.setToken(null);
+        await prefs.remove('iot_token');
+        IoTLogger.warning('Token已过期，需要重新登录', 'SDK');
+        return false;
       }
 
       return false;

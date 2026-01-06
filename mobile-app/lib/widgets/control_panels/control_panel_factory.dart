@@ -1,7 +1,7 @@
 /// 控制面板工厂
 /// 作者: 罗耀生
 /// 日期: 2025-12-19
-/// v0.2.0: 根据产品controlMode动态创建控制面板
+/// 更新: 2026-01-06 - 添加混合控制面板支持
 
 import 'package:flutter/material.dart';
 import 'package:iot_platform_sdk/iot_platform_sdk.dart';
@@ -9,6 +9,7 @@ import '../../services/api_service.dart';
 import 'control_panel_base.dart';
 import 'switch_toggle_panel.dart';
 import 'switch_pulse_panel.dart';
+import 'switch_servo_panel.dart';
 import 'sensor_display_panel.dart';
 import 'generic_panel.dart';
 
@@ -19,8 +20,31 @@ class ControlPanelFactory {
     required Device device,
     required ApiService apiService,
   }) {
-    // 获取产品的控制模式
+    // 获取产品的UI模板和控制模式
+    final uiTemplate = device.product?.uiTemplate;
     final controlMode = device.product?.controlMode;
+
+    // 优先根据UI模板选择面板（更精确）
+    switch (uiTemplate) {
+      case 'servo':
+        // 舵机设备：使用混合控制面板（位置+脉冲）
+        return SwitchServoPanel(device: device, apiService: apiService);
+
+      case 'switch':
+        // 普通开关设备
+        switch (controlMode) {
+          case 'toggle':
+            return SwitchTogglePanel(device: device, apiService: apiService);
+          case 'pulse':
+            return SwitchPulsePanel(device: device, apiService: apiService);
+          default:
+            return GenericPanel(device: device, apiService: apiService);
+        }
+
+      default:
+        // 降级到根据controlMode选择
+        break;
+    }
 
     // 根据controlMode选择面板
     switch (controlMode) {

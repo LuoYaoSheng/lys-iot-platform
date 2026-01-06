@@ -9,7 +9,7 @@ class Env {
   static const String env = String.fromEnvironment('ENV', defaultValue: 'natapp');
   static const String apiBaseUrl = String.fromEnvironment('API_BASE_URL');
   static const String mqttHost = String.fromEnvironment('MQTT_HOST');
-  static const int mqttPort = int.fromEnvironment('MQTT_PORT', defaultValue: 42883);
+  static const int mqttPort = int.fromEnvironment('MQTT_PORT', defaultValue: 1883);
 }
 
 class IoTConfig {
@@ -51,10 +51,10 @@ class IoTConfig {
   /// 开发环境配置（本机�?
   factory IoTConfig.development() {
     return const IoTConfig(
-      apiBaseUrl: 'http://192.168.1.9:48080',
-      mqttHost: '192.168.1.9',
-      mqttPort: 42883,
-      mqttWsPort: 49083,
+      apiBaseUrl: 'http://192.168.21.77:48080',
+      mqttHost: '192.168.21.77',
+      mqttPort: 1883,
+      mqttWsPort: 8083,
       enableLogging: true,
     );
   }
@@ -66,8 +66,8 @@ class IoTConfig {
     return IoTConfig(
       apiBaseUrl: 'http://$serverIp:48080',
       mqttHost: serverIp,
-      mqttPort: 42883,
-      mqttWsPort: 49083,
+      mqttPort: 1883,
+      mqttWsPort: 8083,
       enableLogging: true,
     );
   }
@@ -88,12 +88,13 @@ class IoTConfig {
   }
 
   /// Natapp 内网穿透配置（真机调试用）
+  /// 已弃用：现在使用本地IP直连
   factory IoTConfig.natapp() {
     return const IoTConfig(
-      apiBaseUrl: 'http://i2kai.mynatapp.cc',
-      mqttHost: '2e9f6a4233617225.natapp.cc',
-      mqttPort: 42883,
-      mqttWsPort: 49083,
+      apiBaseUrl: 'http://192.168.21.77:48080',
+      mqttHost: '192.168.21.77',
+      mqttPort: 1883,
+      mqttWsPort: 8083,
       enableLogging: true,
     );
   }

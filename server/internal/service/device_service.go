@@ -256,17 +256,19 @@ type DeviceListResponse struct {
 
 // DeviceInfo 设备信息
 type DeviceInfo struct {
-	DeviceID        string  `json:"deviceId"`
-	DeviceSN        string  `json:"deviceSN"` // 与 SDK Device 模型一致
-	ProductKey      string  `json:"productKey"`
-	Name            string  `json:"name"`
-	Status          string  `json:"status"` // 字符串类型: inactive/online/offline/disabled
-	StatusText      string  `json:"statusText"`
-	FirmwareVersion string  `json:"firmwareVersion"`
-	ChipModel       string  `json:"chipModel"`
-	LastOnlineAt    *string `json:"lastOnlineAt"`
-	ActivatedAt     *string `json:"activatedAt"`
-	CreatedAt       string  `json:"createdAt"`
+	DeviceID        string        `json:"deviceId"`
+	DeviceSN        string        `json:"deviceSN"` // 与 SDK Device 模型一致
+	ProductKey      string        `json:"productKey"`
+	ProjectID       string        `json:"projectId"`
+	Name            string        `json:"name"`
+	Status          string        `json:"status"` // 字符串类型: inactive/online/offline/disabled
+	StatusText      string        `json:"statusText"`
+	FirmwareVersion string        `json:"firmwareVersion"`
+	ChipModel       string        `json:"chipModel"`
+	LastOnlineAt    *string       `json:"lastOnlineAt"`
+	ActivatedAt     *string       `json:"activatedAt"`
+	CreatedAt       string        `json:"createdAt"`
+	Product         *ProductInfo  `json:"product,omitempty"` // v0.2.0: 产品信息
 }
 
 // GetDeviceList 获取设备列表
@@ -318,21 +320,40 @@ func (s *DeviceService) toDeviceInfo(d *model.Device) DeviceInfo {
 		DeviceID:        d.DeviceID,
 		DeviceSN:        d.DeviceSN,
 		ProductKey:      d.ProductKey,
+		ProjectID:       d.ProjectID,
 		Name:            d.Name,
 		Status:          s.getStatusString(d.Status), // 返回字符串状态
 		StatusText:      s.getStatusText(d.Status),
 		FirmwareVersion: d.FirmwareVersion,
 		ChipModel:       d.ChipModel,
-		CreatedAt:       d.CreatedAt.Format("2006-01-02 15:04:05"),
+		CreatedAt:       d.CreatedAt.Format(time.RFC3339),
 	}
 
 	if d.LastOnlineAt != nil {
-		t := d.LastOnlineAt.Format("2006-01-02 15:04:05")
+		t := d.LastOnlineAt.Format(time.RFC3339)
 		info.LastOnlineAt = &t
 	}
 	if d.ActivatedAt != nil {
-		t := d.ActivatedAt.Format("2006-01-02 15:04:05")
+		t := d.ActivatedAt.Format(time.RFC3339)
 		info.ActivatedAt = &t
+	}
+
+	// 查询产品信息
+	product, err := s.productRepo.FindByProductKey(d.ProductKey)
+	if err == nil {
+		info.Product = &ProductInfo{
+			ID:           product.ID,
+			ProductKey:   product.ProductKey,
+			Name:         product.Name,
+			Description:  product.Description,
+			Category:     product.Category,
+			ControlMode:  product.ControlMode,
+			UITemplate:   product.UITemplate,
+			IconName:     product.IconName,
+			IconColor:    product.IconColor,
+			Manufacturer: product.Manufacturer,
+			Model:        product.Model,
+		}
 	}
 
 	return info

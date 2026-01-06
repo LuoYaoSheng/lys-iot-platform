@@ -53,9 +53,8 @@ Future<void> main() async {
     config = IoTConfig.fromEnvironment();
   }
 
-  // 初始化SDK
-  final sdk = IoTSdk(config: config);
-  await sdk.initialize();
+  // 初始化SDK（只创建实例，不调用 initialize，由 SplashPage 统一处理）
+  IoTSdk(config: config);
 
   runApp(const MyApp());
 }
