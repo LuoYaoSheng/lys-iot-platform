@@ -71,7 +71,6 @@ func main() {
 	deviceService := service.NewDeviceService(
 		deviceRepo,
 		productRepo,
-		cfg.MQTT.BrokerExternal,
 		cfg.MQTT.Port,
 	)
 
@@ -80,6 +79,7 @@ func main() {
 		apiKeyRepo,
 		refreshTokenRepo,
 		cfg.JWT.Secret,
+		cfg.JWT.ExpireHours,
 	)
 
 	productService := service.NewProductService(productRepo)
@@ -94,6 +94,15 @@ func main() {
 		// 验证设备认证
 		_, err := deviceService.ValidateMQTTAuth(username, password, clientID)
 		return err == nil
+	})
+
+	// 设置设备状态更新回调（当设备连接/断开时更新数据库）
+	mqttBroker.SetStatusUpdate(func(deviceID string, online bool) {
+		if err := deviceService.UpdateDeviceOnline(deviceID, online); err != nil {
+			log.Printf("[MQTT] Failed to update device status: %s, %v", deviceID, err)
+		} else {
+			log.Printf("[MQTT] Device status updated: %s -> %v", deviceID, map[bool]string{true: "online", false: "offline"}[online])
+		}
 	})
 
 	tcpAddr := fmt.Sprintf(":%d", cfg.MQTT.Port)

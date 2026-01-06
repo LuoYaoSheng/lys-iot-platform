@@ -38,9 +38,8 @@ type DatabaseConfig struct {
 }
 
 type MQTTConfig struct {
-	BrokerExternal string // 外部地址 (设备连接用)
-	Port           int    // TCP端口
-	WSPort         int    // WebSocket端口
+	Port   int // TCP端口
+	WSPort int // WebSocket端口
 }
 
 // Load 加载配置
@@ -75,9 +74,8 @@ func Load() *Config {
 			DBName:   getEnv("DB_NAME", "iot_platform"),
 		},
 		MQTT: MQTTConfig{
-			BrokerExternal: getEnv("MQTT_BROKER_EXTERNAL", "localhost"),
-			Port:           getEnvInt("MQTT_PORT", 1883),
-			WSPort:         getEnvInt("MQTT_WS_PORT", 8083),
+			Port:   getEnvInt("MQTT_PORT", 1883),
+			WSPort: getEnvInt("MQTT_WS_PORT", 8083),
 		},
 		JWT: JWTConfig{
 			Secret:      jwtSecret,

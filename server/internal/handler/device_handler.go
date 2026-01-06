@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"iot-platform-core/internal/model"
@@ -47,7 +48,21 @@ func (h *DeviceHandler) Activate(c *gin.Context) {
 
 	log.Printf("[Activate] ProductKey=%s, DeviceSN=%s", req.ProductKey, req.DeviceSN)
 
-	resp, isAlreadyActivated, err := h.deviceService.Activate(&req)
+	// 从请求中提取主机名作为 MQTT Broker 地址
+	// 优先使用 X-Forwarded-Host（反向代理场景），其次使用 Host
+	host := c.GetHeader("X-Forwarded-Host")
+	if host == "" {
+		host = c.GetHeader("X-Real-IP")
+	}
+	if host == "" {
+		host = c.Request.Host
+	}
+
+	// 移除端口号，使用默认 MQTT 端口
+	mqttHost := extractHostWithoutPort(host)
+	log.Printf("[Activate] MQTT Broker host: %s (from %s)", mqttHost, host)
+
+	resp, isAlreadyActivated, err := h.deviceService.ActivateWithHost(&req, mqttHost)
 	if err != nil {
 		switch err.Error() {
 		case "invalid_product_key":
@@ -370,4 +385,13 @@ func (h *DeviceHandler) DeleteDevice(c *gin.Context) {
 	response.Success(c, gin.H{
 		"message": "device_deleted",
 	})
+}
+
+// extractHostWithoutPort 从主机地址中移除端口号
+// 例如: "192.168.21.77:48080" -> "192.168.21.77"
+func extractHostWithoutPort(host string) string {
+	if idx := strings.Index(host, ":"); idx != -1 {
+		return host[:idx]
+	}
+	return host
 }

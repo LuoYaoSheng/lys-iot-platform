@@ -52,28 +52,30 @@ type TopicsConfig struct {
 
 // DeviceService 设备服务
 type DeviceService struct {
-	deviceRepo         *repository.DeviceRepository
-	productRepo        *repository.ProductRepository
-	mqttBrokerExternal string // 外部地址 (设备连接用)
-	mqttPort           int
+	deviceRepo  *repository.DeviceRepository
+	productRepo *repository.ProductRepository
+	mqttPort    int
 }
 
 func NewDeviceService(
 	deviceRepo *repository.DeviceRepository,
 	productRepo *repository.ProductRepository,
-	mqttBrokerExternal string,
 	mqttPort int,
 ) *DeviceService {
 	return &DeviceService{
-		deviceRepo:         deviceRepo,
-		productRepo:        productRepo,
-		mqttBrokerExternal: mqttBrokerExternal,
-		mqttPort:           mqttPort,
+		deviceRepo:  deviceRepo,
+		productRepo: productRepo,
+		mqttPort:    mqttPort,
 	}
 }
 
-// Activate 设备激活
+// Activate 设备激活（向后兼容方法，使用默认主机名）
 func (s *DeviceService) Activate(req *ActivationRequest) (*ActivationResponse, bool, error) {
+	return s.ActivateWithHost(req, "")
+}
+
+// ActivateWithHost 设备激活（指定主机名）
+func (s *DeviceService) ActivateWithHost(req *ActivationRequest, mqttHost string) (*ActivationResponse, bool, error) {
 	// 1. 验证产品是否存在
 	product, err := s.productRepo.FindByProductKey(req.ProductKey)
 	if err != nil {
@@ -95,7 +97,7 @@ func (s *DeviceService) Activate(req *ActivationRequest) (*ActivationResponse, b
 
 	// 3. 如果设备已存在且已激活，返回现有配置
 	if existingDevice != nil && existingDevice.Status != model.DeviceStatusInactive {
-		resp := s.buildActivationResponse(existingDevice)
+		resp := s.buildActivationResponse(existingDevice, mqttHost)
 		return resp, true, nil // isAlreadyActivated = true
 	}
 
@@ -134,17 +136,22 @@ func (s *DeviceService) Activate(req *ActivationRequest) (*ActivationResponse, b
 		return nil, false, err
 	}
 
-	resp := s.buildActivationResponse(device)
+	resp := s.buildActivationResponse(device, mqttHost)
 	return resp, false, nil
 }
 
 // buildActivationResponse 构建激活响应
-func (s *DeviceService) buildActivationResponse(device *model.Device) *ActivationResponse {
+func (s *DeviceService) buildActivationResponse(device *model.Device, mqttHost string) *ActivationResponse {
+	// 如果未指定主机名，使用 localhost（默认情况）
+	if mqttHost == "" {
+		mqttHost = "localhost"
+	}
+
 	return &ActivationResponse{
 		DeviceID:     device.DeviceID,
 		DeviceSecret: device.DeviceSecret,
 		MQTT: MQTTConfig{
-			Server:    s.mqttBrokerExternal, // 使用外部地址
+			Server:    mqttHost, // 使用传入的主机名
 			Port:      s.mqttPort,
 			PortTLS:   8883,
 			Username:  device.MQTTUsername,

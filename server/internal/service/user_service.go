@@ -34,13 +34,17 @@ func NewUserService(
 	apiKeyRepo *repository.APIKeyRepository,
 	refreshTokenRepo *repository.RefreshTokenRepository,
 	jwtSecret string,
+	jwtExpireHours int,
 ) *UserService {
+	if jwtExpireHours <= 0 {
+		jwtExpireHours = 24 // 默认24小时
+	}
 	return &UserService{
 		userRepo:         userRepo,
 		apiKeyRepo:       apiKeyRepo,
 		refreshTokenRepo: refreshTokenRepo,
 		jwtSecret:        jwtSecret,
-		jwtExpireHours:   2, // Token 2小时过期
+		jwtExpireHours:   jwtExpireHours,
 	}
 }
 

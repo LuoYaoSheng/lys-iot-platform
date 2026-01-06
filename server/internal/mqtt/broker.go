@@ -16,11 +16,15 @@ import (
 // DeviceAuthFunc 设备认证函数类型
 type DeviceAuthFunc func(clientID, username, password string) bool
 
+// DeviceStatusUpdateFunc 设备状态更新函数类型
+type DeviceStatusUpdateFunc func(clientID string, online bool)
+
 // Broker 内置MQTT Broker
 type Broker struct {
-	server   *mqtt.Server
-	authFunc DeviceAuthFunc
-	mu       sync.RWMutex
+	server       *mqtt.Server
+	authFunc     DeviceAuthFunc
+	statusUpdate DeviceStatusUpdateFunc // 设备状态更新回调
+	mu           sync.RWMutex
 	// 在线设备 clientID -> true
 	onlineDevices map[string]bool
 }
@@ -123,4 +127,31 @@ func (b *Broker) setOnline(clientID string, online bool) {
 	} else {
 		delete(b.onlineDevices, clientID)
 	}
+
+	// 同时更新数据库状态
+	if b.statusUpdate != nil {
+		// 从 clientID 中提取 deviceID (格式: ProductKey&deviceID)
+		deviceID := extractDeviceID(clientID)
+		if deviceID != "" {
+			go b.statusUpdate(deviceID, online)
+		}
+	}
+}
+
+// SetStatusUpdate 设置状态更新回调
+func (b *Broker) SetStatusUpdate(fn DeviceStatusUpdateFunc) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.statusUpdate = fn
+}
+
+// extractDeviceID 从 clientID 中提取 deviceID
+// clientID 格式: "ProductKey&deviceID"
+func extractDeviceID(clientID string) string {
+	for i := len(clientID) - 1; i >= 0; i-- {
+		if clientID[i] == '&' {
+			return clientID[i+1:]
+		}
+	}
+	return ""
 }
