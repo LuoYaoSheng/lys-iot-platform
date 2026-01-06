@@ -1,7 +1,7 @@
-// IoT Platform Core - 主入口
+// IoT Platform Core - 主入口 (简化版 - 内置MQTT Broker)
 // 作者: 罗耀生
 // 日期: 2025-12-13
-// 更新: 2025-12-14 - 添加 Project 和 Webhook 支持
+// 更新: 2026-01-06 - 内置MQTT Broker，移除EMQX依赖
 
 package main
 
@@ -12,6 +12,7 @@ import (
 	"iot-platform-core/internal/config"
 	"iot-platform-core/internal/handler"
 	"iot-platform-core/internal/model"
+	"iot-platform-core/internal/mqtt"
 	"iot-platform-core/internal/repository"
 	"iot-platform-core/internal/service"
 
@@ -22,13 +23,12 @@ import (
 )
 
 func main() {
-	log.Println("Starting IoT Platform Core...")
+	log.Println("Starting IoT Platform Core (Embedded MQTT)...")
 
 	// 加载配置
 	cfg := config.Load()
-	log.Printf("Config loaded: DB=%s:%s, Server=:%s, MQTT=%s:%d",
-		cfg.Database.Host, cfg.Database.Port, cfg.Server.Port,
-		cfg.MQTT.Broker, cfg.MQTT.Port)
+	log.Printf("Config loaded: DB=%s:%s, Server=:%s, MQTT Port=%d",
+		cfg.Database.Host, cfg.Database.Port, cfg.Server.Port, cfg.MQTT.Port)
 
 	// 连接数据库
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
@@ -69,11 +69,10 @@ func main() {
 
 	// 初始化服务
 	deviceService := service.NewDeviceService(
-                deviceRepo,
-                productRepo,
-                cfg.MQTT.Broker,
-                cfg.MQTT.BrokerExternal,
-                cfg.MQTT.Port,
+		deviceRepo,
+		productRepo,
+		cfg.MQTT.BrokerExternal,
+		cfg.MQTT.Port,
 	)
 
 	userService := service.NewUserService(
@@ -86,52 +85,27 @@ func main() {
 	productService := service.NewProductService(productRepo)
 	projectService := service.NewProjectService(projectRepo, deviceRepo)
 
-	// 初始化 MQTT 服务（用于发布控制指令）
-	mqttService := service.NewMQTTService(
-		cfg.MQTT.Broker,
-		cfg.MQTT.Port,
-		"iot-platform-core",
-		"", // MQTT 用户名（平台内部使用，可留空）
-		"", // MQTT 密码
-	)
-
-	// 尝试连接 MQTT Broker
-	if err := mqttService.Connect(); err != nil {
-		log.Printf("Warning: MQTT connection failed: %v (device control will be unavailable)", err)
-	} else {
-		log.Println("MQTT connected")
-	}
-
-
-	// 初始化 EMQX API 服务（用于查询在线设备）
-	emqxService := service.NewEMQXService(
-		cfg.EMQX.APIUrl,
-		cfg.EMQX.APIUsername,
-		cfg.EMQX.APIPassword,
-	)
-
-	// 测试 EMQX API 连接
-	if err := emqxService.TestConnection(); err != nil {
-		log.Printf("Warning: EMQX API connection failed: %v (device status sync will be unavailable)", err)
-	} else {
-		log.Println("EMQX API connected")
-
-		// 初始化设备同步服务
-		deviceSyncService := service.NewDeviceSyncService(db, deviceRepo, emqxService)
-
-		// 启动时同步设备在线状态
-		log.Println("Syncing device online status from EMQX...")
-		if err := deviceSyncService.SyncDeviceStatusOnStartup(); err != nil {
-			log.Printf("Warning: Device status sync failed: %v", err)
+	// 启动内置 MQTT Broker
+	mqttBroker := mqtt.NewBroker(func(clientID, username, password string) bool {
+		// 平台内部客户端直接放行
+		if clientID == "iot-platform-core" {
+			return true
 		}
+		// 验证设备认证
+		_, err := deviceService.ValidateMQTTAuth(username, password, clientID)
+		return err == nil
+	})
 
-		// 启动定时同步任务
-		deviceSyncService.StartHeartbeatMonitor(cfg.EMQX.SyncInterval)
+	tcpAddr := fmt.Sprintf(":%d", cfg.MQTT.Port)
+	wsAddr := fmt.Sprintf(":%d", cfg.MQTT.WSPort)
+	if err := mqttBroker.Start(tcpAddr, wsAddr); err != nil {
+		log.Fatalf("Failed to start MQTT Broker: %v", err)
 	}
+	log.Printf("MQTT Broker started on TCP %s, WS %s", tcpAddr, wsAddr)
 
 	// 初始化处理器
 	deviceHandler := handler.NewDeviceHandler(deviceService, authLogRepo)
-	deviceHandler.SetMQTTService(mqttService)
+	deviceHandler.SetMQTTBroker(mqttBroker)
 	userHandler := handler.NewUserHandler(userService)
 	productHandler := handler.NewProductHandler(productService)
 	projectHandler := handler.NewProjectHandler(projectService)

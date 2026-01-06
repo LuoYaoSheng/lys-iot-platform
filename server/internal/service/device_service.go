@@ -52,27 +52,24 @@ type TopicsConfig struct {
 
 // DeviceService 设备服务
 type DeviceService struct {
-    deviceRepo         *repository.DeviceRepository
-    productRepo        *repository.ProductRepository
-    mqttBroker         string // 内部地址
-    mqttBrokerExternal string // 外部地址 (设备连接用)
-    mqttPort           int
+	deviceRepo         *repository.DeviceRepository
+	productRepo        *repository.ProductRepository
+	mqttBrokerExternal string // 外部地址 (设备连接用)
+	mqttPort           int
 }
 
 func NewDeviceService(
-    deviceRepo *repository.DeviceRepository,
-    productRepo *repository.ProductRepository,
-    mqttBroker string,
-    mqttBrokerExternal string,
-    mqttPort int,
+	deviceRepo *repository.DeviceRepository,
+	productRepo *repository.ProductRepository,
+	mqttBrokerExternal string,
+	mqttPort int,
 ) *DeviceService {
-    return &DeviceService{
-        deviceRepo:         deviceRepo,
-        productRepo:        productRepo,
-        mqttBroker:         mqttBroker,
-        mqttBrokerExternal: mqttBrokerExternal,
-        mqttPort:           mqttPort,
-    }
+	return &DeviceService{
+		deviceRepo:         deviceRepo,
+		productRepo:        productRepo,
+		mqttBrokerExternal: mqttBrokerExternal,
+		mqttPort:           mqttPort,
+	}
 }
 
 // Activate 设备激活
@@ -380,23 +377,23 @@ type ControlRequest struct {
 	Angle  *int  `json:"angle"`
 }
 
-// ControlDevice 控制设备（通过 MQTT 发布指令）
-func (s *DeviceService) ControlDevice(deviceID string, req *ControlRequest, mqttService *MQTTService) error {
+// BuildControlMessage 构建控制消息（返回topic和payload）
+func (s *DeviceService) BuildControlMessage(deviceID string, req *ControlRequest) (string, map[string]interface{}, error) {
 	// 1. 验证设备存在
 	device, err := s.deviceRepo.FindByDeviceID(deviceID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("device_not_found")
+			return "", nil, errors.New("device_not_found")
 		}
-		return err
+		return "", nil, err
 	}
 
 	// 2. 验证设备状态
 	if device.Status == model.DeviceStatusInactive {
-		return errors.New("device_not_activated")
+		return "", nil, errors.New("device_not_activated")
 	}
 	if device.Status == model.DeviceStatusDisabled {
-		return errors.New("device_disabled")
+		return "", nil, errors.New("device_disabled")
 	}
 
 	// 3. 构建控制参数
@@ -407,14 +404,12 @@ func (s *DeviceService) ControlDevice(deviceID string, req *ControlRequest, mqtt
 		params["action"] = *req.Action
 
 		if *req.Action == "toggle" && req.Position != nil {
-			// toggle 模式：切换到指定位置
 			params["position"] = *req.Position
 		} else if *req.Action == "pulse" {
-			// pulse 模式：触发动作
 			if req.Duration != nil {
 				params["duration"] = *req.Duration
 			} else {
-				params["duration"] = 500 // 默认500ms
+				params["duration"] = 500
 			}
 		}
 	} else {
@@ -434,11 +429,18 @@ func (s *DeviceService) ControlDevice(deviceID string, req *ControlRequest, mqtt
 	}
 
 	if len(params) == 0 {
-		return errors.New("no_control_params")
+		return "", nil, errors.New("no_control_params")
 	}
 
-	// 4. 发布 MQTT 消息
-	return mqttService.PublishDeviceControl(device.ProductKey, device.DeviceID, params)
+	// 4. 构建topic和payload
+	topic := fmt.Sprintf("/sys/%s/%s/thing/service/property/set", device.ProductKey, device.DeviceID)
+	payload := map[string]interface{}{
+		"method": "thing.service.property.set",
+		"id":     fmt.Sprintf("%d", time.Now().UnixMilli()),
+		"params": params,
+	}
+
+	return topic, payload, nil
 }
 
 // GetDeviceStatus 获取设备状态

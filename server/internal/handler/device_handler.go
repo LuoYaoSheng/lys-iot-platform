@@ -5,12 +5,14 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"iot-platform-core/internal/model"
+	"iot-platform-core/internal/mqtt"
 	"iot-platform-core/internal/repository"
 	"iot-platform-core/internal/service"
 	"iot-platform-core/pkg/response"
@@ -21,7 +23,7 @@ import (
 type DeviceHandler struct {
 	deviceService *service.DeviceService
 	authLogRepo   *repository.MQTTAuthLogRepository
-	mqttService   *service.MQTTService
+	mqttBroker    *mqtt.Broker
 }
 
 func NewDeviceHandler(
@@ -253,9 +255,9 @@ func (h *DeviceHandler) GetDevice(c *gin.Context) {
 
 // ========== 设备控制 ==========
 
-// SetMQTTService 设置 MQTT 服务（供 main.go 调用）
-func (h *DeviceHandler) SetMQTTService(mqttService *service.MQTTService) {
-	h.mqttService = mqttService
+// SetMQTTBroker 设置 MQTT Broker（供 main.go 调用）
+func (h *DeviceHandler) SetMQTTBroker(broker *mqtt.Broker) {
+	h.mqttBroker = broker
 }
 
 // ControlDevice 控制设备
@@ -273,15 +275,16 @@ func (h *DeviceHandler) ControlDevice(c *gin.Context) {
 		return
 	}
 
-	if h.mqttService == nil {
-		log.Println("[ControlDevice] MQTT service not initialized")
-		response.InternalError(c, "mqtt_service_unavailable")
+	if h.mqttBroker == nil {
+		log.Println("[ControlDevice] MQTT broker not initialized")
+		response.InternalError(c, "mqtt_broker_unavailable")
 		return
 	}
 
 	log.Printf("[ControlDevice] DeviceID=%s, Switch=%v, Angle=%v", deviceID, req.Switch, req.Angle)
 
-	err := h.deviceService.ControlDevice(deviceID, &req, h.mqttService)
+	// 构建控制消息并发布
+	topic, payload, err := h.deviceService.BuildControlMessage(deviceID, &req)
 	if err != nil {
 		switch err.Error() {
 		case "device_not_found":
@@ -296,6 +299,14 @@ func (h *DeviceHandler) ControlDevice(c *gin.Context) {
 			log.Printf("[ControlDevice] Error: %v", err)
 			response.InternalError(c, "control_failed: "+err.Error())
 		}
+		return
+	}
+
+	// 通过内置Broker发布消息
+	data, _ := json.Marshal(payload)
+	if err := h.mqttBroker.Publish(topic, data, false); err != nil {
+		log.Printf("[ControlDevice] Publish error: %v", err)
+		response.InternalError(c, "publish_failed")
 		return
 	}
 

@@ -1,24 +1,23 @@
 # ========================================
-# IoT Platform Core - Docker Compose 一键部署配置
+# IoT Platform Core - Docker Compose (简化版)
 # 作者: 罗耀生
-# 日期: 2025-12-16
+# 日期: 2026-01-06
+# 说明: 内置MQTT Broker，无需外部EMQX
 # ========================================
 #
 # 使用说明:
 # 1. 确保Docker已安装并启动
-# 2. 修改 .env 文件中的 MQTT_BROKER_EXTERNAL（改为你的IP或域名）
+# 2. 修改 .env 文件中的配置
 # 3. 启动所有服务: docker compose up -d
 # 4. 查看服务状态: docker compose ps
-# 5. 查看日志: docker compose logs -f
 #
 # 访问地址:
 # - API服务: http://localhost:48080
-# - EMQX Dashboard: http://localhost:49084 (admin/public)
-#
-# 端口规范: 全部使用 4 开头，避免端口冲突
+# - MQTT TCP: localhost:1883
+# - MQTT WebSocket: localhost:8083
 # ========================================
 
-name: iot-platform
+name: iot-lite
 
 services:
   # MySQL 数据库
@@ -31,7 +30,7 @@ services:
       MYSQL_USER: iot_user
       MYSQL_PASSWORD: iot123456
     ports:
-      - "44306:3306"    # MySQL: 44306
+      - "44306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -45,46 +44,28 @@ services:
       - iot-network
     restart: unless-stopped
 
-  # Redis 缓存
-  redis:
-    image: redis:7-alpine
-    container_name: iot-platform_redis
-    ports:
-      - "47379:6379"    # Redis: 47379
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - iot-network
-    restart: unless-stopped
-
-  # ==================== IoT Platform Core 后端服务 ====================
+  # IoT Platform Core (内置MQTT Broker)
   iot-platform-core:
-    image: luoyaosheng/iot-platform-core:latest
+    build: .
     container_name: iot-platform_core
-    env_file:
-      - .env
     environment:
-      # 容器内数据库连接（使用服务名而非localhost）
       DB_HOST: mysql
       DB_PORT: 3306
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      MQTT_BROKER: emqx
+      DB_USER: iot_user
+      DB_PASSWORD: iot123456
+      DB_NAME: iot_platform
+      SERVER_PORT: 48080
       MQTT_PORT: 1883
-      # MQTT外部地址从 .env 读取（设备连接用）
-      # JWT和EMQX配置从 .env 读取
+      MQTT_WS_PORT: 8083
+      MQTT_BROKER_EXTERNAL: ${MQTT_BROKER_EXTERNAL:-localhost}
+      JWT_SECRET: ${JWT_SECRET:-iot-platform-secret-key}
       TZ: Asia/Shanghai
     ports:
-      - "48080:48080"    # API服务端口
+      - "48080:48080"   # API服务
+      - "1883:1883"     # MQTT TCP
+      - "8083:8083"     # MQTT WebSocket
     depends_on:
       mysql:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:48080/health"]
@@ -95,47 +76,8 @@ services:
       - iot-network
     restart: unless-stopped
 
-  # EMQX MQTT Broker
-  emqx:
-    image: emqx/emqx:5.3.0
-    container_name: iot-platform_emqx
-    environment:
-      EMQX_NAME: iot-emqx
-      EMQX_HOST: 127.0.0.1
-      # 启用 HTTP 认证（连接后端API进行设备认证）
-      EMQX_AUTHENTICATION__1__MECHANISM: password_based
-      EMQX_AUTHENTICATION__1__BACKEND: http
-      EMQX_AUTHENTICATION__1__ENABLE: "true"
-      EMQX_AUTHENTICATION__1__METHOD: post
-      EMQX_AUTHENTICATION__1__URL: http://iot-platform-core:48080/api/v1/mqtt/auth
-      EMQX_AUTHENTICATION__1__BODY__USERNAME: $${username}
-      EMQX_AUTHENTICATION__1__BODY__PASSWORD: $${password}
-      EMQX_AUTHENTICATION__1__BODY__CLIENTID: $${clientid}
-      EMQX_AUTHENTICATION__1__HEADERS__CONTENT-TYPE: application/json
-      # 开发模式: 允许未匹配的 ACL
-      EMQX_AUTHORIZATION__NO_MATCH: allow
-    ports:
-      - "42883:1883"    # MQTT: 42883
-      - "49083:8083"    # MQTT WebSocket: 49083
-      - "49084:18083"   # Dashboard: 49084 (admin/public)
-    volumes:
-      - emqx_data:/opt/emqx/data
-    depends_on:
-      iot-platform-core:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "emqx", "ctl", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - iot-network
-    restart: unless-stopped
-
 volumes:
   mysql_data:
-  redis_data:
-  emqx_data:
 
 networks:
   iot-network:

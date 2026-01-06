@@ -1,9 +1,7 @@
 // 配置模块
 // 作者: 罗耀生
 // 日期: 2025-12-13
-// 更新: 2025-12-15 - 添加 .env 文件支持
-// 更新: 2025-12-16 - 添加 EMQX API 配置
-// 更新: 2025-12-30 - 移除硬编码默认密码，增加安全警告
+// 更新: 2026-01-06 - 简化配置，移除EMQX依赖
 
 package config
 
@@ -18,10 +16,8 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
-	Redis    RedisConfig
 	MQTT     MQTTConfig
 	JWT      JWTConfig
-	EMQX     EMQXConfig
 }
 
 type JWTConfig struct {
@@ -41,45 +37,29 @@ type DatabaseConfig struct {
 	DBName   string
 }
 
-type RedisConfig struct {
-	Host string
-	Port string
-}
-
 type MQTTConfig struct {
-	Broker         string // 内部地址 (后端连接用)
 	BrokerExternal string // 外部地址 (设备连接用)
-	Port           int
-}
-
-type EMQXConfig struct {
-	APIUrl       string
-	APIUsername  string
-	APIPassword  string
-	SyncInterval int // 设备状态同步间隔（分钟）
+	Port           int    // TCP端口
+	WSPort         int    // WebSocket端口
 }
 
 // Load 加载配置
-// 优先级: 环境变量 > .env 文件 > 默认值
 func Load() *Config {
-	// 尝试加载 .env 文件（如果存在）
-	// godotenv.Load 不会覆盖已存在的环境变量
 	if err := godotenv.Load(); err != nil {
-		log.Println("[Config] No .env file found, using defaults and environment variables")
+		log.Println("[Config] No .env file found, using defaults")
 	} else {
 		log.Println("[Config] Loaded .env file")
 	}
 
-	// 检查必需的敏感配置，未设置时使用默认值并警告
 	dbPassword := getEnv("DB_PASSWORD", "")
 	jwtSecret := getEnv("JWT_SECRET", "")
 
 	if dbPassword == "" {
-		log.Println("[Config] WARNING: DB_PASSWORD not set, using default (not recommended for production)")
+		log.Println("[Config] WARNING: DB_PASSWORD not set, using default")
 		dbPassword = "iot123456"
 	}
 	if jwtSecret == "" {
-		log.Println("[Config] WARNING: JWT_SECRET not set, using default (not recommended for production)")
+		log.Println("[Config] WARNING: JWT_SECRET not set, using default")
 		jwtSecret = "iot-platform-secret-key-change-me"
 	}
 
@@ -94,24 +74,14 @@ func Load() *Config {
 			Password: dbPassword,
 			DBName:   getEnv("DB_NAME", "iot_platform"),
 		},
-		Redis: RedisConfig{
-			Host: getEnv("REDIS_HOST", "localhost"),
-			Port: getEnv("REDIS_PORT", "47379"),
-		},
 		MQTT: MQTTConfig{
-			Broker:         getEnv("MQTT_BROKER", "localhost"),
 			BrokerExternal: getEnv("MQTT_BROKER_EXTERNAL", "localhost"),
-			Port:           getEnvInt("MQTT_PORT", 42883),
+			Port:           getEnvInt("MQTT_PORT", 1883),
+			WSPort:         getEnvInt("MQTT_WS_PORT", 8083),
 		},
 		JWT: JWTConfig{
 			Secret:      jwtSecret,
 			ExpireHours: getEnvInt("JWT_EXPIRE_HOURS", 2),
-		},
-		EMQX: EMQXConfig{
-			APIUrl:       getEnv("EMQX_API_URL", "http://localhost:18083"),
-			APIUsername:  getEnv("EMQX_API_USERNAME", ""),
-			APIPassword:  getEnv("EMQX_API_PASSWORD", ""),
-			SyncInterval: getEnvInt("EMQX_SYNC_INTERVAL", 5),
 		},
 	}
 }
