@@ -96,32 +96,63 @@ class Product extends Equatable {
   }
 
   factory Product.fromJson(Map<String, dynamic> json) {
+    // 安全解析字符串字段
+    String? safeString(dynamic value) {
+      if (value == null) return null;
+      if (value is String) return value.isEmpty ? null : value;
+      return value.toString();
+    }
+
+    // 安全解析 capabilities
+    Map<String, dynamic>? parseCapabilities(dynamic value) {
+      if (value == null || value == '') return null;
+      if (value is Map) return value as Map<String, dynamic>;
+      if (value is String && value.isNotEmpty) {
+        try {
+          return jsonDecode(value) as Map<String, dynamic>;
+        } catch (e) {
+          return null;
+        }
+      }
+      return null;
+    }
+
+    // 安全解析 mqttTopics
+    Map<String, dynamic>? parseMqttTopics(dynamic value) {
+      if (value == null || value == '') return null;
+      if (value is Map) return value as Map<String, dynamic>;
+      if (value is String && value.isNotEmpty) {
+        try {
+          return jsonDecode(value) as Map<String, dynamic>;
+        } catch (e) {
+          return null;
+        }
+      }
+      return null;
+    }
+
     return Product(
-      productKey: json['productKey'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String?,
-      category: json['category'] as String,
+      productKey: safeString(json['productKey']) ?? '',
+      name: safeString(json['name']) ?? '',
+      description: safeString(json['description']),
+      category: safeString(json['category']) ?? '',
 
       // v0.2.0 新增字段解析
-      controlMode: json['controlMode'] as String?,
-      uiTemplate: json['uiTemplate'] as String?,
-      iconName: json['iconName'] as String?,
-      iconColor: json['iconColor'] as String?,
-      capabilities: json['capabilities'] is String
-          ? jsonDecode(json['capabilities'])
-          : json['capabilities'] as Map<String, dynamic>?,
-      mqttTopics: json['mqttTopics'] is String
-          ? jsonDecode(json['mqttTopics'])
-          : json['mqttTopics'] as Map<String, dynamic>?,
-      manufacturer: json['manufacturer'] as String?,
-      model: json['model'] as String?,
+      controlMode: safeString(json['controlMode']),
+      uiTemplate: safeString(json['uiTemplate']),
+      iconName: safeString(json['iconName']),
+      iconColor: safeString(json['iconColor']),
+      capabilities: parseCapabilities(json['capabilities']),
+      mqttTopics: parseMqttTopics(json['mqttTopics']),
+      manufacturer: safeString(json['manufacturer']),
+      model: safeString(json['model']),
 
       // 原有字段
-      nodeType: json['nodeType'] as String? ?? 'device',
-      dataFormat: json['dataFormat'] as String?,
-      protocol: json['protocol'] as String?,
-      status: json['status'] as int? ?? 1,
-      deviceCount: json['deviceCount'] as int? ?? 0,
+      nodeType: safeString(json['nodeType']) ?? 'device',
+      dataFormat: safeString(json['dataFormat']),
+      protocol: safeString(json['protocol']),
+      status: json['status'] is int ? json['status'] as int : (int.tryParse(json['status']?.toString() ?? '') ?? 1),
+      deviceCount: json['deviceCount'] is int ? json['deviceCount'] as int : (int.tryParse(json['deviceCount']?.toString() ?? '') ?? 0),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,

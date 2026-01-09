@@ -49,15 +49,22 @@ class DeviceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      print('[DeviceProvider] 开始加载设备列表...');
       final response = await IoTSdk.instance.device.getDeviceList();
+      print('[DeviceProvider] 响应: code=${response.code}, message=${response.message}');
+      print('[DeviceProvider] 响应数据: ${response.data}');
 
       if (response.isSuccess && response.data != null) {
         _devices = response.data!.list;
+        print('[DeviceProvider] 成功加载 ${_devices.length} 个设备');
       } else {
         _error = response.message;
+        print('[DeviceProvider] 加载失败: ${response.message}');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       _error = e.toString();
+      print('[DeviceProvider] 异常: $e');
+      print('[DeviceProvider] 堆栈: $stackTrace');
     }
 
     _isLoading = false;

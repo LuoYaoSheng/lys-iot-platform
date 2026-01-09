@@ -1,6 +1,7 @@
 /// 设备数据模型
 /// 作者: 罗耀生
 /// 日期: 2025-12-13
+/// 更新: 2026-01-07 - 兼容服务端字段名 (deviceSN) 和状态字符串类型
 
 class Device {
   final String deviceId;
@@ -30,12 +31,38 @@ class Device {
   });
 
   factory Device.fromJson(Map<String, dynamic> json) {
+    // 兼容服务端返回的字段名（deviceSN）和APP期望的字段名
+    final String deviceSn = json['deviceSn'] ?? json['deviceSN'] ?? '';
+
+    // status 兼容字符串和整数类型
+    // 服务端返回: "online"/"offline"/"inactive"/"disabled"
+    // APP内部使用: 1/2/0/3
+    int status = 0;
+    final statusValue = json['status'];
+    if (statusValue is int) {
+      status = statusValue;
+    } else if (statusValue is String) {
+      switch (statusValue.toLowerCase()) {
+        case 'online':
+          status = 1;
+          break;
+        case 'offline':
+          status = 2;
+          break;
+        case 'disabled':
+          status = 3;
+          break;
+        default:
+          status = 0;
+      }
+    }
+
     return Device(
       deviceId: json['deviceId'] ?? '',
-      deviceSn: json['deviceSn'] ?? '',
+      deviceSn: deviceSn,
       productKey: json['productKey'] ?? '',
       name: json['name'] ?? '',
-      status: json['status'] ?? 0,
+      status: status,
       statusText: json['statusText'] ?? '未知',
       firmwareVersion: json['firmwareVersion'],
       chipModel: json['chipModel'],
