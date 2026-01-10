@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const contentTypeJSON = "application/json; charset=utf-8"
+
 // Response 统一响应结构
 type Response struct {
 	Code    int         `json:"code"`
@@ -19,6 +21,7 @@ type Response struct {
 
 // Success 成功响应
 func Success(c *gin.Context, data interface{}) {
+	c.Header("Content-Type", contentTypeJSON)
 	c.JSON(http.StatusOK, Response{
 		Code:    200,
 		Message: "success",
@@ -28,6 +31,7 @@ func Success(c *gin.Context, data interface{}) {
 
 // Created 创建成功响应 (201)
 func Created(c *gin.Context, data interface{}) {
+	c.Header("Content-Type", contentTypeJSON)
 	c.JSON(http.StatusCreated, Response{
 		Code:    201,
 		Message: "created",
@@ -37,6 +41,7 @@ func Created(c *gin.Context, data interface{}) {
 
 // Error 错误响应
 func Error(c *gin.Context, httpCode int, code int, message string) {
+	c.Header("Content-Type", contentTypeJSON)
 	c.JSON(httpCode, Response{
 		Code:    code,
 		Message: message,
@@ -50,6 +55,7 @@ func SimpleError(c *gin.Context, httpCode int, message string) {
 
 // ErrorWithData 带数据的错误响应
 func ErrorWithData(c *gin.Context, httpCode int, code int, message string, data interface{}) {
+	c.Header("Content-Type", contentTypeJSON)
 	c.JSON(httpCode, Response{
 		Code:    code,
 		Message: message,
