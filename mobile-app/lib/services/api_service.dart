@@ -99,7 +99,7 @@ class ApiService {
       final json = jsonDecode(body);
 
       if (json['code'] == 200 && json['data'] != null) {
-        final devices = (json['data']['devices'] as List)
+        final devices = (json['data']['list'] as List)
             .map((e) => Device.fromJson(e))
             .toList();
         return ApiResponse(code: 200, message: 'success', data: devices);

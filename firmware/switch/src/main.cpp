@@ -132,9 +132,10 @@ void setup() {
   ESP32PWM::allocateTimer(0);
   servo.setPeriodHertz(50);
   servo.attach(SERVO_PIN, 500, 2400);
-  servo.write(SERVO_ANGLE_MIN);
+  servo.write(SERVO_POS_MIDDLE);// 启动时直接到中间位置，避免大幅度旋转
+  currentPosition = "middle";  // 同步软件状态
   delay(500);
-  Serial.printf("[INIT] Servo GPIO%d\n", SERVO_PIN);
+  Serial.printf("[INIT] Servo GPIO%d\n", SERVO_PIN, SERVO_POS_MIDDLE);
   if (!storage.begin()) { Serial.println("[ERR] NVS"); changeState(STATE_ERROR); return; }
   Serial.println("[INIT] NVS ok");
   storage.printConfig();
