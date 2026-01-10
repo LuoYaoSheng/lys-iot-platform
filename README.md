@@ -4,7 +4,10 @@
 
 **作者**: 罗耀生
 **协议**: GPL v3
-**仓库**: https://gitee.com/luoyaosheng/open-iot-platform
+
+**📍 仓库地址**:
+- [Gitee](https://gitee.com/luoyaosheng/open-iot-platform) - 国内访问推荐
+- [GitHub](https://github.com/LuoYaoSheng/open-iot-platform) - 国际访问
 
 ---
 
@@ -200,5 +203,6 @@ GNU General Public License v3.0
 
 ## 联系方式
 
-- Gitee: https://gitee.com/luoyaosheng
-- Issues: https://gitee.com/luoyaosheng/open-iot-platform/issues
+**Issues 反馈**:
+- [Gitee Issues](https://gitee.com/luoyaosheng/open-iot-platform/issues)
+- [GitHub Issues](https://github.com/LuoYaoSheng/open-iot-platform/issues)
