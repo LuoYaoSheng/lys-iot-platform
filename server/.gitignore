@@ -23,8 +23,9 @@ logs/
 
 # 备份文件
 backups/
-*.sql
 *.dump
+*.bak.sql
+# scripts/init.sql 必须保留
 
 # Docker 数据卷
 mysql_data/

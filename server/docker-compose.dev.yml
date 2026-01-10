@@ -1,16 +1,16 @@
 # ========================================
-# IoT Platform - 生产环境 Docker Compose
+# IoT Platform - 开发环境 Docker Compose
 # 作者: 罗耀生
 # 日期: 2026-01-10
-# 说明: 使用远程镜像，适用于生产部署
+# 说明: 本地构建，支持代码热重载，适用于开发调试
 # 代码库: https://gitee.com/luoyaosheng/open-iot-platform
 # ========================================
 #
 # 使用说明:
-# 1. 上传文件: docker-compose.yml + scripts/init.sql
-# 2. 启动服务: docker compose up -d
-# 3. 查看状态: docker compose ps
-# 4. 查看日志: docker compose logs -f [service]
+# 1. 启动服务: docker compose -f docker-compose.dev.yml up -d --build
+# 2. 重新构建: docker compose -f docker-compose.dev.yml up -d --build
+# 3. 查看日志: docker compose -f docker-compose.dev.yml logs -f iot-platform
+# 4. 进入容器: docker exec -it iot-platform-dev sh
 #
 # 访问地址:
 # - API: http://localhost:48080
@@ -18,13 +18,13 @@
 # - MQTT WS: localhost:8083
 # ========================================
 
-name: open-iot-platform
+name: open-iot-platform-dev
 
 services:
   # ==================== MySQL 数据库 ====================
   mysql:
     image: mysql:8.0
-    container_name: iot-platform-mysql
+    container_name: iot-platform-mysql-dev
     environment:
       MYSQL_ROOT_PASSWORD: root123456
       MYSQL_DATABASE: iot_platform
@@ -34,42 +34,47 @@ services:
     ports:
       - "44306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_dev_data:/var/lib/mysql
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
     command: >
       --default-authentication-plugin=mysql_native_password
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
+      --general-log=1
+      --general-log-file=/var/lib/mysql/general.log
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123456"]
       interval: 10s
       timeout: 5s
       retries: 10
     networks:
-      - iot-network
+      - iot-dev-network
     restart: unless-stopped
 
   # ==================== Redis 缓存 ====================
   redis:
     image: redis:7-alpine
-    container_name: iot-platform-redis
+    container_name: iot-platform-redis-dev
+    command: redis-server --appendonly yes
     ports:
       - "47379:6379"
     volumes:
-      - redis_data:/data
+      - redis_dev_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - iot-network
+      - iot-dev-network
     restart: unless-stopped
 
-  # ==================== IoT Platform 服务 ====================
+  # ==================== IoT Platform 服务（本地构建）====================
   iot-platform:
-    image: docker.io/luoyaosheng/open-iot-platform:latest
-    container_name: iot-platform
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iot-platform-dev
     environment:
       # 数据库配置
       DB_HOST: mysql
@@ -90,11 +95,12 @@ services:
       MQTT_PORT: 1883
       MQTT_WS_PORT: 8083
 
-      # JWT 配置（生产环境请修改密钥）
-      JWT_SECRET: iot-platform-secret-key-change-me
+      # JWT 配置
+      JWT_SECRET: dev-secret-key
       JWT_EXPIRE_HOURS: 168
 
-      # 时区
+      # 开发模式
+      GIN_MODE: debug
       TZ: Asia/Shanghai
     ports:
       - "48080:48080"   # API 服务
@@ -111,18 +117,18 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - iot-network
+      - iot-dev-network
     restart: unless-stopped
 
 # ==================== 数据卷 ====================
 volumes:
-  mysql_data:
-    name: iot-platform-mysql-data
-  redis_data:
-    name: iot-platform-redis-data
+  mysql_dev_data:
+    name: iot-platform-mysql-dev-data
+  redis_dev_data:
+    name: iot-platform-redis-dev-data
 
 # ==================== 网络 ====================
 networks:
-  iot-network:
-    name: iot-network
+  iot-dev-network:
+    name: iot-dev-network
     driver: bridge
