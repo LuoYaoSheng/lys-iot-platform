@@ -1,10 +1,12 @@
 // 统一响应格式
 // 作者: 罗耀生
 // 日期: 2025-12-13
+// 更新: 2026-01-10 - 修复中文乱码，确保 UTF-8 编码
 
 package response
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,10 +21,24 @@ type Response struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
+// writeJSON 写入 JSON 响应（确保 UTF-8 编码）
+func writeJSON(c *gin.Context, status int, obj interface{}) {
+	c.Header("Content-Type", contentTypeJSON)
+	c.Status(status)
+
+	// 手动序列化确保 UTF-8
+	jsonBytes, err := json.Marshal(obj)
+	if err != nil {
+		c.Writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	c.Writer.Write(jsonBytes)
+}
+
 // Success 成功响应
 func Success(c *gin.Context, data interface{}) {
-	c.Header("Content-Type", contentTypeJSON)
-	c.JSON(http.StatusOK, Response{
+	writeJSON(c, http.StatusOK, Response{
 		Code:    200,
 		Message: "success",
 		Data:    data,
@@ -31,8 +47,7 @@ func Success(c *gin.Context, data interface{}) {
 
 // Created 创建成功响应 (201)
 func Created(c *gin.Context, data interface{}) {
-	c.Header("Content-Type", contentTypeJSON)
-	c.JSON(http.StatusCreated, Response{
+	writeJSON(c, http.StatusCreated, Response{
 		Code:    201,
 		Message: "created",
 		Data:    data,
@@ -41,8 +56,7 @@ func Created(c *gin.Context, data interface{}) {
 
 // Error 错误响应
 func Error(c *gin.Context, httpCode int, code int, message string) {
-	c.Header("Content-Type", contentTypeJSON)
-	c.JSON(httpCode, Response{
+	writeJSON(c, httpCode, Response{
 		Code:    code,
 		Message: message,
 	})
@@ -55,8 +69,7 @@ func SimpleError(c *gin.Context, httpCode int, message string) {
 
 // ErrorWithData 带数据的错误响应
 func ErrorWithData(c *gin.Context, httpCode int, code int, message string, data interface{}) {
-	c.Header("Content-Type", contentTypeJSON)
-	c.JSON(httpCode, Response{
+	writeJSON(c, httpCode, Response{
 		Code:    code,
 		Message: message,
 		Data:    data,
