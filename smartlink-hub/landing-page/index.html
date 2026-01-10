@@ -796,29 +796,48 @@
             <!-- Deploy Guide -->
             <div id="deploy-guide" class="deploy-guide" style="margin-top: 4rem; padding: 3rem; background: var(--bg-dark); border-radius: 12px; border: 1px solid var(--border-color);">
                 <h3 style="font-size: 2rem; margin-bottom: 1.5rem; color: var(--primary-color);">📦 Docker 一键部署教程</h3>
-                <p style="color: var(--text-light); margin-bottom: 2rem;">适合有服务器的玩家,3 个命令搞定（简化架构，内置 MQTT Broker）</p>
+                <p style="color: var(--text-light); margin-bottom: 2rem;">支持 Windows / macOS / Linux，3 个命令搞定（简化架构，内置 MQTT Broker）</p>
 
                 <div class="deploy-steps">
                     <div class="deploy-step">
                         <div class="deploy-step-number">1</div>
-                        <h4>准备服务器</h4>
-                        <p>需要一台 Linux 服务器,比如:</p>
-                        <ul>
-                            <li>• 阿里云/腾讯云 ECS (最低配 1核2G)</li>
-                            <li>• 家里的 NAS 设备</li>
-                            <li>• 树莓派4 (4G 内存版本)</li>
-                        </ul>
-                        <p style="margin-top: 1rem; color: var(--text-light); font-size: 0.9rem;">
-                            💰 成本参考: 云服务器约 60-100元/月,树莓派4约 400元一次性
-                        </p>
+                        <h4>选择部署环境</h4>
+                        <p>Docker 支持 Windows、macOS 和 Linux，均可部署：</p>
+                        <div style="margin: 1.5rem 0;">
+                            <div style="padding: 1rem; background: var(--bg-card); border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+                                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">🏠 个人电脑 (适合测试体验)</h5>
+                                <p style="color: var(--text-light); font-size: 0.9rem; margin: 0;">
+                                    Windows / macOS / Linux 均可安装 Docker Desktop<br>
+                                    ⚠️ <strong>不适合长期运行</strong>：电脑关机服务就停了
+                                </p>
+                            </div>
+                            <div style="padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid var(--primary-color);">
+                                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">🖥️ 服务器设备 (推荐长期运行)</h5>
+                                <p style="color: var(--text-dark); font-size: 0.9rem; margin: 0;">
+                                    • 阿里云/腾讯云 ECS (最低配 1核2G)<br>
+                                    • 家里的 NAS 设备<br>
+                                    • 树莓派4 (4G 内存版本)<br>
+                                    💰 成本参考: 云服务器约 60-100元/月,树莓派4约 400元一次性
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="deploy-step">
                         <div class="deploy-step-number">2</div>
                         <h4>安装 Docker</h4>
-                        <p>SSH 登录服务器,执行以下命令:</p>
-                        <div class="code-block">
-# 安装 Docker (Ubuntu/Debian)
+                        <p>根据你的系统选择安装方式:</p>
+                        <div style="margin: 1.5rem 0;">
+                            <div style="padding: 1rem; background: var(--bg-card); border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+                                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">🪟 Windows / 🍎 macOS</h5>
+                                <p style="color: var(--text-light); font-size: 0.9rem; margin: 0 0 0.5rem 0;">
+                                    下载 <a href="https://www.docker.com/products/docker-desktop/" target="_blank" style="color: var(--primary-color);">Docker Desktop</a> 安装包，双击安装即可
+                                </p>
+                            </div>
+                            <div style="padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">🐧 Linux 服务器</h5>
+                                <p style="color: var(--text-light); font-size: 0.9rem; margin: 0 0 0.5rem 0;">SSH 登录服务器,执行:</p>
+                                <pre style="background: var(--bg-dark); padding: 0.8rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; color: #a5b4fc;"># 安装 Docker (Ubuntu/Debian)
 curl -fsSL https://get.docker.com | bash
 
 # 启动 Docker
@@ -826,28 +845,28 @@ sudo systemctl start docker
 sudo systemctl enable docker
 
 # 验证安装
-docker --version
+docker --version</pre>
+                            </div>
                         </div>
                     </div>
 
                     <div class="deploy-step">
                         <div class="deploy-step-number">3</div>
-                        <h4>获取服务端代码</h4>
-                        <p>服务端代码为独立项目,需要联系作者获取:</p>
-                        <div style="padding: 2rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; margin: 1rem 0; border: 1px solid var(--border-color);">
-                            <p style="color: var(--text-light); line-height: 1.8; margin-bottom: 1rem;">
-                                📧 <strong style="color: var(--text-dark);">获取方式:</strong><br>
-                                • 提交 Issue 说明部署需求<br>
-                                • 作者会提供服务端部署包<br>
-                                • 包含完整的 Docker Compose 配置<br>
-                                • 支持一键部署(MySQL + 后端服务，内置 MQTT Broker)
-                            </p>
-                            <p style="font-weight: 600;">
-                                <a href="https://gitee.com/luoyaosheng/open-iot-platform/issues" style="color: var(--primary-color); text-decoration: none;">
-                                    👉 点击这里提交部署需求
-                                </a>
-                            </p>
-                        </div>
+                        <h4>克隆代码并启动</h4>
+                        <p>项目完全开源，从 GitHub 或 Gitee 克隆后一键启动:</p>
+                        <pre style="background: var(--bg-dark); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: #a5b4fc; line-height: 1.6;"># 克隆完整项目 (选择其中一个)
+git clone https://gitee.com/luoyaosheng/open-iot-platform.git
+# 或 GitHub
+git clone https://github.com/LuoYaoSheng/open-iot-platform.git
+
+# 进入服务端目录
+cd open-iot-platform/server
+
+# 一键启动 (内置 MySQL + Redis + MQTT Broker)
+docker compose up -d</pre>
+                        <p style="margin-top: 1rem; color: var(--text-light); font-size: 0.9rem;">
+                            💡 首次启动会自动拉取镜像并构建服务，请耐心等待约 2-3 分钟
+                        </p>
                     </div>
 
                     <div class="deploy-step">

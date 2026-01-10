@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"iot-platform-core/internal/model"
@@ -126,11 +127,32 @@ func (s *DeviceService) ActivateWithHost(req *ActivationRequest, mqttHost string
 	now := time.Now()
 	device.ActivatedAt = &now
 
-	// 保存设备
+	// 保存设备（处理并发导致的唯一约束冲突）
 	if existingDevice != nil {
 		err = s.deviceRepo.Update(device)
 	} else {
 		err = s.deviceRepo.Create(device)
+		// 如果遇到唯一约束冲突（MySQL 1062），说明并发创建了相同设备
+		// 重新查询并更新
+		if err != nil && isDuplicateKeyError(err) {
+			log.Printf("[Activate] Duplicate key detected for %s/%s, re-querying...", req.ProductKey, req.DeviceSN)
+			existingDevice, err = s.deviceRepo.FindByDeviceSN(req.ProductKey, req.DeviceSN)
+			if err != nil {
+				return nil, false, err
+			}
+			// 使用已存在的设备
+			device = existingDevice
+			// 更新凭证
+			device.DeviceSecret = s.generateSecret()
+			device.MQTTUsername = fmt.Sprintf("%s&%s", req.ProductKey, device.DeviceID)
+			device.MQTTPassword = s.generateToken()
+			device.MQTTClientID = fmt.Sprintf("%s&%s", req.ProductKey, device.DeviceID)
+			device.FirmwareVersion = req.FirmwareVersion
+			device.ChipModel = req.ChipModel
+			device.Status = model.DeviceStatusOffline
+			device.ActivatedAt = &now
+			err = s.deviceRepo.Update(device)
+		}
 	}
 
 	if err != nil {
@@ -139,6 +161,17 @@ func (s *DeviceService) ActivateWithHost(req *ActivationRequest, mqttHost string
 
 	resp := s.buildActivationResponse(device, mqttHost)
 	return resp, false, nil
+}
+
+// isDuplicateKeyError 检查是否是唯一约束冲突错误
+func isDuplicateKeyError(err error) bool {
+	if err == nil {
+		return false
+	}
+	// MySQL duplicate key error code is 1062
+	return strings.Contains(err.Error(), "Error 1062") ||
+		strings.Contains(err.Error(), "duplicate key") ||
+		strings.Contains(err.Error(), "Duplicate entry")
 }
 
 // buildActivationResponse 构建激活响应

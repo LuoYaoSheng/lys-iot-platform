@@ -49,9 +49,9 @@ func (Product) TableName() string {
 type Device struct {
 	ID              int64        `gorm:"primaryKey" json:"id"`
 	DeviceID        string       `gorm:"uniqueIndex;size:64" json:"deviceId"`
-	DeviceSN        string       `gorm:"index;size:64" json:"deviceSN"`
+	DeviceSN        string       `gorm:"size:64;uniqueIndex:idx_product_device" json:"deviceSN"`
 	DeviceSecret    string       `gorm:"size:128" json:"-"`
-	ProductKey      string       `gorm:"index;size:64" json:"productKey"`
+	ProductKey      string       `gorm:"size:64;uniqueIndex:idx_product_device" json:"productKey"`
 	ProjectID       string       `gorm:"index;size:64" json:"projectId"` // 所属项目
 	Name            string       `gorm:"size:128" json:"name"`
 	Status          DeviceStatus `gorm:"default:0" json:"status"`
