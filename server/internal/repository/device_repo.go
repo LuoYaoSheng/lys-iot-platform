@@ -151,7 +151,6 @@ func (r *DeviceRepository) UpdateDeviceProperty(deviceID, propertyID, value stri
 		FirstOrCreate(property).Error
 }
 
-
 // ProductRepository 产品仓库
 type ProductRepository struct {
 	db *gorm.DB
