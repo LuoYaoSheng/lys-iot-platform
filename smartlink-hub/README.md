@@ -3,7 +3,7 @@
 **让你的 ESP32 和舵机秒变智能设备**
 
 [![License](https://img.shields.io/badge/License-Free_to_Use-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-v0.1.0-blue.svg)](releases/v0.1.0)
+[![Version](https://img.shields.io/badge/Version-v0.2.0-blue.svg)](releases/v0.2.0)
 [![Platform](https://img.shields.io/badge/Platform-ESP32-red.svg)](https://www.espressif.com/en/products/socs/esp32)
 
 ---
@@ -35,16 +35,28 @@
 
 ## 📦 快速下载
 
-### v0.1.0 (2025-12-19)
+### v0.2.0 (2026-01-10) ✨ 最新
 
 | 文件 | 大小 | 说明 | 下载 |
 |------|------|------|------|
-| **Android APP** | 51.4 MB | 用于配网和控制设备 | [下载 APK](releases/v0.1.0/iot-config-app-v0.1.0.apk) |
-| **ESP32 固件** | 1.7 MB | 烧写到 ESP32 开发板 | [下载 BIN](releases/v0.1.0/esp32-firmware-v0.1.0.bin) |
-| **Bootloader** | 18 KB | ESP32 引导程序 | [下载](releases/v0.1.0/bootloader.bin) |
-| **Partitions** | 3 KB | ESP32 分区表 | [下载](releases/v0.1.0/partitions.bin) |
+| **Android APP** | 97 MB | 用于配网和控制设备 | [下载 APK](releases/v0.2.0/iot-config-app-v0.2.0.apk) |
+| **ESP32 舵机固件** | 1.64 MB | ESP32 舵机开关固件 | [下载 BIN](releases/v0.2.0/esp32-servo-firmware-v0.2.0.bin) |
+| **ESP32-S3 唤醒固件** | 1.46 MB | ESP32-S3 USB 唤醒固件 | [下载 BIN](releases/v0.2.0/esp32s3-wakeup-firmware-v0.2.0.bin) |
+| **Bootloader (ESP32)** | 17 KB | ESP32 引导程序 | [下载](releases/v0.2.0/bootloader-esp32.bin) |
+| **Bootloader (ESP32-S3)** | 15 KB | ESP32-S3 引导程序 | [下载](releases/v0.2.0/bootloader-esp32s3.bin) |
+| **Partitions** | 3 KB | 分区表 | [下载 ESP32](releases/v0.2.0/partitions-esp32.bin) [ESP32-S3](releases/v0.2.0/partitions-esp32s3.bin) |
 
-**历史版本**: [查看所有版本](releases/)
+**更新内容**:
+- 🆕 支持 ESP32-S3 USB 唤醒设备
+- 🎨 APP 新增 USB 唤醒专用控制面板
+- 🐛 修复舵机启动大幅度旋转问题
+- 🐛 修复设备列表加载错误
+
+### 历史版本
+
+**v0.1.0** (2025-12-19) - [查看](releases/v0.1.0/)
+
+**更多版本**: [查看所有版本](releases/)
 
 ---
 
@@ -97,12 +109,14 @@ iot-smartlink-hub/
 │   └── preview.bat        # 本地预览工具
 │
 ├── releases/              # 下载资源
-│   └── v0.1.0/           # v0.1.0 版本
-│       ├── iot-config-app-v0.1.0.apk    # Android APP
-│       ├── esp32-firmware-v0.1.0.bin    # ESP32 固件
-│       ├── bootloader.bin               # 引导程序
-│       ├── partitions.bin               # 分区表
-│       └── README.md                    # 版本说明
+│   ├── v0.2.0/           # v0.2.0 版本 (最新)
+│   │   ├── iot-config-app-v0.2.0.apk           # Android APP
+│   │   ├── esp32-servo-firmware-v0.2.0.bin     # ESP32 舵机固件
+│   │   ├── esp32s3-wakeup-firmware-v0.2.0.bin  # ESP32-S3 唤醒固件
+│   │   ├── bootloader-*.bin                    # 引导程序
+│   │   ├── partitions-*.bin                    # 分区表
+│   │   └── README.md                           # 版本说明
+│   └── v0.1.0/           # v0.1.0 版本 (历史)
 │
 ├── README.md              # 本文档
 └── LICENSE                # 许可协议
@@ -176,8 +190,8 @@ https://gitee.com/luoyaosheng/iot-smartlink-hub/issues
 ## 👨‍💻 关于作者
 
 **作者**: 罗耀生
-**更新时间**: 2025-12-19
-**版本**: v0.1.0
+**更新时间**: 2026-01-10
+**版本**: v0.2.0
 
 ---
 
