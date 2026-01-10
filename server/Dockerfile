@@ -5,7 +5,7 @@
 # ========================================
 
 # ==================== 构建阶段 ====================
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # 安装编译依赖
 RUN apk add --no-cache git gcc musl-dev
@@ -16,8 +16,9 @@ WORKDIR /build
 # 复制依赖文件（利用Docker缓存层）
 COPY go.mod go.sum ./
 
-# 设置 GOTOOLCHAIN 为 auto，允许自动下载所需的 Go 版本
+# 设置 Go 代理，使用本地 toolchain
 ENV GOTOOLCHAIN=auto
+ENV GOPROXY=https://goproxy.cn,direct
 
 RUN go mod download
 

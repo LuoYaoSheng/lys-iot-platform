@@ -14,6 +14,7 @@ import (
 	"iot-platform-core/internal/handler"
 	"iot-platform-core/internal/model"
 	"iot-platform-core/internal/mqtt"
+	"iot-platform-core/internal/redis"
 	"iot-platform-core/internal/repository"
 	"iot-platform-core/internal/service"
 
@@ -24,15 +25,15 @@ import (
 )
 
 func main() {
-	log.Println("Starting IoT Platform Core (Embedded MQTT)...")
+	log.Println("Starting IoT Platform Core (Embedded MQTT + Redis)...")
 
 	// 加载配置
 	cfg := config.Load()
-	log.Printf("Config loaded: DB=%s:%s, Server=:%s, MQTT Port=%d",
-		cfg.Database.Host, cfg.Database.Port, cfg.Server.Port, cfg.MQTT.Port)
+	log.Printf("Config loaded: DB=%s:%s, Server=:%s, MQTT Port=%d, Redis=%s:%s",
+		cfg.Database.Host, cfg.Database.Port, cfg.Server.Port, cfg.MQTT.Port, cfg.Redis.Host, cfg.Redis.Port)
 
 	// 连接数据库
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&collation=utf8mb4_unicode_ci",
 		cfg.Database.User,
 		cfg.Database.Password,
 		cfg.Database.Host,
@@ -47,6 +48,10 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	log.Println("Database connected")
+
+	// 设置连接字符集为 utf8mb4
+	sqlDB, _ := db.DB()
+	sqlDB.Exec("SET NAMES utf8mb4")
 
 	// 自动迁移数据库表
 	if err := autoMigrate(db); err != nil {
@@ -86,7 +91,22 @@ func main() {
 	productService := service.NewProductService(productRepo)
 	projectService := service.NewProjectService(projectRepo, deviceRepo)
 
-	// 启动内置 MQTT Broker
+	// 初始化 Redis 客户端
+	redisClient, err := redis.NewClient(&redis.Config{
+		Host: cfg.Redis.Host,
+		Port: cfg.Redis.Port,
+	}, cfg.Redis.DeviceOnlineTTL)
+	if err != nil {
+		log.Printf("[Redis] Failed to connect: %v (continuing without Redis)", err)
+		redisClient = nil
+	}
+	defer func() {
+		if redisClient != nil {
+			redisClient.Close()
+		}
+	}()
+
+// 启动内置 MQTT Broker
 	mqttBroker := mqtt.NewBroker(func(clientID, username, password string) bool {
 		// 平台内部客户端直接放行
 		if clientID == "iot-platform-core" {
@@ -97,6 +117,11 @@ func main() {
 		return err == nil
 	})
 
+	// 设置 Redis 客户端到 Broker
+	if redisClient != nil {
+		mqttBroker.SetRedisClient(redisClient)
+	}
+
 	// 设置设备状态更新回调（当设备连接/断开时更新数据库）
 	mqttBroker.SetStatusUpdate(func(deviceID string, online bool) {
 		if err := deviceService.UpdateDeviceOnline(deviceID, online); err != nil {
@@ -105,23 +130,13 @@ func main() {
 			log.Printf("[MQTT] Device status updated: %s -> %v", deviceID, map[bool]string{true: "online", false: "offline"}[online])
 		}
 	})
-
-	// 设置最后在线时间更新回调
-	mqttBroker.SetLastOnlineUpdate(func(deviceID string) {
-		if err := deviceService.UpdateLastOnline(deviceID); err != nil {
-			log.Printf("[MQTT] Failed to update last online: %s, %v", deviceID, err)
-		}
-	})
-
 	// 启动定时检查离线设备的任务（每30秒检查一次）
+	// 使用 Redis 实时状态对比数据库状态，找出真正离线的设备
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
-			// 检查超过2分钟未活动的设备
-			if _, err := deviceService.CheckOfflineDevices(2 * time.Minute); err != nil {
-				log.Printf("[Device] Failed to check offline devices: %v", err)
-			}
+			checkOfflineDevices(deviceRepo, redisClient)
 		}
 	}()
 
@@ -278,7 +293,19 @@ func initDefaultData(db *gorm.DB) error {
 			Model:        "ESP32-Servo-Switch-v1",
 			Status:       1,
 		},
-	}
+		{
+			ProductKey:   "USB-WAKEUP-S3",
+			Name:         "USB Wakeup Device",
+			Description:  "ESP32-S3 USB HID Wakeup Device with BLE provisioning",
+			ControlMode:  "trigger",
+			UITemplate:   "wakeup",
+			IconName:     "keyboard",
+			IconColor:    "#6C63FF",
+			Manufacturer: "SmartLink",
+			Model:        "ESP32-S3-N16R8",
+			Status:       1,
+		},
+}
 
 	for _, defaultProduct := range defaultProducts {
 		var existingProduct model.Product
@@ -333,4 +360,39 @@ func initDefaultData(db *gorm.DB) error {
 
 	log.Println("Default products check completed")
 	return nil
+}
+
+// checkOfflineDevices 检查离线设备
+// 逻辑: 查询数据库中状态为在线的设备，对比 Redis 中的实际在线状态
+// 如果 Redis 中不存在该设备（TTL 过期），则标记为离线
+func checkOfflineDevices(deviceRepo *repository.DeviceRepository, redisClient *redis.Client) {
+	// 如果 Redis 未启用，不执行检查
+	if redisClient == nil {
+		return
+	}
+
+	// 获取数据库中所有在线设备
+	onlineDevices, err := deviceRepo.FindByStatus(model.DeviceStatusOnline)
+	if err != nil {
+		log.Printf("[Device] Failed to query online devices: %v", err)
+		return
+	}
+
+	// 检查每个在线设备在 Redis 中的状态
+	offlineCount := 0
+	for _, device := range onlineDevices {
+		// 如果 Redis 中不存在该设备（TTL 过期或从未连接），说明已离线
+		if !redisClient.IsDeviceOnline(device.DeviceID) {
+			if err := deviceRepo.UpdateStatus(device.DeviceID, model.DeviceStatusOffline); err != nil {
+				log.Printf("[Device] Failed to mark offline: %s, %v", device.DeviceID, err)
+			} else {
+				log.Printf("[Device] Device %s marked offline (not in Redis)", device.DeviceID)
+				offlineCount++
+			}
+		}
+	}
+
+	if offlineCount > 0 {
+		log.Printf("[Device] Marked %d device(s) offline", offlineCount)
+	}
 }

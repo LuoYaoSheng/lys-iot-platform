@@ -1,6 +1,7 @@
 // MQTT事件Hook
 // 作者: 罗耀生
 // 日期: 2026-01-06
+// 更新: 2026-01-06 - 添加OnPublished监听设备消息，刷新Redis TTL
 
 package mqtt
 
@@ -29,6 +30,7 @@ func (h *EventHook) Provides(b byte) bool {
 		mqtt.OnConnectAuthenticate,
 		mqtt.OnSessionEstablished,
 		mqtt.OnDisconnect,
+		mqtt.OnPublished, // 监听发布消息，用于刷新Redis TTL
 	}, []byte{b})
 }
 
@@ -61,4 +63,11 @@ func (h *EventHook) OnSessionEstablished(cl *mqtt.Client, pk packets.Packet) {
 func (h *EventHook) OnDisconnect(cl *mqtt.Client, err error, expire bool) {
 	h.broker.setOnline(cl.ID, false)
 	log.Printf("[MQTT] Client disconnected: %s", cl.ID)
+}
+
+// OnPublished 消息发布 - 刷新Redis TTL
+// 当设备发布消息（如状态上报）时，刷新Redis TTL，防止长时间连接被误判为离线
+func (h *EventHook) OnPublished(cl *mqtt.Client, pk packets.Packet) {
+	// 刷新设备在线状态（Redis TTL）
+	h.broker.refreshOnline(cl.ID)
 }

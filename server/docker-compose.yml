@@ -1,15 +1,16 @@
 # ========================================
-# IoT Platform Core - Docker Compose (简化版)
+# IoT Platform Core - Docker Compose
 # 作者: 罗耀生
 # 日期: 2026-01-06
-# 说明: 内置MQTT Broker，无需外部EMQX
+# 说明: 内置MQTT Broker，包含 MySQL + Redis
 # ========================================
 #
 # 使用说明:
 # 1. 确保Docker已安装并启动
-# 2. 修改 .env 文件中的配置
-# 3. 启动所有服务: docker compose up -d
-# 4. 查看服务状态: docker compose ps
+# 2. 启动所有服务: docker compose up -d
+# 3. 查看服务状态: docker compose ps
+# 4. 查看日志: docker compose logs -f [service_name]
+# 5. 停止所有服务: docker compose down
 #
 # 访问地址:
 # - API服务: http://localhost:48080
@@ -17,26 +18,27 @@
 # - MQTT WebSocket: localhost:8083
 # ========================================
 
-name: iot-lite
+name: open-iot-platform
 
 services:
   # MySQL 数据库
   mysql:
     image: mysql:8.0
-    container_name: iot-platform_mysql
+    container_name: iot-platform-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root123456
       MYSQL_DATABASE: iot_platform
       MYSQL_USER: iot_user
       MYSQL_PASSWORD: iot123456
+      TZ: Asia/Shanghai
     ports:
       - "44306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --init-connect="SET NAMES utf8mb4"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123456"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,28 +46,55 @@ services:
       - iot-network
     restart: unless-stopped
 
-  # IoT Platform Core (内置MQTT Broker)
+  # Redis 缓存（设备在线状态管理）
+  redis:
+    image: redis:7-alpine
+    container_name: iot-platform-redis
+    ports:
+      - "47379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # IoT Platform Core（内置 MQTT Broker）
   iot-platform-core:
     build: .
-    container_name: iot-platform_core
+    container_name: iot-platform-core
     environment:
+      # MySQL 配置
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: iot_user
       DB_PASSWORD: iot123456
       DB_NAME: iot_platform
+      # Redis 配置
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DEVICE_TTL: 120
+      # Server 配置
       SERVER_PORT: 48080
+      # MQTT 配置（内置 Broker）
       MQTT_PORT: 1883
       MQTT_WS_PORT: 8083
-      MQTT_BROKER_EXTERNAL: ${MQTT_BROKER_EXTERNAL:-localhost}
-      JWT_SECRET: ${JWT_SECRET:-iot-platform-secret-key}
+      # JWT 配置
+      JWT_SECRET: iot-platform-secret-key
+      JWT_EXPIRE_HOURS: 24
       TZ: Asia/Shanghai
     ports:
-      - "48080:48080"   # API服务
+      - "48080:48080"   # API 服务
       - "1883:1883"     # MQTT TCP
       - "8083:8083"     # MQTT WebSocket
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:48080/health"]
@@ -76,9 +105,15 @@ services:
       - iot-network
     restart: unless-stopped
 
+# ==================== 数据卷 ====================
 volumes:
   mysql_data:
+    name: iot-platform-mysql-data
+  redis_data:
+    name: iot-platform-redis-data
 
+# ==================== 网络 ====================
 networks:
   iot-network:
+    name: iot-network
     driver: bridge

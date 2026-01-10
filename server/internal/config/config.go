@@ -1,7 +1,7 @@
 // 配置模块
 // 作者: 罗耀生
 // 日期: 2025-12-13
-// 更新: 2026-01-06 - 简化配置，移除EMQX依赖
+// 更新: 2026-01-06 - 简化配置，移除EMQX依赖，添加Redis支持
 
 package config
 
@@ -17,6 +17,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	MQTT     MQTTConfig
+	Redis    RedisConfig
 	JWT      JWTConfig
 }
 
@@ -40,6 +41,14 @@ type DatabaseConfig struct {
 type MQTTConfig struct {
 	Port   int // TCP端口
 	WSPort int // WebSocket端口
+}
+
+type RedisConfig struct {
+	Host            string
+	Port            string
+	Password        string
+	DB              int
+	DeviceOnlineTTL int // 设备在线状态TTL（秒），默认120
 }
 
 // Load 加载配置
@@ -76,6 +85,13 @@ func Load() *Config {
 		MQTT: MQTTConfig{
 			Port:   getEnvInt("MQTT_PORT", 1883),
 			WSPort: getEnvInt("MQTT_WS_PORT", 8083),
+		},
+		Redis: RedisConfig{
+			Host:            getEnv("REDIS_HOST", "localhost"),
+			Port:            getEnv("REDIS_PORT", "47379"),
+			Password:        getEnv("REDIS_PASSWORD", ""),
+			DB:              getEnvInt("REDIS_DB", 0),
+			DeviceOnlineTTL:  getEnvInt("REDIS_DEVICE_TTL", 120),
 		},
 		JWT: JWTConfig{
 			Secret:      jwtSecret,
