@@ -30,14 +30,14 @@
 
 ```
 open-iot-platform/
-├── server/              # 后端服务 (Go + Gin + MySQL + Redis + EMQX)
+├── server/              # 后端服务 (Go + Gin + MySQL + Redis + 内置MQTT)
 ├── mobile-app/          # 移动端配网 APP (Flutter)
 ├── iot-libs-common/     # 公共库 (Flutter SDK + 嵌入式库)
 ├── smartlink-hub/       # SmartLink 配网服务
 ├── firmware/            # 硬件固件
 │   ├── switch/         # ESP32 智能开关固件
 │   └── usb-wakeup/     # ESP32-S3 USB 键盘唤醒固件
-└── docker/             # Docker 部署配置
+└── docs/               # 文档
 ```
 
 ---
@@ -56,8 +56,9 @@ docker compose up -d
 
 | 服务 | 地址 | 说明 |
 |------|------|------|
-| Core API | http://localhost:48080 | 设备引擎 API |
-| EMQX Dashboard | http://localhost:49084 | MQTT 管理 (admin/public) |
+| Core API | http://localhost:48080 | 核心 API |
+| MQTT TCP | localhost:1883 | MQTT 服务 |
+| MQTT WebSocket | localhost:8083 | MQTT WebSocket |
 | MySQL | localhost:44306 | 数据库 (root/root123456) |
 | Redis | localhost:47379 | 缓存服务 |
 
@@ -148,7 +149,7 @@ pio run --target upload
 | 后端 | Go + Gin + GORM |
 | 数据库 | MySQL |
 | 缓存 | Redis |
-| MQTT | EMQX |
+| MQTT | 内置 Broker (mochi-mqtt) |
 | 移动端 | Flutter + Dart |
 | 固件 | ESP32/ESP32-S3 (PlatformIO + Arduino) |
 | 部署 | Docker + Docker Compose |
