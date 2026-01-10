@@ -114,8 +114,8 @@ INSERT INTO products (
 ) VALUES
 (
     'SW-SERVO-001',
-    '智能舵机开关',
-    'ESP32智能舵机开关，支持BLE配网和MQTT控制',
+    'Smart Servo Switch',
+    'ESP32 smart servo switch with BLE provisioning and MQTT control',
     'switch',
     'toggle',
     'servo_switch',
