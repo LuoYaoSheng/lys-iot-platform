@@ -1,42 +1,27 @@
-# Open IoT Platform - 发布指南
+# 发布流程指南
 
 **作者**: 罗耀生
-**日期**: 2026-01-10
-**版本**: v1.0
+**最后更新**: 2026-01-10
 
 ---
 
-## 📦 Release 包含内容
+## 📋 发布检查清单
 
-### 1. 固件文件
-
-| 文件 | 说明 | 芯片 |
-|------|------|------|
-| esp32-servo-firmware-{version}.bin | ESP32 舵机开关固件 | ESP32-WROOM-32E |
-| bootloader-esp32.bin | ESP32 引导程序 | ESP32 |
-| partitions-esp32.bin | ESP32 分区表 | ESP32 |
-| esp32s3-wakeup-firmware-{version}.bin | ESP32-S3 USB 唤醒固件 | ESP32-S3-N16R8 |
-| bootloader-esp32s3.bin | ESP32-S3 引导程序 | ESP32-S3 |
-| partitions-esp32s3.bin | ESP32-S3 分区表 | ESP32-S3 |
-
-### 2. 移动端 APP
-
-| 文件 | 说明 |
-|------|------|
-| iot-config-app-{version}.apk | Android 配网控制 APP |
-
-### 3. 服务端部署文件
-
-| 文件 | 说明 |
-|------|------|
-| docker-compose.yml | Docker Compose 配置 |
-| init.sql | 数据库初始化脚本 |
+- [ ] 代码已提交并推送到 master 分支
+- [ ] 版本号已更新
+- [ ] 固件已构建
+- [ ] APK 已构建
+- [ ] 压缩包已打包
+- [ ] Release Notes 已更新
+- [ ] Git Tag 已创建
+- [ ] GitHub Release 已发布
+- [ ] Gitee Release 已发布
 
 ---
 
-## 🚀 打包步骤
+## 🔨 发布步骤
 
-### 1. 编译固件
+### 1. 构建固件
 
 ```bash
 # ESP32 舵机开关
@@ -44,65 +29,140 @@ cd firmware/switch
 pio run
 
 # ESP32-S3 USB 唤醒
-cd ../usb-wakeup
+cd firmware/usb-wakeup
 pio run
 ```
 
-### 2. 编译 APP
+**输出文件位置**:
+```
+firmware/switch/.pio/build/esp32dev/firmware.bin
+firmware/usb-wakeup/.pio/build/esp32-s3-devkitc-1/firmware.bin
+```
+
+### 2. 构建 APK
 
 ```bash
 cd mobile-app
 flutter build apk --release
 ```
 
-### 3. 运行打包脚本
-
-```bash
-cd /path/to/open-iot-platform
-./release.sh v0.3.0
+**输出文件位置**:
+```
+mobile-app/build/app/outputs/flutter-apk/app-release.apk
 ```
 
-脚本会自动：
-- 收集固件文件到 `releases/v0.3.0/firmware/`
-- 收集 APK 文件到 `releases/v0.3.0/`
-- 收集服务端文件到 `releases/v0.3.0/server/`
-- 生成 SHA256 校验和
-- 生成发布说明 README
+> **注意**: 需要签名配置文件 `mobile-app/android/key.properties` 和 keystore 文件
+
+### 3. 执行打包脚本
+
+```bash
+./release.sh v0.x.x
+```
+
+或使用 Python 脚本（推荐 Windows 环境）:
+
+```bash
+python release.py v0.x.x
+```
+
+**输出文件位置**:
+```
+smartlink-hub/releases/open-iot-platform-v0.x.x.zip
+```
+
+### 4. 创建 Git Tag
+
+```bash
+git tag -a v0.x.x -m "Release v0.x.x"
+git push origin v0.x.x
+git push gitee v0.x.x
+```
+
+### 5. 发布 GitHub Release
+
+1. 访问: https://github.com/LuoYaoSheng/open-iot-platform/releases/new
+2. 选择 tag: `v0.x.x`
+3. 标题: `Open IoT Platform v0.x.x`
+4. 复制 `docs/RELEASE_NOTES.md` 内容到描述
+5. 上传 `open-iot-platform-v0.x.x.zip`
+6. 点击 "Publish release"
+
+### 6. 发布 Gitee Release
+
+1. 访问: https://gitee.com/luoyaosheng/open-iot-platform/releases/new
+2. 选择 tag: `v0.x.x`
+3. 标题: `Open IoT Platform v0.x.x`
+4. 复制 release notes
+5. 上传 `open-iot-platform-v0.x.x.zip`
+6. 点击 "发布"
 
 ---
 
-## 📤 发布到 GitHub/Gitee
+## 📦 压缩包结构
 
-### 方式一：通过网页上传
-
-1. 访问 [GitHub Releases](https://github.com/LuoYaoSheng/open-iot-platform/releases)
-2. 点击 "Draft a new release"
-3. 填写标签版本 (如 `v0.3.0`)
-4. 上传 `releases/v0.3.0/` 目录下的所有文件
-5. 发布
-
-### 方式二：使用 gh 命令行工具
-
-```bash
-# 安装 gh cli 后
-gh release create v0.3.0 releases/v0.3.0/* \
-  --title "v0.3.0" \
-  --notes "Release notes here"
+```
+open-iot-platform-v0.x.x.zip
+├── firmware/
+│   ├── esp32-servo-firmware.bin       # ESP32 舵机固件
+│   ├── bootloader-esp32.bin            # ESP32 Bootloader
+│   ├── partitions-esp32.bin            # ESP32 分区表
+│   ├── esp32s3-wakeup-firmware.bin     # ESP32-S3 唤醒固件
+│   ├── bootloader-esp32s3.bin          # ESP32-S3 Bootloader
+│   └── partitions-esp32s3.bin          # ESP32-S3 分区表
+├── server/
+│   ├── docker-compose.yml              # Docker Compose 配置
+│   └── scripts/
+│       └── init.sql                    # 数据库初始化脚本
+├── iot-config-app.apk                  # Android 配网 APP
+└── README.txt                          # 快速开始说明
 ```
 
 ---
 
-## 📋 Release 检查清单
+## 🔐 签名证书备份
 
-发布前确认：
+签名证书已备份至 `backup/android-certificates.zip`，包含:
 
-- [ ] 固件已更新版本号
-- [ ] APP 版本号已更新
-- [ ] 固件编译成功
-- [ ] APP 编译成功
-- [ ] SHA256 校验和已生成
-- [ ] README 说明已更新
-- [ ] 测试所有功能正常
+- `key.properties` - 签名配置
+- `iot-app-release.jks` - Keystore 文件
+
+⚠️ **此文件不得提交到 Git 仓库**
+
+---
+
+## 📝 更新 Release Notes
+
+发布前编辑 `docs/RELEASE_NOTES.md`:
+
+1. 更新版本号和发布日期
+2. 在 `v0.x.x 更新内容` 部分添加:
+   - 新增功能
+   - 优化改进
+   - 问题修复
+3. 更新版本历史
+
+---
+
+## 🚨 常见问题
+
+### Q: APK 打包失败
+**A**: 检查 `mobile-app/android/key.properties` 是否存在
+
+### Q: 固件路径错误
+**A**: 检查 `release.py` 中的固件路径是否与 PlatformIO 输出一致
+
+### Q: init.sql 位置错误
+**A**: 确保放在 `server/scripts/` 目录，与 docker-compose.yml 中的 volume 路径一致
+
+---
+
+## 📌 版本号规则
+
+- 格式: `v主版本.次版本.修订号`
+- 示例: `v0.3.0`
+- 主版本: 架构重大变更
+- 次版本: 新功能
+- 修订号: Bug 修复
 
 ---
 

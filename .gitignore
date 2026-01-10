@@ -7,6 +7,11 @@ releases/
 smartlink-hub/releases/
 
 # ========================================
+# 内容规划（个人创作笔记，不提交到仓库）
+# ========================================
+docs/内容规划/
+
+# ========================================
 # 编译产物
 # ========================================
 *.exe
@@ -91,3 +96,8 @@ Thumbs.db
 .pub-cache/
 .pub/
 build/
+
+# Android Certificates (NEVER COMMIT)
+backup/android-certificates/
+mobile-app/android/key.properties
+mobile-app/android/keystore/*.jks
