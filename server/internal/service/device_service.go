@@ -467,15 +467,20 @@ func (s *DeviceService) BuildControlMessage(deviceID string, req *ControlRequest
 
 	// 新协议：支持 action 参数
 	if req.Action != nil {
-		params["action"] = *req.Action
+		// trigger 操作转换为 wakeup 命令（USB唤醒设备）
+		if *req.Action == "trigger" {
+			params["wakeup"] = true
+		} else {
+			params["action"] = *req.Action
 
-		if *req.Action == "toggle" && req.Position != nil {
-			params["position"] = *req.Position
-		} else if *req.Action == "pulse" {
-			if req.Duration != nil {
-				params["duration"] = *req.Duration
-			} else {
-				params["duration"] = 500
+			if *req.Action == "toggle" && req.Position != nil {
+				params["position"] = *req.Position
+			} else if *req.Action == "pulse" {
+				if req.Duration != nil {
+					params["duration"] = *req.Duration
+				} else {
+					params["duration"] = 500
+				}
 			}
 		}
 	} else {

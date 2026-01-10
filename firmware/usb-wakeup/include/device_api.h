@@ -2,14 +2,15 @@
  * 设备激活 API 模块
  * 作者: 罗耀生
  * 日期: 2025-12-26
+ * 更新: 2026-01-07 - 统一 HTTP 客户端实现与 switch 固件
  */
 
 #ifndef DEVICE_API_H
 #define DEVICE_API_H
 
 #include <HTTPClient.h>
-#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
+#include <WiFi.h>
 #include "config.h"
 
 // 激活结果结构
@@ -62,25 +63,16 @@ public:
     ActivationResult result;
     result.success = false;
 
+    String deviceSN = getDeviceSN();
     DEBUG_PRINT("[API] Activating device: ");
     DEBUG_PRINTLN(deviceSN);
 
-    HTTPClient http;
-    WiFiClient client;
-
+    // 构建请求 URL
     String url = baseUrl + String(API_ACTIVATE_PATH);
     DEBUG_PRINT("[API] URL: ");
     DEBUG_PRINTLN(url);
 
-    if (!http.begin(client, url)) {
-      result.errorMessage = "Failed to connect";
-      return result;
-    }
-
-    http.addHeader("Content-Type", "application/json");
-    http.setTimeout(API_TIMEOUT);
-
-    // 请求体
+    // 构建请求体
     StaticJsonDocument<256> reqDoc;
     reqDoc["productKey"] = PRODUCT_KEY;
     reqDoc["deviceSN"] = deviceSN;
@@ -89,16 +81,22 @@ public:
 
     String reqBody;
     serializeJson(reqDoc, reqBody);
-
     DEBUG_PRINT("[API] Request: ");
     DEBUG_PRINTLN(reqBody);
+
+    // 发送 HTTP 请求
+    HTTPClient http;
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+    http.setTimeout(API_TIMEOUT);
 
     int httpCode = http.POST(reqBody);
     DEBUG_PRINT("[API] Response code: ");
     DEBUG_PRINTLN(httpCode);
 
-    if (httpCode != 200) {
-      result.errorMessage = "HTTP " + String(httpCode);
+    if (httpCode <= 0) {
+      result.errorMessage = "HTTP request failed: " + http.errorToString(httpCode);
+      DEBUG_PRINTLN(result.errorMessage);
       http.end();
       return result;
     }
@@ -106,7 +104,6 @@ public:
     String respBody = http.getString();
     DEBUG_PRINT("[API] Response: ");
     DEBUG_PRINTLN(respBody);
-
     http.end();
 
     // 解析响应
@@ -114,28 +111,53 @@ public:
     DeserializationError error = deserializeJson(respDoc, respBody);
 
     if (error) {
-      result.errorMessage = "JSON parse error";
+      result.errorMessage = "JSON parse error: " + String(error.c_str());
+      DEBUG_PRINTLN(result.errorMessage);
       return result;
     }
 
-    int code = respDoc["code"];
-    if (code != 200) {
+    int code = respDoc["code"] | 0;
+
+    // 处理错误响应
+    if (code != 200 && code != 409) {
       result.errorMessage = respDoc["message"] | "Unknown error";
+      DEBUG_PRINT("[API] Error = ");
+      DEBUG_PRINTLN(result.errorMessage);
       return result;
     }
 
+    // 解析成功响应
     JsonObject data = respDoc["data"];
+
+    result.deviceId = data["deviceId"] | "";
+    result.deviceSecret = data["deviceSecret"] | "";
+
+    // 解析 MQTT 配置（嵌套在 mqtt 对象中）
+    JsonObject mqtt = data["mqtt"];
+    String serverStr = mqtt["server"] | "";
+    result.mqttServer = serverStr;
+    result.mqttPort = mqtt["port"] | 1883;
+    result.mqttUsername = mqtt["username"] | "";
+    result.mqttPassword = mqtt["password"] | "";
+    result.mqttClientId = mqtt["clientId"] | "";
+
+    // 解析 topics 配置（嵌套在 topics 对象中）
+    JsonObject topics = data["topics"];
+    result.topicPropertyPost = topics["propertyPost"] | "";
+    result.topicPropertySet = topics["propertySet"] | "";
+    result.topicStatus = topics["status"] | "";
+
+    // 验证必要字段
+    if (result.deviceId.length() == 0 || result.mqttServer.length() == 0) {
+      result.errorMessage = "Missing required fields in response";
+      DEBUG_PRINTLN(result.errorMessage);
+      return result;
+    }
+
     result.success = true;
-    result.deviceId = data["deviceId"].as<String>();
-    result.deviceSecret = data["deviceSecret"].as<String>();
-    result.mqttServer = data["mqttServer"].as<String>();
-    result.mqttPort = data["mqttPort"] | 1883;
-    result.mqttUsername = data["mqttUsername"].as<String>();
-    result.mqttPassword = data["mqttPassword"].as<String>();
-    result.mqttClientId = data["mqttClientId"].as<String>();
-    result.topicPropertyPost = data["topicPropertyPost"].as<String>();
-    result.topicPropertySet = data["topicPropertySet"].as<String>();
-    result.topicStatus = data["topicStatus"].as<String>();
+    DEBUG_PRINTLN("[API] Activation successful!");
+    DEBUG_PRINT("[API] MQTT Server = ");
+    DEBUG_PRINTLN(result.mqttServer);
 
     return result;
   }

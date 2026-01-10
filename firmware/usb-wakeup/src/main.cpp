@@ -55,7 +55,6 @@ PubSubClient mqttClient(wifiClient);
 DeviceState currentState = STATE_BOOT;
 unsigned long lastReportTime = 0, stateEnterTime = 0, buttonPressTime = 0;
 bool resetTriggered = false;
-bool usbReady = false;
 
 // MQTT
 String mqttServer, mqttUsername, mqttPassword, mqttClientId;
@@ -69,44 +68,13 @@ unsigned long ledTime = 0;
 int ledStep = 0;
 bool ledState = false;
 
-// ========== USB HID 键盘 (ESP32-S3 原生支持) ==========
-
-// USB 事件回调
-static void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-  if (event_base == ARDUINO_USB_EVENTS) {
-    switch (event_id) {
-      case ARDUINO_USB_STARTED_EVENT:
-        DEBUG_PRINTLN("[USB] Started");
-        usbReady = true;
-        break;
-      case ARDUINO_USB_STOPPED_EVENT:
-        DEBUG_PRINTLN("[USB] Stopped");
-        usbReady = false;
-        break;
-      case ARDUINO_USB_SUSPEND_EVENT:
-        DEBUG_PRINTLN("[USB] Suspended");
-        break;
-      case ARDUINO_USB_RESUME_EVENT:
-        DEBUG_PRINTLN("[USB] Resumed");
-        break;
-      default:
-        break;
-    }
-  }
-}
+// ========== USB HID 键盘 ==========
 
 // 发送 USB HID 唤醒信号
 void sendUSBWakeup() {
-  if (!usbReady) {
-    DEBUG_PRINTLN("[USB] Not ready, skipping wakeup");
-    return;
-  }
-
-  // 发送空格键唤醒电脑
-  DEBUG_PRINTLN("[USB] Sending SPACE key to wake up...");
-  Keyboard.press(' ');
-  delay(50);
-  Keyboard.release(' ');
+  // 发送 F13 功能键唤醒电脑（不影响正常使用）
+  DEBUG_PRINTLN("[USB] Sending wakeup key...");
+  Keyboard.write(KEY_F13);
   DEBUG_PRINTLN("[USB] Wakeup key sent!");
 }
 
@@ -261,11 +229,17 @@ void setup() {
   pinMode(CONFIG_BUTTON, INPUT_PULLUP);
   digitalWrite(WAKEUP_LED_PIN, HIGH);
 
-  // 初始化 USB HID 和 USB CDC
-  USB.onEvent(usbEventCallback);
+  // 初始化 USB HID
+  USB.onEvent([](void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
+    if (event_base == ARDUINO_USB_EVENTS) {
+      if (event_id == ARDUINO_USB_STARTED_EVENT) {
+        Serial.println("[USB] HID started");
+      }
+    }
+  });
   Keyboard.begin();
   USB.begin();
-  Serial.println("[INIT] USB CDC+HID ready");
+  Serial.println("[INIT] USB HID ready");
 
   // 初始化存储
   if (!storage.begin()) {
@@ -404,10 +378,11 @@ void handleStateActivating() {
   bleConfig.notifyActivated(r.deviceId);
   delay(1000);
 
-  // 停止 BLE，释放资源，准备切换到 USB HID 模式
-  Serial.println("[USB] Stopping BLE, switching to USB HID mode...");
+  // 停止 BLE，释放资源
+  Serial.println("[USB] Stopping BLE...");
   bleConfig.stop();
-  Serial.println("[USB] USB HID ready for wakeup commands");
+  delay(1000);
+  Serial.println("[USB] BLE stopped, HID ready");
 
   changeState(STATE_MQTT_CONNECTING);
 }
@@ -432,6 +407,7 @@ void handleStateMQTTConnecting() {
     Serial.println("[MQTT] OK");
     mqttClient.subscribe(topicPropertySet.c_str());
     mqttClient.publish(topicStatus.c_str(), "{\"status\":\"online\"}");
+
     conn = false;
     retry = 1000;
     changeState(STATE_RUNNING);
@@ -444,11 +420,13 @@ void handleStateMQTTConnecting() {
 
 void handleStateRunning() {
   static unsigned long hb = 0;
+
   if (WiFi.status() != WL_CONNECTED) { changeState(STATE_WIFI_CONNECTING); return; }
   if (!mqttClient.connected()) { changeState(STATE_MQTT_CONNECTING); return; }
   mqttClient.loop();
+
   if (millis() - lastReportTime > STATUS_REPORT_INTERVAL) { reportStatus(); lastReportTime = millis(); }
-  if (millis() - hb > 60000) { Serial.printf("[RUN] RSSI=%d up=%lus USB=%s\n", WiFi.RSSI(), millis()/1000, usbReady ? "READY" : "WAIT"); hb = millis(); }
+  if (millis() - hb > 60000) { Serial.printf("[RUN] RSSI=%d up=%lus\n", WiFi.RSSI(), millis()/1000); hb = millis(); }
 
   // LED 慢闪表示正常运行
   if (millis() - ledTime > 1000) {
@@ -532,9 +510,8 @@ void reportStatus() {
   p["wifi_rssi"] = WiFi.RSSI();
   p["uptime"] = millis()/1000;
   p["status"] = "online";
-  p["usb_hid"] = usbReady ? "ready" : "init";
   char buf[256];
   serializeJson(doc, buf);
   mqttClient.publish(topicPropertyPost.c_str(), buf);
-  Serial.printf("[REPORT] RSSI=%d USB=%s\n", WiFi.RSSI(), usbReady ? "READY" : "WAIT");
+  Serial.printf("[REPORT] RSSI=%d\n", WiFi.RSSI());
 }

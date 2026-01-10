@@ -345,6 +345,7 @@ class _DeviceCard extends StatelessWidget {
       case 'lightbulb': return Icons.lightbulb;
       case 'curtains': return Icons.curtains;
       case 'bolt': return Icons.bolt;
+      case 'keyboard': return Icons.keyboard;
       default: return Icons.device_unknown;
     }
   }
@@ -432,7 +433,8 @@ class _DeviceCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (device.status == DeviceStatus.online) ...[
+                  // 仅舵机设备显示位置
+                  if (device.status == DeviceStatus.online && device.product?.uiTemplate == 'servo') ...[
                     const SizedBox(height: 4),
                     Text(
                       _positionText,

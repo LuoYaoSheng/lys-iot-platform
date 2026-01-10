@@ -11,6 +11,7 @@ import 'switch_toggle_panel.dart';
 import 'switch_pulse_panel.dart';
 import 'switch_servo_panel.dart';
 import 'sensor_display_panel.dart';
+import 'usb_wakeup_panel.dart';
 import 'generic_panel.dart';
 
 /// 控制面板工厂
@@ -41,6 +42,10 @@ class ControlPanelFactory {
             return GenericPanel(device: device, apiService: apiService);
         }
 
+      case 'wakeup':
+        // USB唤醒设备
+        return UsbWakeupPanel(device: device, apiService: apiService);
+
       default:
         // 降级到根据controlMode选择
         break;
@@ -53,6 +58,10 @@ class ControlPanelFactory {
 
       case 'pulse':
         return SwitchPulsePanel(device: device, apiService: apiService);
+
+      case 'trigger':
+        // USB唤醒设备（fallback）
+        return UsbWakeupPanel(device: device, apiService: apiService);
 
       case 'readonly':
         return SensorDisplayPanel(device: device, apiService: apiService);
@@ -105,6 +114,8 @@ class ControlPanelFactory {
         return Icons.curtains;
       case 'bolt':
         return Icons.bolt;
+      case 'keyboard':
+        return Icons.keyboard;
       default:
         return Icons.devices;
     }
