@@ -101,3 +101,8 @@ build/
 backup/android-certificates/
 mobile-app/android/key.properties
 mobile-app/android/keystore/*.jks
+
+# ========================================
+# 设计原型（HTML 原型文件，不提交到仓库）
+# ========================================
+design-system/prototype/

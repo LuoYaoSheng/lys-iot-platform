@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:iot_platform_sdk/iot_platform_sdk.dart';
 import 'login_page.dart';
+import 'home_page.dart';
 import '../main.dart';
 
 class SplashPage extends StatefulWidget {
@@ -70,7 +71,7 @@ class _SplashPageState extends State<SplashPage> {
         // 已登录，进入主页
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => HomePage()),
         );
       } else {
         // 未登录，进入登录页

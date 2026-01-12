@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:iot_platform_sdk/iot_platform_sdk.dart';
 import '../../services/api_service.dart';
+import '../../design_system/design_system.dart';
 
 /// 控制面板基类
 abstract class ControlPanelBase extends StatefulWidget {
@@ -27,7 +28,7 @@ abstract class ControlPanelState<T extends ControlPanelBase> extends State<T> {
   void showSuccess(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.green),
+        SnackBar(content: Text(message), backgroundColor: MinimalTokens.success),
       );
     }
   }
@@ -36,7 +37,7 @@ abstract class ControlPanelState<T extends ControlPanelBase> extends State<T> {
   void showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
+        SnackBar(content: Text(message), backgroundColor: MinimalTokens.error),
       );
     }
   }

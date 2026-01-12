@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'control_panel_base.dart';
+import '../../design_system/design_system.dart';
 
 class GenericPanel extends ControlPanelBase {
   const GenericPanel({
@@ -24,15 +25,19 @@ class _GenericPanelState extends ControlPanelState<GenericPanel> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           '设备控制',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: MinimalTokens.gray900,
+          ),
         ),
         const SizedBox(height: 24),
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
+            color: MinimalTokens.gray100,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -40,14 +45,14 @@ class _GenericPanelState extends ControlPanelState<GenericPanel> {
               Icon(
                 Icons.info_outline,
                 size: 48,
-                color: Colors.grey.shade400,
+                color: MinimalTokens.gray300,
               ),
               const SizedBox(height: 16),
               Text(
                 '暂无专用控制面板',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey.shade600,
+                  color: MinimalTokens.gray700,
                 ),
               ),
               const SizedBox(height: 8),
@@ -55,7 +60,7 @@ class _GenericPanelState extends ControlPanelState<GenericPanel> {
                 '请联系管理员配置产品控制模式',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade500,
+                  color: MinimalTokens.gray500,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -78,7 +83,7 @@ class _GenericPanelState extends ControlPanelState<GenericPanel> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: Colors.grey.shade700,
+            color: MinimalTokens.gray700,
           ),
         ),
         const SizedBox(height: 12),
@@ -103,14 +108,17 @@ class _GenericPanelState extends ControlPanelState<GenericPanel> {
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: MinimalTokens.gray700,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 12),
+              style: TextStyle(
+                fontSize: 12,
+                color: MinimalTokens.gray700,
+              ),
             ),
           ),
         ],

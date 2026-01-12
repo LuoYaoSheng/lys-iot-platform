@@ -1,16 +1,19 @@
 /// 设备列表页面
 /// 作者: 罗耀生
-/// 日期: 2025-12-13
-/// 更新: 2025-12-15 - 使用 SDK Device 模型
-/// 更新: 2025-12-19 - v0.2.0 根据产品信息显示图标和名称，使用BottomSheet控制面板
+/// 版本: 4.0.0
+/// 完全遵循截图设计：紫色渐变背景 + 白色卡片内容区
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:iot_platform_sdk/iot_platform_sdk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../design_system/design_system.dart';
 import '../providers/device_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/control_panels/control_panel_factory.dart';
+import 'scan_page.dart';
+import 'profile_page.dart';
+import 'settings_page.dart';
 
 class DeviceListPage extends StatefulWidget {
   const DeviceListPage({super.key});
@@ -20,7 +23,6 @@ class DeviceListPage extends StatefulWidget {
 }
 
 class _DeviceListPageState extends State<DeviceListPage> {
-  // 存储设备位置状态
   final Map<String, String> _devicePositions = {};
   final ApiService _apiService = ApiService();
 
@@ -36,19 +38,14 @@ class _DeviceListPageState extends State<DeviceListPage> {
 
   Future<void> _loadAPICredentials() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // 加载自定义 API 地址（如果有）
     final customApiUrl = prefs.getString('custom_api_url');
     if (customApiUrl != null && customApiUrl.isNotEmpty) {
       _apiService.setBaseUrl(customApiUrl);
     }
-
-    // 优先使用 Bearer Token
     final token = prefs.getString('iot_token');
     if (token != null && token.isNotEmpty) {
       _apiService.setBearerToken(token);
     } else {
-      // 降级使用 API Key
       final apiKey = prefs.getString('api_key');
       final apiSecret = prefs.getString('api_secret');
       if (apiKey != null && apiSecret != null) {
@@ -79,12 +76,109 @@ class _DeviceListPageState extends State<DeviceListPage> {
   Widget build(BuildContext context) {
     return Consumer<DeviceProvider>(
       builder: (context, provider, child) {
-        return RefreshIndicator(
-          onRefresh: () async {
-            await provider.loadDevices();
-            await _loadDevicePositions();
-          },
-          child: _buildContent(provider),
+        return Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFE8EAF6), // 浅紫色顶部
+                  Color(0xFFD1C4E9), // 稍深紫色底部
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  Column(
+                    children: [
+                      // 白色卡片内容区
+                      Expanded(
+                        child: Center(
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: _buildContent(provider),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // 底部占位，给 TabBar 留空间
+                      const SizedBox(height: 60),
+                    ],
+                  ),
+
+                  // FAB 按钮
+                  Positioned(
+                    right: 24,
+                    bottom: 76,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ScanPage()),
+                        ),
+                        customBorder: const CircleBorder(),
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF2196F3),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0x40000000),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            size: 28,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 底部导航栏
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: _BottomTabBar(
+                      currentIndex: 0,
+                      onTap: (index) {
+                        if (index == 1) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ProfilePage()),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
@@ -92,7 +186,9 @@ class _DeviceListPageState extends State<DeviceListPage> {
 
   Widget _buildContent(DeviceProvider provider) {
     if (provider.isLoading && provider.devices.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF2196F3)),
+      );
     }
 
     if (provider.error != null && provider.devices.isEmpty) {
@@ -100,13 +196,26 @@ class _DeviceListPageState extends State<DeviceListPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.grey.shade400),
+            const Icon(Icons.error_outline, size: 48, color: Color(0xFF999999)),
             const SizedBox(height: 16),
-            Text('加载失败', style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+            Text(
+              '加载失败',
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            ),
             const SizedBox(height: 8),
-            Text(provider.error!, style: TextStyle(fontSize: 12, color: Colors.grey.shade500), textAlign: TextAlign.center),
+            Text(
+              provider.error ?? '',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(onPressed: () => provider.loadDevices(), icon: const Icon(Icons.refresh), label: const Text('重试')),
+            ElevatedButton(
+              onPressed: () => provider.loadDevices(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2196F3),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('重试'),
+            ),
           ],
         ),
       );
@@ -117,256 +226,53 @@ class _DeviceListPageState extends State<DeviceListPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.devices, size: 64, color: Colors.grey.shade400),
+            Icon(Icons.devices_outlined, size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            Text('暂无设备', style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+            Text(
+              '暂无设备',
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            ),
             const SizedBox(height: 8),
-            Text('请添加新设备', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+            Text(
+              '点击下方 + 添加设备',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
           ],
         ),
       );
     }
 
     return ListView.builder(
-      itemCount: provider.devices.length,
+      padding: const EdgeInsets.all(16),
+      itemCount: provider.devices.length + 1,
       itemBuilder: (context, index) {
+        if (index == provider.devices.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              '长按设备卡片可删除',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+
         final device = provider.devices[index];
-        final position = _devicePositions[device.deviceId] ?? 'middle';
         return _DeviceCard(
-          device: device,
-          position: position,
-          onTap: () => _onDeviceTap(device),
-          onDelete: () => _onDeviceDelete(device, provider),
+          name: _getDeviceDisplayName(device),
+          isOnline: device.isOnline,
+          infoText: _getDeviceInfoText(device),
+          onTap: () => _showDeviceControlSheet(device),
+          onLongPress: () => _showDeleteDialog(device, provider),
         );
       },
     );
   }
 
-  void _onDeviceTap(Device device) {
-    // v0.2.0: 使用 BottomSheet 方式显示控制面板
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) {
-          return SingleChildScrollView(
-            controller: scrollController,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                24,
-                16,
-                24,
-                MediaQuery.of(context).viewInsets.bottom + 24,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 顶部拖动指示器
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  // 设备标题
-                  _buildDeviceHeader(device),
-                  const Divider(height: 32),
-                  // 动态控制面板
-                  ControlPanelFactory.createPanel(
-                    device: device,
-                    apiService: _apiService,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  /// 构建设备标题
-  Widget _buildDeviceHeader(Device device) {
-    final icon = ControlPanelFactory.getPanelIcon(device);
-    final color = ControlPanelFactory.getPanelColor(device);
-    final title = ControlPanelFactory.getPanelTitle(device);
-
-    return Row(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 32),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: device.isOnline ? Colors.green : Colors.grey,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    device.isOnline ? '在线' : '离线',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: device.isOnline ? Colors.green : Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    device.deviceId,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _onDeviceDelete(Device device, DeviceProvider provider) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除设备'),
-        content: Text('确定要删除设备 "${device.name ?? device.deviceId}" 吗？'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      final success = await provider.deleteDevice(device.deviceId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(success ? '设备已删除' : '删除失败')),
-        );
-      }
-    }
-  }
-}
-
-class _DeviceCard extends StatelessWidget {
-  final Device device;
-  final String position;
-  final VoidCallback onTap;
-  final VoidCallback onDelete;
-
-  const _DeviceCard({
-    required this.device,
-    required this.position,
-    required this.onTap,
-    required this.onDelete,
-  });
-
-  String get _statusText {
-    switch (device.status) {
-      case DeviceStatus.online: return '在线';
-      case DeviceStatus.offline: return '离线';
-      case DeviceStatus.disabled: return '已禁用';
-      case DeviceStatus.inactive: return '未激活';
-    }
-  }
-
-  Color get _statusColor {
-    switch (device.status) {
-      case DeviceStatus.online: return Colors.green;
-      case DeviceStatus.offline: return Colors.grey;
-      case DeviceStatus.disabled: return Colors.red;
-      case DeviceStatus.inactive: return Colors.orange;
-    }
-  }
-
-  String get _positionText {
-    switch (position) {
-      case 'up': return '位置: 上';
-      case 'down': return '位置: 下';
-      case 'middle': return '位置: 中';
-      default: return '位置: 中';
-    }
-  }
-
-  /// v0.2.0: 根据产品信息获取图标
-  IconData get _productIcon {
-    final iconName = device.product?.iconName;
-    if (iconName == null) return Icons.power_settings_new; // 默认图标
-
-    // Material Icons 映射表
-    switch (iconName) {
-      case 'power_settings_new': return Icons.power_settings_new;
-      case 'touch_app': return Icons.touch_app;
-      case 'thermostat': return Icons.thermostat;
-      case 'lock': return Icons.lock;
-      case 'lightbulb': return Icons.lightbulb;
-      case 'curtains': return Icons.curtains;
-      case 'bolt': return Icons.bolt;
-      case 'keyboard': return Icons.keyboard;
-      default: return Icons.device_unknown;
-    }
-  }
-
-  /// v0.2.0: 根据产品信息获取颜色
-  Color get _productColor {
-    final colorHex = device.product?.iconColor;
-    if (colorHex == null) return _statusColor; // 降级使用状态颜色
-
-    try {
-      // 解析 HEX 颜色 (#FF6B35)
-      final hex = colorHex.replaceAll('#', '');
-      return Color(int.parse('FF$hex', radix: 16));
-    } catch (e) {
-      return _statusColor; // 解析失败降级
-    }
-  }
-
-  /// v0.2.0: 根据产品信息获取设备名称
-  String get _deviceDisplayName {
-    // 优先级: device.name > product.name > "智能设备"
+  String _getDeviceDisplayName(Device device) {
     if (device.name != null && device.name!.isNotEmpty) {
       return device.name!;
     }
@@ -376,78 +282,588 @@ class _DeviceCard extends StatelessWidget {
     return '智能设备';
   }
 
+  String _getDeviceInfoText(Device device) {
+    final parts = <String>[];
+    final position = _devicePositions[device.deviceId];
+    if (device.isOnline &&
+        position != null &&
+        (device.product?.uiTemplate == 'servo' ||
+            device.product?.controlMode == 'servo')) {
+      parts.add('位置: ${_getPositionText(position)}');
+    }
+    parts.add('固件: 1.0.0');
+    return parts.join(' ');
+  }
+
+  String _getPositionText(String position) {
+    switch (position) {
+      case 'up':
+        return '上';
+      case 'down':
+        return '下';
+      case 'middle':
+        return '中';
+      default:
+        return '中';
+    }
+  }
+
+  void _showDeviceControlSheet(Device device) {
+    final title = _getDeviceDisplayName(device);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DeviceControlSheet(
+        title: title,
+        isOnline: device.isOnline,
+        device: device,
+        apiService: _apiService,
+        child: ControlPanelFactory.createPanel(
+          device: device,
+          apiService: _apiService,
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(Device device, DeviceProvider provider) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => _DeleteDialog(
+        deviceName: _getDeviceDisplayName(device),
+        onConfirm: () async {
+          Navigator.pop(context);
+          final success = await provider.deleteDevice(device.deviceId);
+          if (mounted) {
+            if (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('设备已删除'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('删除失败'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+}
+
+/// 设备卡片 - 匹配截图设计
+class _DeviceCard extends StatefulWidget {
+  final String name;
+  final bool isOnline;
+  final String infoText;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+
+  const _DeviceCard({
+    required this.name,
+    required this.isOnline,
+    required this.infoText,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  @override
+  State<_DeviceCard> createState() => _DeviceCardState();
+}
+
+class _DeviceCardState extends State<_DeviceCard> {
+  bool _isPressing = false;
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onDelete,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // v0.2.0: 使用产品图标和颜色
-              Container(
-                width: 48, height: 48,
-                decoration: BoxDecoration(
-                  color: _productColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(_productIcon, color: _productColor),
+    return GestureDetector(
+      onTap: widget.onTap,
+      onLongPress: () {
+        setState(() => _isPressing = false);
+        widget.onLongPress();
+      },
+      onLongPressStart: (_) {
+        setState(() => _isPressing = true);
+      },
+      onLongPressEnd: (_) {
+        setState(() => _isPressing = false);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _isPressing ? Colors.grey.shade100 : Colors.white,
+          border: Border.all(color: Colors.grey.shade200, width: 1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            // 状态点
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: widget.isOnline ? const Color(0xFF4CAF50) : const Color(0xFFF44336),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // v0.2.0: 使用产品名称
-                    Text(
-                      _deviceDisplayName,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      device.deviceId,
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+            ),
+            // 设备名称和信息
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _statusText,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _statusColor,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  Text(
+                    widget.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF333333),
                     ),
                   ),
-                  // 仅舵机设备显示位置
-                  if (device.status == DeviceStatus.online && device.product?.uiTemplate == 'servo') ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      _positionText,
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.infoText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
                     ),
-                  ],
+                  ),
                 ],
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+            ),
+            // 状态文字
+            Text(
+              widget.isOnline ? '在线' : '离线',
+              style: TextStyle(
+                fontSize: 14,
+                color: widget.isOnline ? const Color(0xFF4CAF50) : const Color(0xFFF44336),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // 右箭头
+            Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: Colors.grey.shade400,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 删除确认对话框
+class _DeleteDialog extends StatelessWidget {
+  final String deviceName;
+  final VoidCallback onConfirm;
+
+  const _DeleteDialog({
+    required this.deviceName,
+    required this.onConfirm,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: MediaQuery.of(context).size.width - 64,
+        constraints: const BoxConstraints(maxWidth: 320),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '删除设备',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF333333),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '确定要删除"$deviceName"吗？\\n删除后无法恢复。',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF999999),
+                      backgroundColor: const Color(0xFFEEEEEE),
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      minimumSize: const Size.fromHeight(44),
+                    ),
+                    child: const Text('取消'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: onConfirm,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFF44336),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      minimumSize: const Size.fromHeight(44),
+                    ),
+                    child: const Text('删除'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 设备控制底部面板
+class _DeviceControlSheet extends StatefulWidget {
+  final String title;
+  final bool isOnline;
+  final Device device;
+  final ApiService apiService;
+  final Widget child;
+
+  const _DeviceControlSheet({
+    required this.title,
+    required this.isOnline,
+    required this.device,
+    required this.apiService,
+    required this.child,
+  });
+
+  @override
+  State<_DeviceControlSheet> createState() => _DeviceControlSheetState();
+}
+
+class _DeviceControlSheetState extends State<_DeviceControlSheet> {
+  void _showActionSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ActionSheet(
+        deviceName: widget.title,
+        onDelete: () => _showDeleteDialogInSheet(),
+      ),
+    );
+  }
+
+  void _showDeleteDialogInSheet() {
+    Navigator.pop(context);
+    final provider = context.read<DeviceProvider>();
+    showDialog(
+      context: context,
+      builder: (context) => _DeleteDialog(
+        deviceName: widget.title,
+        onConfirm: () async {
+          Navigator.pop(context);
+          final success = await provider.deleteDevice(widget.device.deviceId);
+          if (mounted) {
+            if (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('设备已删除'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              Navigator.pop(context);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('删除失败'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  child: widget.child,
+                ),
+              ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
         ),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.chevron_left,
+                size: 24,
+                color: Color(0xFF333333),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              widget.title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF333333),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          GestureDetector(
+            onTap: _showActionSheet,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                Icons.edit,
+                size: 18,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 操作菜单
+class _ActionSheet extends StatelessWidget {
+  final String deviceName;
+  final VoidCallback onDelete;
+
+  const _ActionSheet({
+    required this.deviceName,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            _ActionItem(
+              icon: Icons.edit_outlined,
+              label: '重命名',
+              onTap: () {
+                Navigator.pop(context);
+                // TODO: 实现重命名
+              },
+            ),
+            _ActionItem(
+              icon: Icons.delete_outline,
+              label: '删除设备',
+              isDanger: true,
+              onTap: onDelete,
+            ),
+            Container(
+              height: 1,
+              color: const Color(0xFFEEEEEE),
+              margin: const EdgeInsets.only(top: 8),
+            ),
+            _ActionItem(
+              label: '取消',
+              onTap: () => Navigator.pop(context),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionItem extends StatelessWidget {
+  final IconData? icon;
+  final String label;
+  final bool isDanger;
+  final VoidCallback onTap;
+
+  const _ActionItem({
+    this.icon,
+    required this.label,
+    this.isDanger = false,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        alignment: Alignment.center,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 20,
+                color: isDanger ? const Color(0xFFF44336) : const Color(0xFF333333),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                color: isDanger ? const Color(0xFFF44336) : const Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 底部导航栏 - 匹配截图设计
+class _BottomTabBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _BottomTabBar({
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 60,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onTap(0),
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.grid_view,
+                    size: 24,
+                    color: currentIndex == 0 ? const Color(0xFF2196F3) : const Color(0xFF9E9E9E),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '设备',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: currentIndex == 0 ? const Color(0xFF2196F3) : const Color(0xFF9E9E9E),
+                      fontWeight: currentIndex == 0 ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => onTap(1),
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.person,
+                    size: 24,
+                    color: currentIndex == 1 ? const Color(0xFF2196F3) : const Color(0xFF9E9E9E),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '我的',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: currentIndex == 1 ? const Color(0xFF2196F3) : const Color(0xFF9E9E9E),
+                      fontWeight: currentIndex == 1 ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

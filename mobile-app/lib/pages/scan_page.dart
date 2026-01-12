@@ -1,11 +1,13 @@
 /// BLE 扫描页面
 /// 作者: 罗耀生
-/// 日期: 2025-12-13
+/// 版本: 3.0.0
+/// 使用 Design System 组件
 
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../design_system/design_system.dart';
 import '../services/ble_service.dart';
 import 'config_page.dart';
 
@@ -91,25 +93,11 @@ class _ScanPageState extends State<ScanPage> {
   }
 
   void _showBluetoothDialog() {
-    showDialog(
+    MinimalDialog.showInfo(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('蓝牙未开启'),
-        content: const Text('扫描设备需要开启蓝牙，请在系统设置中开启蓝牙后重试。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              FlutterBluePlus.turnOn();
-            },
-            child: const Text('开启蓝牙'),
-          ),
-        ],
-      ),
+      title: '蓝牙未开启',
+      message: '扫描设备需要开启蓝牙，请在系统设置中开启蓝牙后重试。',
+      confirmText: '我知道了',
     );
   }
 
@@ -170,38 +158,42 @@ class _ScanPageState extends State<ScanPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('设备配网'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: MinimalTokens.white,
+        elevation: 0,
         actions: [
           if (_isScanning)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _startScan,
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
+          )
+        else
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _startScan,
+          ),
         ],
       ),
       body: Column(
         children: [
           // 提示信息
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.blue.shade50,
+            padding: MinimalEdgeInsets.md,
+            color: MinimalTokens.primary.withOpacity(0.1),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade700),
-                const SizedBox(width: 12),
+                Icon(Icons.info_outline, color: MinimalTokens.primary),
+                const SizedBox(width: MinimalSpacing.md),
                 Expanded(
                   child: Text(
                     '正在扫描 "IoT-Switch-" 前缀的设备...\n请确保设备处于配网模式（LED快闪）',
-                    style: TextStyle(color: Colors.blue.shade700, fontSize: 13),
+                    style: TextStyle(
+                      color: MinimalTokens.primary,
+                      fontSize: MinimalTokens.fontSizeCaption,
+                    ),
                   ),
                 ),
               ],
@@ -211,16 +203,16 @@ class _ScanPageState extends State<ScanPage> {
           // 错误提示
           if (_error != null)
             Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.red.shade50,
+              padding: MinimalEdgeInsets.md,
+              color: MinimalTokens.error.withOpacity(0.1),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline, color: Colors.red.shade700),
-                  const SizedBox(width: 12),
+                  Icon(Icons.error_outline, color: MinimalTokens.error),
+                  const SizedBox(width: MinimalSpacing.md),
                   Expanded(
                     child: Text(
                       _error!,
-                      style: TextStyle(color: Colors.red.shade700),
+                      style: TextStyle(color: MinimalTokens.error),
                     ),
                   ),
                 ],
@@ -237,18 +229,18 @@ class _ScanPageState extends State<ScanPage> {
                         Icon(
                           Icons.bluetooth_searching,
                           size: 64,
-                          color: Colors.grey.shade400,
+                          color: MinimalTokens.gray300,
                         ),
-                        const SizedBox(height: 16),
+                        const MinimalSpacer(size: MinimalSpacing.md),
                         Text(
                           _isScanning ? '正在扫描...' : '未发现设备',
                           style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey.shade600,
+                            fontSize: MinimalTokens.fontSizeBody,
+                            color: MinimalTokens.gray500,
                           ),
                         ),
                         if (!_isScanning) ...[
-                          const SizedBox(height: 16),
+                          const MinimalSpacer(size: MinimalSpacing.md),
                           ElevatedButton.icon(
                             onPressed: _startScan,
                             icon: const Icon(Icons.refresh),
@@ -267,20 +259,32 @@ class _ScanPageState extends State<ScanPage> {
 
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Colors.blue.shade100,
+                          backgroundColor: MinimalTokens.primary.withOpacity(0.1),
                           child: Icon(
                             Icons.bluetooth,
-                            color: Colors.blue.shade700,
+                            color: MinimalTokens.primary,
                           ),
                         ),
                         title: Text(
                           device.platformName.isNotEmpty
                               ? device.platformName
                               : '未知设备',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontWeight: MinimalTokens.fontWeightMedium,
+                            color: MinimalTokens.gray700,
+                          ),
                         ),
-                        subtitle: Text('信号强度: $rssi dBm'),
-                        trailing: const Icon(Icons.chevron_right),
+                        subtitle: Text(
+                          '信号强度: $rssi dBm',
+                          style: TextStyle(
+                            color: MinimalTokens.gray500,
+                            fontSize: MinimalTokens.fontSizeCaption,
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          color: MinimalTokens.gray300,
+                        ),
                         onTap: () => _onDeviceTap(result),
                       );
                     },

@@ -71,6 +71,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	apiKeyRepo := repository.NewAPIKeyRepository(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
+	resetTokenRepo := repository.NewPasswordResetTokenRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
 
 	// 初始化服务
@@ -84,6 +85,7 @@ func main() {
 		userRepo,
 		apiKeyRepo,
 		refreshTokenRepo,
+		resetTokenRepo,
 		cfg.JWT.Secret,
 		cfg.JWT.ExpireHours,
 	)
@@ -182,6 +184,8 @@ func main() {
 			users.POST("/register", userHandler.Register)
 			users.POST("/login", userHandler.Login)
 			users.POST("/refresh-token", userHandler.RefreshToken)
+			users.POST("/password/reset/request", userHandler.RequestPasswordReset)
+			users.POST("/password/reset/confirm", userHandler.ResetPassword)
 		}
 
 		// ========== 用户相关（需要认证） ==========
@@ -264,6 +268,7 @@ func autoMigrate(db *gorm.DB) error {
 		&model.User{},
 		&model.APIKey{},
 		&model.RefreshToken{},
+		&model.PasswordResetToken{},
 		&model.Project{},
 		&model.ProjectMember{},
 		&model.Product{},

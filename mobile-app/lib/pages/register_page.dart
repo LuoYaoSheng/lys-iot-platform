@@ -1,9 +1,11 @@
 /// 注册页面
 /// 作者: 罗耀生
-/// 日期: 2025-12-15
+/// 版本: 3.0.0
+/// 使用 Design System 组件
 
 import 'package:flutter/material.dart';
 import 'package:iot_platform_sdk/iot_platform_sdk.dart';
+import '../design_system/design_system.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -52,12 +54,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (result.isSuccess) {
         // 注册成功，显示提示并返回登录页
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('注册成功！请登录'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        MinimalToast.showSuccess(context, '注册成功！请登录');
         Navigator.pop(context);
       } else {
         String errorMsg = result.message;
@@ -87,12 +84,15 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: MinimalTokens.white,
       appBar: AppBar(
+        backgroundColor: MinimalTokens.white,
+        elevation: 0,
         title: const Text('注册账号'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: MinimalEdgeInsets.xxl,
           child: Form(
             key: _formKey,
             child: Column(
@@ -101,37 +101,40 @@ class _RegisterPageState extends State<RegisterPage> {
                 // 标题
                 Text(
                   '创建新账号',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                    fontSize: MinimalTokens.fontSizeTitle,
+                    fontWeight: MinimalTokens.fontWeightSemiBold,
+                    color: MinimalTokens.gray900,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const MinimalSpacer(size: MinimalSpacing.sm),
                 Text(
                   '请填写以下信息完成注册',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey,
+                  style: TextStyle(
+                    fontSize: MinimalTokens.fontSizeBodySmall,
+                    color: MinimalTokens.gray500,
                   ),
                 ),
-                const SizedBox(height: 32),
+                const MinimalSpacer(size: MinimalSpacing.xl),
 
                 // 错误提示
                 if (_errorMessage != null)
                   Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: MinimalEdgeInsets.md,
+                    margin: const EdgeInsets.only(bottom: MinimalSpacing.md),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
+                      color: MinimalTokens.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(MinimalTokens.radiusMd),
+                      border: Border.all(color: MinimalTokens.error.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
-                        const SizedBox(width: 8),
+                        Icon(Icons.error_outline, color: MinimalTokens.error, size: 20),
+                        const SizedBox(width: MinimalSpacing.sm),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: TextStyle(color: Colors.red.shade700),
+                            style: TextStyle(color: MinimalTokens.error),
                           ),
                         ),
                       ],
@@ -145,7 +148,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     labelText: '用户名',
                     hintText: '请输入用户名',
                     prefixIcon: Icon(Icons.person_outline),
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -157,7 +159,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const MinimalSpacer(size: MinimalSpacing.md),
 
                 // 邮箱输入
                 TextFormField(
@@ -167,7 +169,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     labelText: '邮箱',
                     hintText: '请输入邮箱地址',
                     prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -179,7 +180,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const MinimalSpacer(size: MinimalSpacing.md),
 
                 // 密码输入
                 TextFormField(
@@ -189,7 +190,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     labelText: '密码',
                     hintText: '需包含大小写字母、数字和特殊字符',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -211,7 +211,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const MinimalSpacer(size: MinimalSpacing.md),
 
                 // 确认密码
                 TextFormField(
@@ -221,7 +221,6 @@ class _RegisterPageState extends State<RegisterPage> {
                     labelText: '确认密码',
                     hintText: '请再次输入密码',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
@@ -243,49 +242,49 @@ class _RegisterPageState extends State<RegisterPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const MinimalSpacer(size: MinimalSpacing.md),
 
                 // 密码要求提示
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: MinimalEdgeInsets.md,
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    color: MinimalTokens.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(MinimalTokens.radiusMd),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
-                          const SizedBox(width: 8),
+                          Icon(Icons.info_outline, size: 16, color: MinimalTokens.primary),
+                          const SizedBox(width: MinimalSpacing.sm),
                           Text(
                             '密码要求',
                             style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: Colors.blue.shade700,
+                              fontWeight: MinimalTokens.fontWeightMedium,
+                              color: MinimalTokens.primary,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const MinimalSpacer(size: MinimalSpacing.sm),
                       Text(
                         '• 至少8个字符\n• 包含大写字母\n• 包含小写字母\n• 包含数字\n• 包含特殊字符 (!@#\$%^&*)',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue.shade700,
+                          fontSize: MinimalTokens.fontSizeCaption,
+                          color: MinimalTokens.primary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const MinimalSpacer(size: MinimalSpacing.xl),
 
                 // 注册按钮
                 FilledButton(
                   onPressed: _isLoading ? null : _register,
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: MinimalSpacing.md),
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -298,13 +297,19 @@ class _RegisterPageState extends State<RegisterPage> {
                         )
                       : const Text('注 册', style: TextStyle(fontSize: 16)),
                 ),
-                const SizedBox(height: 16),
+                const MinimalSpacer(size: MinimalSpacing.md),
 
                 // 返回登录
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('已有账号？'),
+                    Text(
+                      '已有账号？',
+                      style: TextStyle(
+                        color: MinimalTokens.gray500,
+                        fontSize: MinimalTokens.fontSizeBody,
+                      ),
+                    ),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('返回登录'),

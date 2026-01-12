@@ -51,8 +51,8 @@ class IoTConfig {
   /// 开发环境配置（本机�?
   factory IoTConfig.development() {
     return const IoTConfig(
-      apiBaseUrl: 'http://192.168.21.77:48080',
-      mqttHost: '192.168.21.77',
+      apiBaseUrl: 'http://117.50.216.173:48080',
+      mqttHost: '117.50.216.173',
       mqttPort: 1883,
       mqttWsPort: 8083,
       enableLogging: true,
@@ -91,8 +91,8 @@ class IoTConfig {
   /// 已弃用：现在使用本地IP直连
   factory IoTConfig.natapp() {
     return const IoTConfig(
-      apiBaseUrl: 'http://192.168.21.77:48080',
-      mqttHost: '192.168.21.77',
+      apiBaseUrl: 'http://117.50.216.173:48080',
+      mqttHost: '117.50.216.173',
       mqttPort: 1883,
       mqttWsPort: 8083,
       enableLogging: true,

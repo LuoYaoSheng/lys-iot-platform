@@ -1,7 +1,8 @@
-/// 登录页面
+/// 登录页面 - 简洁风格
 /// 作者: 罗耀生
 /// 日期: 2025-12-15
-/// 更新: 2025-12-16 - 添加服务器地址配置功能
+/// 更新: 2025-01-11 - 应用简洁设计风格
+/// 更新: 2025-01-12 - 使用品牌 Logo 和 Bottom Sheet 配置
 
 import 'package:flutter/material.dart';
 import 'package:iot_platform_sdk/iot_platform_sdk.dart';
@@ -9,6 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'register_page.dart';
 import '../main.dart';
+import '../design_system/design_system.dart';
+import '../widgets/brand_logo.dart';
+import 'home_page.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,12 +29,31 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+  String _currentServerUrl = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentServer();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCurrentServer() async {
+    final prefs = await SharedPreferences.getInstance();
+    final customUrl = prefs.getString('custom_api_url');
+    final defaultUrl = IoTConfig.fromEnvironment().apiBaseUrl;
+
+    if (mounted) {
+      setState(() {
+        _currentServerUrl = customUrl ?? defaultUrl;
+      });
+    }
   }
 
   Future<void> _login() async {
@@ -50,10 +74,9 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       if (success) {
-        // 登录成功，进入主页
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => HomePage()),
         );
       } else {
         setState(() {
@@ -73,21 +96,25 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// 显示服务器配置对话框
   Future<void> _showServerConfigDialog() async {
     if (!mounted) return;
 
-    final result = await showDialog<String>(
+    final result = await showModalBottomSheet<String>(
       context: context,
-      builder: (context) => const _ServerConfigDialog(),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ServerConfigBottomSheet(
+        currentUrl: _currentServerUrl,
+      ),
     );
 
     if (!mounted) return;
 
     if (result != null && result.isNotEmpty) {
-      // 显示提示并退出应用
-      if (!mounted) return;
+      // 更新显示的服务器地址
+      await _loadCurrentServer();
 
+      // 显示重启确认对话框
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -96,10 +123,7 @@ class _LoginPageState extends State<LoginPage> {
           content: const Text('应用即将重启以应用新配置...'),
           actions: [
             FilledButton(
-              onPressed: () {
-                // 退出应用
-                exit(0);
-              },
+              onPressed: () => exit(0),
               child: const Text('立即重启'),
             ),
           ],
@@ -111,62 +135,72 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: MinimalTokens.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: MinimalTokens.white,
         elevation: 0,
         actions: [
-          // 服务器配置按钮
-          IconButton(
-            icon: const Icon(Icons.dns_outlined),
-            tooltip: '服务器配置',
+          // 服务器配置按钮（小图标+文字）
+          TextButton.icon(
             onPressed: _showServerConfigDialog,
+            icon: const Icon(Icons.settings_rounded, size: 18),
+            label: const Text('配置', style: TextStyle(fontSize: 12)),
+            style: TextButton.styleFrom(
+              foregroundColor: MinimalTokens.gray700,
+            ),
           ),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 60),
+                const SizedBox(height: 40),
 
-                // Logo
-                Center(
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      Icons.devices_other,
-                      size: 48,
-                      color: Theme.of(context).colorScheme.primary,
+                // 品牌 Logo
+                SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      color: MinimalTokens.white,
+                      child: Image.asset(
+                        'assets/icon/app_icon.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 16),
 
                 // 标题
-                Text(
-                  '欢迎回来',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                const Text(
+                  '智开',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w600,
+                    color: MinimalTokens.gray900,
                   ),
                   textAlign: TextAlign.center,
                 ),
+
                 const SizedBox(height: 8),
+
                 Text(
-                  '登录以继续管理您的智能设备',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey,
+                  '欢迎回来，请登录',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: MinimalTokens.gray500,
                   ),
                   textAlign: TextAlign.center,
                 ),
+
                 const SizedBox(height: 48),
 
                 // 错误提示
@@ -175,18 +209,27 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 16),
                     decoration: BoxDecoration(
-                      color: Colors.red.shade50,
+                      color: MinimalTokens.error.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
+                      border: Border.all(
+                        color: MinimalTokens.error.withOpacity(0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                        Icon(
+                          Icons.error_outline,
+                          color: MinimalTokens.error,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: TextStyle(color: Colors.red.shade700),
+                            style: TextStyle(
+                              color: MinimalTokens.error,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ],
@@ -201,7 +244,6 @@ class _LoginPageState extends State<LoginPage> {
                     labelText: '邮箱',
                     hintText: '请输入邮箱地址',
                     prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -213,6 +255,7 @@ class _LoginPageState extends State<LoginPage> {
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 16),
 
                 // 密码输入
@@ -223,10 +266,11 @@ class _LoginPageState extends State<LoginPage> {
                     labelText: '密码',
                     hintText: '请输入密码',
                     prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_outlined,
                       ),
                       onPressed: () {
                         setState(() {
@@ -242,14 +286,44 @@ class _LoginPageState extends State<LoginPage> {
                     return null;
                   },
                 ),
+
+                const SizedBox(height: 16),
+
+                // 忘记密码 + 服务器地址
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordPage(),
+                          ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 24),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('忘记密码？'),
+                    ),
+                    Text(
+                      _currentServerUrl.isNotEmpty ? _currentServerUrl : '加载中...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: MinimalTokens.gray500,
+                      ),
+                    ),
+                  ],
+                ),
+
                 const SizedBox(height: 24),
 
                 // 登录按钮
                 FilledButton(
                   onPressed: _isLoading ? null : _login,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
                   child: _isLoading
                       ? const SizedBox(
                           width: 20,
@@ -259,15 +333,22 @@ class _LoginPageState extends State<LoginPage> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('登 录', style: TextStyle(fontSize: 16)),
+                      : const Text('登录'),
                 ),
+
                 const SizedBox(height: 16),
 
                 // 注册链接
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('还没有账号？'),
+                    Text(
+                      '还没有账号？',
+                      style: TextStyle(
+                        color: MinimalTokens.gray500,
+                        fontSize: 14,
+                      ),
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -277,6 +358,9 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
                       },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                      ),
                       child: const Text('立即注册'),
                     ),
                   ],
@@ -290,24 +374,24 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-/// 服务器配置对话框
-/// 使用独立的 StatefulWidget 管理 TextEditingController 生命周期
-class _ServerConfigDialog extends StatefulWidget {
-  const _ServerConfigDialog();
+/// 服务器配置 Bottom Sheet
+class _ServerConfigBottomSheet extends StatefulWidget {
+  final String currentUrl;
+
+  const _ServerConfigBottomSheet({required this.currentUrl});
 
   @override
-  State<_ServerConfigDialog> createState() => _ServerConfigDialogState();
+  State<_ServerConfigBottomSheet> createState() => _ServerConfigBottomSheetState();
 }
 
-class _ServerConfigDialogState extends State<_ServerConfigDialog> {
+class _ServerConfigBottomSheetState extends State<_ServerConfigBottomSheet> {
   late final TextEditingController _apiUrlController;
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _apiUrlController = TextEditingController();
-    _loadCurrentConfig();
+    _apiUrlController = TextEditingController(text: widget.currentUrl);
   }
 
   @override
@@ -316,41 +400,21 @@ class _ServerConfigDialogState extends State<_ServerConfigDialog> {
     super.dispose();
   }
 
-  Future<void> _loadCurrentConfig() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (mounted) {
-        setState(() {
-          _apiUrlController.text = prefs.getString('custom_api_url') ??
-              IoTConfig.fromEnvironment().apiBaseUrl;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   Future<void> _saveConfig() async {
     final apiUrl = _apiUrlController.text.trim();
-
     if (apiUrl.isEmpty) return;
+
+    setState(() => _isLoading = true);
 
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('custom_api_url', apiUrl);
 
-      // 从 API URL 提取主机名作为 MQTT 地址
       try {
         final uri = Uri.parse(apiUrl);
         await prefs.setString('custom_mqtt_host', uri.host);
         await prefs.setInt('custom_mqtt_port', 42883);
       } catch (e) {
-        // URL 解析失败，使用默认值
         await prefs.remove('custom_mqtt_host');
         await prefs.remove('custom_mqtt_port');
       }
@@ -359,12 +423,12 @@ class _ServerConfigDialogState extends State<_ServerConfigDialog> {
         Navigator.pop(context, apiUrl);
       }
     } catch (e) {
-      // 保存失败，不关闭对话框
+      setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('保存失败: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: MinimalTokens.error,
           ),
         );
       }
@@ -373,72 +437,91 @@ class _ServerConfigDialogState extends State<_ServerConfigDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Row(
-        children: [
-          Icon(Icons.dns, size: 24),
-          SizedBox(width: 8),
-          Text('服务器配置'),
-        ],
+    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: MinimalTokens.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      content: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
-          : SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '请输入您的IoT平台服务器地址',
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _apiUrlController,
-                    decoration: const InputDecoration(
-                      labelText: 'API 服务器地址',
-                      hintText: 'http://your-server-ip:48080',
-                      prefixIcon: Icon(Icons.http),
-                      border: OutlineInputBorder(),
-                      helperText: '例如: http://192.168.1.100:48080',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
-                        const SizedBox(width: 8),
-                        const Expanded(
-                          child: Text(
-                            '修改后需要重启应用才能生效',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+      padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + bottomPadding),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 拖动指示器
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: MinimalTokens.gray200,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('取消'),
-        ),
-        FilledButton(
-          onPressed: _isLoading ? null : _saveConfig,
-          child: const Text('保存并重启'),
-        ),
-      ],
+          ),
+
+          // 标题
+          Stack(
+            children: [
+              Center(
+                child: Text(
+                  '服务器配置',
+                  style: TextStyle(
+                    fontSize: MinimalTokens.fontSizeTitle,
+                    fontWeight: FontWeight.w600,
+                    color: MinimalTokens.gray900,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: MinimalTokens.gray500),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // API 服务器地址输入
+          TextField(
+            controller: _apiUrlController,
+            decoration: const InputDecoration(
+              labelText: 'API 服务器地址',
+              hintText: 'http://192.168.1.100:48080',
+              helperText: '请输入服务器地址，如 http://192.168.1.100:48080',
+            ),
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.done,
+          ),
+
+          const SizedBox(height: 24),
+
+          // 保存按钮
+          FilledButton(
+            onPressed: _isLoading ? null : _saveConfig,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('保存配置'),
+          ),
+        ],
+      ),
     );
   }
 }

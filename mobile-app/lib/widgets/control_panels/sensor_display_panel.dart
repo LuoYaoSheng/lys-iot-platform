@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'control_panel_base.dart';
+import '../../design_system/design_system.dart';
 
 class SensorDisplayPanel extends ControlPanelBase {
   const SensorDisplayPanel({
@@ -51,13 +52,18 @@ class _SensorDisplayPanelState extends ControlPanelState<SensorDisplayPanel> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               '传感器数据',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: MinimalTokens.gray900,
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _isLoading ? null : _loadSensorData,
+              color: MinimalTokens.gray700,
             ),
           ],
         ),
@@ -75,7 +81,9 @@ class _SensorDisplayPanelState extends ControlPanelState<SensorDisplayPanel> {
               padding: const EdgeInsets.all(24.0),
               child: Text(
                 '暂无数据',
-                style: TextStyle(color: Colors.grey.shade600),
+                style: TextStyle(
+                  color: MinimalTokens.gray700,
+                ),
               ),
             ),
           )
@@ -101,7 +109,7 @@ class _SensorDisplayPanelState extends ControlPanelState<SensorDisplayPanel> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
+            color: MinimalTokens.gray100,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -111,14 +119,15 @@ class _SensorDisplayPanelState extends ControlPanelState<SensorDisplayPanel> {
                 _formatLabel(entry.key),
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade700,
+                  color: MinimalTokens.gray700,
                 ),
               ),
               Text(
                 _formatValue(entry.value),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
+                  color: MinimalTokens.gray900,
                 ),
               ),
             ],

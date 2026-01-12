@@ -1,6 +1,7 @@
 // 用户服务层
 // 作者: 罗耀生
 // 日期: 2025-12-13
+// 更新: 2025-01-12 - 添加密码重置功能
 
 package service
 
@@ -8,6 +9,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"log"
 	"regexp"
 	"time"
 
@@ -25,6 +27,7 @@ type UserService struct {
 	userRepo         *repository.UserRepository
 	apiKeyRepo       *repository.APIKeyRepository
 	refreshTokenRepo *repository.RefreshTokenRepository
+	resetTokenRepo   *repository.PasswordResetTokenRepository
 	jwtSecret        string
 	jwtExpireHours   int
 }
@@ -33,6 +36,7 @@ func NewUserService(
 	userRepo *repository.UserRepository,
 	apiKeyRepo *repository.APIKeyRepository,
 	refreshTokenRepo *repository.RefreshTokenRepository,
+	resetTokenRepo *repository.PasswordResetTokenRepository,
 	jwtSecret string,
 	jwtExpireHours int,
 ) *UserService {
@@ -43,6 +47,7 @@ func NewUserService(
 		userRepo:         userRepo,
 		apiKeyRepo:       apiKeyRepo,
 		refreshTokenRepo: refreshTokenRepo,
+		resetTokenRepo:   resetTokenRepo,
 		jwtSecret:        jwtSecret,
 		jwtExpireHours:   jwtExpireHours,
 	}
@@ -478,4 +483,107 @@ func generateRandomString(length int) string {
 	bytes := make([]byte, length)
 	rand.Read(bytes)
 	return hex.EncodeToString(bytes)[:length]
+}
+
+// ========== 密码重置 ==========
+
+// RequestPasswordResetRequest 请求密码重置
+type RequestPasswordResetRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// RequestPasswordResetResponse 请求密码重置响应
+type RequestPasswordResetResponse struct {
+	Message   string `json:"message"`
+	Token     string `json:"token,omitempty"`    // 开发模式返回
+	ExpiresAt string `json:"expiresAt"`
+}
+
+// RequestPasswordReset 请求密码重置
+func (s *UserService) RequestPasswordReset(req *RequestPasswordResetRequest) (*RequestPasswordResetResponse, error) {
+	// 验证邮箱是否存在
+	user, err := s.userRepo.FindByEmail(req.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 邮箱不存在，但返回成功以防邮箱枚举攻击
+			log.Printf("[RequestPasswordReset] Email not found: %s", req.Email)
+			return &RequestPasswordResetResponse{
+				Message:   "如果邮箱存在，重置令牌已生成",
+				ExpiresAt: time.Now().Add(1 * time.Hour).Format(time.RFC3339),
+			}, nil
+		}
+		return nil, err
+	}
+
+	// 生成重置令牌
+	token := "reset_" + generateRandomString(32)
+
+	resetToken := &model.PasswordResetToken{
+		Token:     token,
+		Email:     user.Email,
+		ExpiresAt: time.Now().Add(1 * time.Hour), // 1小时过期
+	}
+
+	if err := s.resetTokenRepo.Create(resetToken); err != nil {
+		log.Printf("[RequestPasswordReset] Failed to create token: %v", err)
+		return nil, err
+	}
+
+	log.Printf("[RequestPasswordReset] Token created for %s: %s", user.Email, token)
+
+	// TODO: 发送邮件（生产环境）
+	// 开发环境：返回令牌
+	return &RequestPasswordResetResponse{
+		Message:   "重置令牌已生成",
+		Token:     token, // 开发模式返回
+		ExpiresAt: resetToken.ExpiresAt.Format(time.RFC3339),
+	}, nil
+}
+
+// ResetPasswordRequest 重置密码请求
+type ResetPasswordRequest struct {
+	Token    string `json:"token" binding:"required"`
+	Password string `json:"password" binding:"required,min=8,max=32"`
+}
+
+// ResetPassword 重置密码
+func (s *UserService) ResetPassword(req *ResetPasswordRequest) error {
+	// 查找有效的重置令牌
+	resetToken, err := s.resetTokenRepo.FindValidByToken(req.Token)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("invalid_or_expired_token")
+		}
+		return err
+	}
+
+	// 验证密码强度
+	if !isStrongPassword(req.Password) {
+		return errors.New("weak_password")
+	}
+
+	// 查找用户
+	user, err := s.userRepo.FindByEmail(resetToken.Email)
+	if err != nil {
+		return errors.New("user_not_found")
+	}
+
+	// 加密新密码
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// 更新密码
+	user.PasswordHash = string(hashedPassword)
+	if err := s.userRepo.Update(user); err != nil {
+		return err
+	}
+
+	// 标记令牌已使用
+	s.resetTokenRepo.MarkAsUsed(req.Token)
+
+	log.Printf("[ResetPassword] Password reset for %s", user.Email)
+
+	return nil
 }

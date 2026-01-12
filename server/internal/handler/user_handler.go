@@ -1,6 +1,7 @@
 // 用户处理器
 // 作者: 罗耀生
 // 日期: 2025-12-13
+// 更新: 2025-01-12 - 添加密码重置功能
 
 package handler
 
@@ -321,4 +322,62 @@ func (h *UserHandler) CombinedAuthMiddleware() gin.HandlerFunc {
 		response.Unauthorized(c, "unauthorized")
 		c.Abort()
 	}
+}
+
+// ========== 密码重置 ==========
+
+// RequestPasswordReset 请求密码重置
+// POST /api/v1/users/password/reset/request
+func (h *UserHandler) RequestPasswordReset(c *gin.Context) {
+	var req service.RequestPasswordResetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "invalid_request: "+err.Error())
+		return
+	}
+
+	log.Printf("[RequestPasswordReset] Email=%s", req.Email)
+
+	resp, err := h.userService.RequestPasswordReset(&req)
+	if err != nil {
+		log.Printf("[RequestPasswordReset] Error: %v", err)
+		response.InternalError(c, "internal_error")
+		return
+	}
+
+	response.Success(c, resp)
+}
+
+// ResetPassword 重置密码
+// POST /api/v1/users/password/reset/confirm
+func (h *UserHandler) ResetPassword(c *gin.Context) {
+	var req service.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "invalid_request: "+err.Error())
+		return
+	}
+
+	log.Printf("[ResetPassword] Token=%s...", req.Token[:10])
+
+	err := h.userService.ResetPassword(&req)
+	if err != nil {
+		switch err.Error() {
+		case "invalid_or_expired_token":
+			response.BadRequest(c, "invalid_or_expired_token")
+		case "weak_password":
+			response.BadRequest(c, "weak_password")
+		case "user_not_found":
+			response.NotFound(c, "user_not_found")
+		default:
+			log.Printf("[ResetPassword] Error: %v", err)
+			response.InternalError(c, "internal_error")
+		}
+		return
+	}
+
+	log.Printf("[ResetPassword] Success")
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    200,
+		"message": "密码已重置",
+	})
 }
