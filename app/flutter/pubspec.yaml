@@ -1,0 +1,61 @@
+name: iot_config_app
+description: "Open IoT Platform - 移动端配置应用"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # URL 启动
+  url_launcher: ^6.3.1
+
+  # 状态管理
+  provider: ^6.1.2
+
+  # 网络请求
+  dio: ^5.7.0
+  pretty_dio_logger: ^1.4.0
+
+  # MQTT
+  mqtt_client: ^10.5.1
+
+  # 本地存储
+  shared_preferences: ^2.3.3
+
+  # JSON 序列化
+  json_annotation: ^4.9.0
+
+  # 工具
+  logger: ^2.5.0
+  intl: ^0.20.1
+
+  # 本地 SDK 依赖
+  iot_platform_sdk:
+    path: ../../iot-libs-common/flutter-sdk
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # JSON 代码生成
+  build_runner: ^2.4.13
+  json_serializable: ^6.8.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  # fonts:
+  #   - family: CustomFont
+  #     fonts:
+  #       - asset: fonts/CustomFont-Regular.ttf
