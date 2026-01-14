@@ -139,6 +139,7 @@ export default {
 }
 
 .page-title {
+  display: block;
   font-size: 40rpx;
   font-weight: bold;
   color: #3A3A3C;
@@ -146,6 +147,7 @@ export default {
 }
 
 .page-desc {
+  display: block;
   font-size: 28rpx;
   color: #8E8E93;
   margin-bottom: 64rpx;
