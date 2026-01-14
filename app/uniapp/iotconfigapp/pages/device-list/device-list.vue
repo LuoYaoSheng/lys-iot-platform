@@ -1,96 +1,44 @@
-<!-- 设备列表页（TabBar主页） -->
+<!-- 设备列表页 -->
 <!-- 作者: 罗耀生 -->
-<!-- 日期: 2026-01-13 -->
 
 <template>
-  <view class="device-list-container">
-    <!-- 状态栏占位 -->
-    <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
-
-    <!-- 页面标题区 -->
-    <view class="header">
-      <text class="title">我的设备</text>
-    </view>
-
+  <view class="device-list">
     <!-- 设备列表 -->
-    <scroll-view class="device-list" scroll-y @touchstart="handleTouchStart" @touchend="handleTouchEnd">
-      <AppCard
-        v-for="device in devices"
-        :key="device.id"
-        :clickable="true"
-        @click="openDevice(device)"
-        @longpress="showDeviceMenu(device)"
-      >
-        <view class="device-card">
-          <view class="device-card-header">
-            <view class="status-dot" :class="device.status"></view>
-            <text class="device-card-name">{{ device.name }}</text>
-            <text class="device-card-status" :style="{ color: getStatusColor(device.status) }">
-              {{ MockData.getStatusText(device) }}
-            </text>
-            <view class="more-icon">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="2" fill="currentColor"/>
-                <path d="M3 10H8M12 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </view>
-          </view>
-          <view class="device-card-footer">
-            <text>位置: {{ device.location }}</text>
-            <text>固件: {{ device.firmware }}</text>
-          </view>
-        </view>
-      </AppCard>
-
-      <AppEmpty v-if="devices.length === 0" message="暂无设备" actionText="添加设备" @action="goToScan" />
-
-      <view class="tip-text">
-        长按设备卡片可删除
+    <scroll-view class="list" scroll-y>
+      <view v-if="devices.length === 0" class="empty">
+        <text class="empty-icon">📱</text>
+        <text class="empty-text">暂无设备</text>
+        <button class="btn-add" @click="goScan">添加设备</button>
       </view>
+
+      <view v-for="device in devices" :key="device.id" class="device-card" @click="goControl(device)" @longpress="showDelete(device)">
+        <view class="card-header">
+          <view class="status-dot" :class="device.status"></view>
+          <text class="device-name">{{ device.name }}</text>
+          <text class="device-status" :class="device.status">{{ statusText(device.status) }}</text>
+        </view>
+        <view class="card-footer">
+          <text class="device-info">{{ device.type === 'servo' ? '舵机开关' : 'USB唤醒' }}</text>
+          <text class="device-info">固件: {{ device.firmware }}</text>
+        </view>
+      </view>
+
+      <view v-if="devices.length > 0" class="tip">长按设备可删除</view>
     </scroll-view>
 
     <!-- 悬浮添加按钮 -->
-    <view class="fab" @click="goToScan">
-      <AppIcon name="add" :size="56" color="#FFFFFF" />
+    <view class="fab" @click="goScan">
+      <text class="fab-icon">+</text>
     </view>
 
-    <!-- 设备操作弹窗 -->
-    <view class="modal-overlay" v-if="showModal" @tap="closeModal">
-      <view class="modal-content" @tap.stop>
-        <view class="modal-item" @tap="editDeviceName">
-          <AppIcon name="edit" :size="48" color="#3A3A3C" />
-          <text class="modal-label">修改名称</text>
-        </view>
-        <view class="modal-item delete" @tap="confirmDelete">
-          <AppIcon name="delete" :size="48" color="#FF3B30" />
-          <text class="modal-label">删除设备</text>
-        </view>
-        <view class="modal-cancel" @tap="closeModal">
-          <text>取消</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 编辑设备名称弹窗 -->
-    <view class="modal-overlay" v-if="showEditModal" @tap="closeEditModal">
-      <view class="edit-modal-content" @tap.stop>
-        <text class="modal-title">修改设备名称</text>
-        <input class="modal-input" v-model="editName" placeholder="请输入设备名称" />
-        <view class="modal-actions">
-          <button class="modal-btn cancel" @tap="closeEditModal">取消</button>
-          <button class="modal-btn confirm" @tap="saveDeviceName">保存</button>
-        </view>
-      </view>
-    </view>
-
-    <!-- 删除确认弹窗 -->
-    <view class="modal-overlay" v-if="showDeleteModal" @tap="closeDeleteModal">
-      <view class="edit-modal-content" @tap.stop>
+    <!-- 删除确认 -->
+    <view class="modal" v-if="showModal" @click="showModal = false">
+      <view class="modal-content" @click.stop>
         <text class="modal-title">删除设备</text>
-        <text class="modal-message">确定要删除「{{ currentDevice?.name }}」吗？</text>
-        <view class="modal-actions">
-          <button class="modal-btn cancel" @tap="closeDeleteModal">取消</button>
-          <button class="modal-btn danger" @tap="doDelete">删除</button>
+        <text class="modal-msg">确定删除「{{ currentDevice?.name }}」？</text>
+        <view class="modal-btns">
+          <button class="btn-cancel" @click="showModal = false">取消</button>
+          <button class="btn-delete" @click="doDelete">删除</button>
         </view>
       </view>
     </view>
@@ -98,355 +46,216 @@
 </template>
 
 <script>
-import { MockData, DeviceType, DeviceStatus } from '@/utils/mock-data.js';
-import AppIcon from '@/components/AppIcon.vue';
-import AppCard from '@/components/AppCard.vue';
-import AppEmpty from '@/components/AppEmpty.vue';
+// Mock数据
+const mockDevices = [
+  { id: '1', name: 'IoT-Switch-A1B2', type: 'servo', status: 'online', firmware: 'v1.2.0' },
+  { id: '2', name: 'IoT-Wakeup-C3D4', type: 'wakeup', status: 'online', firmware: 'v1.0.0' },
+  { id: '3', name: 'IoT-Switch-E5F6', type: 'servo', status: 'offline', firmware: 'v1.1.0' }
+]
 
 export default {
-  name: 'DeviceList',
-  components: {
-    AppIcon,
-    AppCard,
-    AppEmpty
-  },
   data() {
     return {
-      statusBarHeight: 0,
       devices: [],
       showModal: false,
-      showEditModal: false,
-      showDeleteModal: false,
-      currentDevice: null,
-      editName: '',
-      longPressTimer: null,
-      isLongPress: false
-    };
-  },
-  onReady() {
-    const systemInfo = uni.getSystemInfoSync();
-    this.statusBarHeight = systemInfo.statusBarHeight || 0;
-    this.loadDevices();
+      currentDevice: null
+    }
   },
   onShow() {
-    this.loadDevices();
+    this.loadDevices()
   },
   methods: {
     loadDevices() {
-      this.devices = MockData.getDevices();
+      // 从本地存储获取，如果没有则用mock数据
+      const saved = uni.getStorageSync('devices')
+      this.devices = saved || mockDevices
+      if (!saved) uni.setStorageSync('devices', mockDevices)
     },
-
-    getStatusColor(status) {
-      const map = {
-        [DeviceStatus.ONLINE]: '#34C759',
-        [DeviceStatus.OFFLINE]: '#8E8E93',
-        [DeviceStatus.CONFIGURING]: '#FF9500'
-      };
-      return map[status] || '#8E8E93';
+    statusText(status) {
+      return { online: '在线', offline: '离线', configuring: '配置中' }[status] || '未知'
     },
-
-    handleTouchStart() {
-      this.isLongPress = false;
-      this.longPressTimer = setTimeout(() => {
-        this.isLongPress = true;
-      }, 500);
+    goScan() {
+      uni.navigateTo({ url: '/pages/scan/scan' })
     },
-
-    handleTouchEnd() {
-      if (this.longPressTimer) {
-        clearTimeout(this.longPressTimer);
-      }
+    goControl(device) {
+      uni.navigateTo({ url: '/pages/device-control/device-control?id=' + device.id })
     },
-
-    openDevice(device) {
-      if (this.isLongPress) return;
-      uni.navigateTo({
-        url: `/pages/device-control/device-control?deviceId=${device.id}`
-      });
+    showDelete(device) {
+      this.currentDevice = device
+      this.showModal = true
     },
-
-    showDeviceMenu(device) {
-      this.currentDevice = device;
-      this.showModal = true;
-    },
-
-    closeModal() {
-      this.showModal = false;
-      this.currentDevice = null;
-    },
-
-    editDeviceName() {
-      this.editName = this.currentDevice.name;
-      this.showModal = false;
-      this.showEditModal = true;
-    },
-
-    closeEditModal() {
-      this.showEditModal = false;
-      this.editName = '';
-    },
-
-    saveDeviceName() {
-      if (!this.editName.trim()) {
-        uni.showToast({ title: '请输入设备名称', icon: 'none' });
-        return;
-      }
-      MockData.updateDevice(this.currentDevice.id, { name: this.editName });
-      this.loadDevices();
-      this.closeEditModal();
-      uni.showToast({ title: '设备名称已修改', icon: 'success' });
-    },
-
-    confirmDelete() {
-      this.showModal = false;
-      this.showDeleteModal = true;
-    },
-
-    closeDeleteModal() {
-      this.showDeleteModal = false;
-    },
-
     doDelete() {
-      MockData.removeDevice(this.currentDevice.id);
-      this.loadDevices();
-      this.closeDeleteModal();
-      uni.showToast({ title: '设备已删除', icon: 'success' });
-    },
-
-    goToScan() {
-      uni.navigateTo({
-        url: '/pages/scan/scan'
-      });
+      this.devices = this.devices.filter(d => d.id !== this.currentDevice.id)
+      uni.setStorageSync('devices', this.devices)
+      this.showModal = false
+      uni.showToast({ title: '已删除', icon: 'success' })
     }
   }
-};
+}
 </script>
 
-<style lang="scss" scoped>
-@import '@/styles/app-tokens.scss';
-
-.device-list-container {
-  min-height: 100vh;
-  background: $color-bg-gray;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.status-bar {
-  width: 100%;
-  background: $color-bg-primary;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  padding: $spacing-md $spacing-lg;
-  background: $color-bg-primary;
-  border-bottom: 1px solid $color-border-primary;
-}
-
-.title {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-}
+<style lang="scss">
+@import '@/styles/tokens.scss';
 
 .device-list {
-  height: calc(100vh - var(--status-bar-height) - 100rpx - 50rpx);
-  padding: $spacing-md;
+  min-height: 100vh;
+  background: $color-bg;
+  box-sizing: border-box;
+}
+
+.list {
+  height: calc(100vh - 100rpx);
+  padding: $spacing-lg;
+  box-sizing: border-box;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 200rpx;
+}
+
+.empty-icon { font-size: 120rpx; margin-bottom: $spacing-lg; }
+.empty-text { font-size: $font-md; color: $color-text-secondary; margin-bottom: $spacing-xl; }
+
+.btn-add {
+  padding: 0 $spacing-xl;
+  height: $height-button-sm;
+  background: $color-primary;
+  color: #FFF;
+  border-radius: $radius-md;
+  font-size: $font-sm;
+  border: none;
 }
 
 .device-card {
-  padding: 0;
+  background: $color-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
 }
 
-.device-card-header {
+.card-header {
   display: flex;
   align-items: center;
-  padding: $spacing-md;
-  border-bottom: 1px solid $color-border-primary;
+  margin-bottom: $spacing-sm;
 }
 
 .status-dot {
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  margin-right: $spacing-md;
-  flex-shrink: 0;
-
-  &.online {
-    background: $color-success;
-  }
-
-  &.offline {
-    background: $color-text-tertiary;
-  }
-
-  &.configuring {
-    background: $color-warning;
-  }
-}
-
-.device-card-name {
-  flex: 1;
-  font-size: $font-size-md;
-  font-weight: $font-weight-medium;
-  color: $color-text-primary;
-}
-
-.device-card-status {
-  font-size: $font-size-sm;
   margin-right: $spacing-sm;
+  background: $color-text-secondary;
+  &.online { background: $color-success; }
+  &.offline { background: $color-text-secondary; }
+  &.configuring { background: $color-warning; }
 }
 
-.more-icon {
-  width: 40rpx;
-  height: 40rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: $color-text-tertiary;
+.device-name {
+  flex: 1;
+  font-size: $font-md;
+  font-weight: 500;
+  color: $color-text;
 }
 
-.device-card-footer {
+.device-status {
+  font-size: $font-sm;
+  color: $color-text-secondary;
+  &.online { color: $color-success; }
+}
+
+.card-footer {
   display: flex;
   justify-content: space-between;
-  padding: $spacing-sm $spacing-md;
-  background: $color-bg-secondary;
-  font-size: $font-size-sm;
+  padding-left: 28rpx;
+}
+
+.device-info {
+  font-size: $font-xs;
   color: $color-text-secondary;
 }
 
-.tip-text {
+.tip {
   text-align: center;
-  font-size: $font-size-sm;
+  font-size: $font-xs;
   color: $color-text-secondary;
-  padding: $spacing-md;
+  padding: $spacing-lg;
 }
 
 .fab {
   position: fixed;
-  right: $spacing-lg;
-  bottom: calc(100rpx + env(safe-area-inset-bottom) + $spacing-lg);
+  right: $spacing-xl;
+  bottom: calc(100rpx + env(safe-area-inset-bottom));
   width: 112rpx;
   height: 112rpx;
   background: $color-primary;
-  border-radius: $radius-xl;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: $shadow-lg;
-  z-index: $z-index-floating;
 }
 
-/* 弹窗样式 */
-.modal-overlay {
+.fab-icon {
+  font-size: 56rpx;
+  color: #FFF;
+  font-weight: 300;
+}
+
+.modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: flex-end;
-  z-index: $z-index-modal;
-}
-
-.modal-content {
-  width: 100%;
-  background: $color-bg-primary;
-  border-radius: $radius-xxl $radius-xxl 0 0;
-  padding: $spacing-sm 0 $spacing-lg;
-}
-
-.modal-item {
-  display: flex;
-  align-items: center;
-  padding: $spacing-lg;
-  border-bottom: 1px solid $color-border-primary;
-
-  &.delete .modal-label {
-    color: $color-error;
-  }
-}
-
-.modal-label {
-  font-size: $font-size-md;
-  color: $color-text-primary;
-  margin-left: $spacing-md;
-}
-
-.modal-cancel {
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-lg;
-  font-size: $font-size-md;
-  color: $color-primary;
-  border-top: 16rpx solid $color-bg-gray;
+  z-index: 999;
 }
 
-/* 编辑弹窗样式 */
-.edit-modal-content {
-  width: 600rpx;
-  background: $color-bg-primary;
-  border-radius: $radius-xxl;
+.modal-content {
+  width: 560rpx;
+  background: $color-card;
+  border-radius: $radius-lg;
   padding: $spacing-xl;
-  margin-bottom: 15vh;
-  align-self: center;
 }
 
 .modal-title {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  display: block;
+  font-size: $font-lg;
+  font-weight: 600;
+  color: $color-text;
   text-align: center;
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-md;
 }
 
-.modal-message {
-  font-size: $font-size-md;
+.modal-msg {
+  font-size: $font-sm;
   color: $color-text-secondary;
-  display: block;
   text-align: center;
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-xl;
 }
 
-.modal-input {
-  width: 100%;
-  padding: $spacing-md;
-  background: $color-bg-secondary;
-  border-radius: $radius-md;
-  font-size: $font-size-md;
-  color: $color-text-primary;
-  margin-bottom: $spacing-lg;
-}
-
-.modal-actions {
+.modal-btns {
   display: flex;
   gap: $spacing-md;
 }
 
-.modal-btn {
+.btn-cancel, .btn-delete {
   flex: 1;
-  padding: $spacing-md;
+  height: $height-button-sm;
   border-radius: $radius-md;
-  font-size: $font-size-md;
+  font-size: $font-md;
   border: none;
+}
 
-  &.cancel {
-    background: $color-bg-secondary;
-    color: $color-text-secondary;
-  }
+.btn-cancel {
+  background: $color-bg;
+  color: $color-text-secondary;
+}
 
-  &.confirm {
-    background: $color-primary;
-    color: #FFFFFF;
-  }
-
-  &.danger {
-    background: $color-error;
-    color: #FFFFFF;
-  }
+.btn-delete {
+  background: $color-error;
+  color: #FFF;
 }
 </style>
