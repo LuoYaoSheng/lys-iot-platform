@@ -17,10 +17,14 @@
 
       <view class="form">
         <view class="input-group">
-          <input class="input" type="text" placeholder="邮箱" v-model="email" />
+          <text class="input-label">邮箱</text>
+          <input class="input" type="text" placeholder="请输入邮箱" v-model="email" />
         </view>
 
         <button class="btn-primary" @click="handleSubmit">发送重置链接</button>
+        <view class="back-link" @click="goBack">
+          <text>返回登录</text>
+        </view>
       </view>
     </view>
   </view>
@@ -123,6 +127,13 @@ export default {
   margin-bottom: 32rpx;
 }
 
+.input-label {
+  display: block;
+  font-size: 28rpx;
+  color: #3A3A3C;
+  margin-bottom: 12rpx;
+}
+
 .input {
   width: 100%;
   height: 96rpx;
@@ -142,5 +153,15 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.back-link {
+  text-align: center;
+  margin-top: 32rpx;
+
+  text {
+    color: #007AFF;
+    font-size: 28rpx;
+  }
 }
 </style>

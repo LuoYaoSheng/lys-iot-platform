@@ -13,19 +13,34 @@
 
     <view class="content">
       <text class="page-title">创建新账号</text>
+      <text class="page-desc">请填写注册信息</text>
 
       <view class="form">
         <view class="input-group">
-          <input class="input" type="text" placeholder="邮箱" v-model="email" />
+          <text class="input-label">邮箱</text>
+          <input class="input" type="text" placeholder="请输入邮箱" v-model="email" />
         </view>
         <view class="input-group">
-          <input class="input" type="password" placeholder="密码" v-model="password" />
+          <text class="input-label">密码</text>
+          <input class="input" type="password" placeholder="请输入密码" v-model="password" />
         </view>
         <view class="input-group">
-          <input class="input" type="password" placeholder="确认密码" v-model="confirmPassword" />
+          <text class="input-label">确认密码</text>
+          <input class="input" type="password" placeholder="请再次输入密码" v-model="confirmPassword" />
+        </view>
+
+        <!-- 黄色提示badge -->
+        <view class="password-badge">
+          <text class="badge-icon">⚠️</text>
+          <text class="badge-text">密码至少 8 位，包含字母和数字</text>
         </view>
 
         <button class="btn-primary" @click="handleRegister">注 册</button>
+
+        <!-- 登录链接 -->
+        <view class="login-link">
+          <text class="login-btn" @click="goToLogin">返回登录</text>
+        </view>
       </view>
     </view>
   </view>
@@ -68,6 +83,12 @@ export default {
       setTimeout(() => {
         uni.navigateBack();
       }, 1500);
+    },
+
+    goToLogin() {
+      uni.navigateTo({
+        url: '/pages/login/login'
+      });
     },
 
     goBack() {
@@ -121,6 +142,12 @@ export default {
   font-size: 40rpx;
   font-weight: bold;
   color: #3A3A3C;
+  margin-bottom: 16rpx;
+}
+
+.page-desc {
+  font-size: 28rpx;
+  color: #8E8E93;
   margin-bottom: 64rpx;
 }
 
@@ -130,6 +157,13 @@ export default {
 
 .input-group {
   margin-bottom: 32rpx;
+}
+
+.input-label {
+  display: block;
+  font-size: 28rpx;
+  color: #3A3A3C;
+  margin-bottom: 12rpx;
 }
 
 .input {
@@ -152,5 +186,38 @@ export default {
   align-items: center;
   justify-content: center;
   margin-top: 32rpx;
+}
+
+/* 密码提示badge */
+.password-badge {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: rgba(255, 149, 0, 0.1);
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  border-radius: 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.badge-icon {
+  font-size: 28rpx;
+  margin-right: 12rpx;
+}
+
+.badge-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #FF9500;
+}
+
+/* 登录链接 */
+.login-link {
+  text-align: center;
+  margin-top: 32rpx;
+}
+
+.login-btn {
+  font-size: 28rpx;
+  color: #007AFF;
 }
 </style>

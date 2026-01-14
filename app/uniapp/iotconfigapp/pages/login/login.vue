@@ -7,6 +7,7 @@
     <!-- 服务器设置按钮 -->
     <view class="settings-btn" @tap="showServerSettings">
       <text class="settings-icon">⚙️</text>
+      <text class="settings-text">配置</text>
     </view>
 
     <!-- Logo -->
@@ -28,6 +29,7 @@
       </view>
 
       <view class="form-actions">
+        <text class="server-info">{{ currentServerUrl }}</text>
         <text class="forgot-link" @click="goToForgotPassword">忘记密码？</text>
       </view>
 
@@ -39,21 +41,31 @@
       </view>
     </view>
 
-    <!-- 服务器设置弹窗 -->
-    <view class="modal-overlay" v-if="showServerModal" @tap="closeServerSettings">
-      <view class="modal-content" @tap.stop>
-        <text class="modal-title">服务器设置</text>
-        <view class="input-group">
-          <text class="input-label">服务器地址</text>
-          <input class="input" v-model="serverUrl" placeholder="https://iot.example.com" />
+    <!-- 服务器设置底部弹窗 -->
+    <view class="bottom-sheet-overlay" v-if="showServerModal" @tap="closeServerSettings">
+      <view class="bottom-sheet" @tap.stop>
+        <!-- 拖动手柄 -->
+        <view class="drag-handle"></view>
+
+        <!-- 关闭按钮 -->
+        <view class="close-btn" @tap="closeServerSettings">
+          <text class="close-icon">×</text>
         </view>
-        <view class="input-group">
-          <text class="input-label">端口</text>
-          <input class="input" v-model="serverPort" type="number" placeholder="443" />
-        </view>
-        <view class="modal-actions">
-          <button class="modal-btn cancel" @tap="closeServerSettings">取消</button>
-          <button class="modal-btn confirm" @tap="saveServerSettings">保存</button>
+
+        <!-- 弹窗内容 -->
+        <view class="sheet-content">
+          <text class="sheet-title">API 服务器设置</text>
+
+          <view class="input-group">
+            <text class="input-label">服务器地址</text>
+            <input
+              class="input"
+              v-model="serverUrl"
+              placeholder="http://192.168.1.100:48080"
+            />
+          </view>
+
+          <button class="btn-save" @tap="saveServerSettings">保 存</button>
         </view>
       </view>
     </view>
@@ -65,19 +77,20 @@ export default {
   name: 'Login',
   data() {
     return {
-      email: '',
-      password: '',
+      email: 'user@example.com',
+      password: 'password123',
       showServerModal: false,
-      serverUrl: 'https://iot.example.com',
-      serverPort: '443'
+      serverUrl: 'http://192.168.1.100:48080',
+      currentServerUrl: 'http://192.168.1.100:48080'
     };
   },
   onShow() {
     // 加载已保存的服务器配置
     const savedUrl = uni.getStorageSync('serverUrl');
-    const savedPort = uni.getStorageSync('serverPort');
-    if (savedUrl) this.serverUrl = savedUrl;
-    if (savedPort) this.serverPort = savedPort;
+    if (savedUrl) {
+      this.serverUrl = savedUrl;
+      this.currentServerUrl = savedUrl;
+    }
   },
   methods: {
     handleLogin() {
@@ -92,7 +105,8 @@ export default {
 
       // 模拟登录成功
       uni.setStorageSync('token', 'demo-token');
-      uni.redirectTo({
+      // 使用 switchTab 跳转到 TabBar 页面
+      uni.switchTab({
         url: '/pages/device-list/device-list'
       });
     },
@@ -120,7 +134,7 @@ export default {
     saveServerSettings() {
       // 保存服务器配置
       uni.setStorageSync('serverUrl', this.serverUrl);
-      uni.setStorageSync('serverPort', this.serverPort);
+      this.currentServerUrl = this.serverUrl;
       this.closeServerSettings();
       uni.showToast({
         title: '服务器设置已保存',
@@ -144,15 +158,21 @@ export default {
   position: absolute;
   top: 48rpx;
   right: 48rpx;
-  width: 64rpx;
-  height: 64rpx;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background: #F5F5F7;
+  border-radius: 20rpx;
 }
 
 .settings-icon {
-  font-size: 36rpx;
+  font-size: 32rpx;
+}
+
+.settings-text {
+  font-size: 28rpx;
+  color: #3A3A3C;
 }
 
 .logo-section {
@@ -218,13 +238,21 @@ export default {
 
 .form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 48rpx;
+}
+
+.server-info {
+  font-size: 24rpx;
+  color: #8E8E93;
+  flex: 1;
 }
 
 .forgot-link {
   font-size: 28rpx;
   color: #007AFF;
+  margin-left: 16rpx;
 }
 
 .btn-primary {
@@ -256,57 +284,89 @@ export default {
   margin-left: 8rpx;
 }
 
-/* 服务器设置弹窗 */
-.modal-overlay {
+/* 底部弹窗 */
+.bottom-sheet-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.bottom-sheet {
+  position: relative;
+  background: #FFFFFF;
+  border-radius: 24rpx 24rpx 0 0;
+  padding-bottom: 68rpx;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* 拖动手柄 */
+.drag-handle {
+  width: 72rpx;
+  height: 8rpx;
+  background: #C7C7CC;
+  border-radius: 4rpx;
+  margin: 16rpx auto 24rpx;
+}
+
+/* 关闭按钮 */
+.close-btn {
+  position: absolute;
+  top: 24rpx;
+  right: 32rpx;
+  width: 48rpx;
+  height: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
 }
 
-.modal-content {
-  width: 560rpx;
-  background: #FFFFFF;
-  border-radius: 24rpx;
-  padding: 32rpx;
+.close-icon {
+  font-size: 56rpx;
+  color: #8E8E93;
+  font-weight: 300;
+  line-height: 1;
 }
 
-.modal-title {
+/* 弹窗内容 */
+.sheet-content {
+  padding: 0 48rpx 48rpx;
+}
+
+.sheet-title {
   font-size: 36rpx;
   font-weight: bold;
   color: #3A3A3C;
-  margin-bottom: 32rpx;
+  margin-bottom: 48rpx;
+  display: block;
+  text-align: center;
 }
 
-.modal-actions {
-  display: flex;
-  gap: 16rpx;
-  margin-top: 32rpx;
-}
-
-.modal-btn {
-  flex: 1;
-  height: 80rpx;
+.btnSave {
+  width: 100%;
+  height: 96rpx;
+  background: #007AFF;
+  color: #FFFFFF;
   border-radius: 16rpx;
   font-size: 32rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.modal-btn.cancel {
-  background: #F5F5F7;
-  color: #3A3A3C;
-}
-
-.modal-btn.confirm {
-  background: #007AFF;
-  color: #FFFFFF;
+  margin-top: 48rpx;
 }
 </style>
