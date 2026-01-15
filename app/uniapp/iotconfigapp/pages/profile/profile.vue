@@ -31,7 +31,7 @@
     <!-- 菜单列表 -->
     <view class="menu-section">
       <view class="menu-item" @click="goDeviceList">
-        <text class="menu-icon">📱</text>
+        <AppIcon name="device" :size="40" color="#8E8E93" />
         <text class="menu-label">设备管理</text>
         <text class="menu-value">{{ deviceCount }} 台</text>
         <text class="menu-arrow">›</text>
@@ -40,12 +40,12 @@
 
     <view class="menu-section">
       <view class="menu-item" @click="goSettings">
-        <text class="menu-icon">⚙️</text>
+        <AppIcon name="settings" :size="40" color="#8E8E93" />
         <text class="menu-label">设置</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="menu-item" @click="goAbout">
-        <text class="menu-icon">ℹ️</text>
+        <AppIcon name="info" :size="40" color="#8E8E93" />
         <text class="menu-label">关于</text>
         <text class="menu-value">v1.0.0</text>
         <text class="menu-arrow">›</text>
@@ -60,7 +60,10 @@
 </template>
 
 <script>
+import AppIcon from '@/components/AppIcon.vue'
+
 export default {
+  components: { AppIcon },
   data() {
     return {
       deviceCount: 0,

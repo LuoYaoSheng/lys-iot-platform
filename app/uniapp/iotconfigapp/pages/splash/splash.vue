@@ -1,111 +1,100 @@
 <!-- 启动页 -->
 <!-- 作者: 罗耀生 -->
-<!-- 日期: 2026-01-13 -->
 
 <template>
-  <view class="splash-container">
-    <view class="logo">
-      <view class="logo-icon">
-        <text class="logo-icon-symbol">⚡</text>
+  <view class="splash">
+    <view class="content">
+      <view class="logo">
+        <AppIcon name="bolt" :size="64" color="#FFFFFF" />
       </view>
+      <text class="title">Open IoT</text>
+      <text class="subtitle">智能设备配置工具</text>
     </view>
-    <text class="app-name">Open IoT</text>
-    <text class="app-subtitle">Platform</text>
     <view class="loading">
-      <view class="loading-spinner"></view>
+      <view class="spinner"></view>
     </view>
   </view>
 </template>
 
 <script>
-export default {
-  name: 'Splash',
-  data() {
-    return {};
-  },
-  onLoad() {
-    // 2秒后自动跳转
-    setTimeout(() => {
-      this.checkLoginStatus();
-    }, 2000);
-  },
-  methods: {
-    checkLoginStatus() {
-      // TODO: 检查登录状态
-      const token = uni.getStorageSync('token');
+import AppIcon from '@/components/AppIcon.vue'
 
+export default {
+  components: { AppIcon },
+  onLoad() {
+    setTimeout(() => {
+      const token = uni.getStorageSync('token')
       if (token) {
-        uni.redirectTo({
-          url: '/pages/device-list/device-list'
-        });
+        uni.switchTab({ url: '/pages/device-list/device-list' })
       } else {
-        uni.redirectTo({
-          url: '/pages/login/login'
-        });
+        uni.redirectTo({ url: '/pages/login/login' })
       }
-    }
+    }, 1500)
   }
-};
+}
 </script>
 
-<style scoped>
-.splash-container {
+<style lang="scss">
+@import '@/styles/tokens.scss';
+
+.splash {
+  min-height: 100vh;
+  background: $color-card;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
-  background: #FFFFFF;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .logo {
-  margin-bottom: 24rpx;
-}
-
-.logo-icon {
   width: 160rpx;
   height: 160rpx;
-  background: #007AFF;
-  border-radius: 40rpx;
+  background: $color-primary;
+  border-radius: $radius-lg;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: $spacing-xl;
 }
 
-.logo-icon-symbol {
-  font-size: 96rpx;
+.logo-icon {
+  font-size: 80rpx;
   color: #FFFFFF;
 }
 
-.app-name {
-  font-size: 48rpx;
-  font-weight: bold;
-  color: #3A3A3C;
-  margin-bottom: 16rpx;
+.title {
+  font-size: $font-3xl;
+  font-weight: 600;
+  color: $color-text;
+  margin-bottom: $spacing-sm;
 }
 
-.app-subtitle {
-  font-size: 32rpx;
-  color: #8E8E93;
-  margin-bottom: 96rpx;
+.subtitle {
+  font-size: $font-md;
+  color: $color-text-secondary;
 }
 
 .loading {
-  margin-top: 48rpx;
+  position: fixed;
+  bottom: 160rpx;
 }
 
-.loading-spinner {
+.spinner {
   width: 48rpx;
   height: 48rpx;
-  border: 4rpx solid #F0F0F0;
-  border-top-color: #007AFF;
+  border: 4rpx solid $color-border;
+  border-top-color: $color-primary;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 </style>

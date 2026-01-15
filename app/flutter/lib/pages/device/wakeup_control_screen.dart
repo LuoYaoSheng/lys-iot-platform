@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/app_icon.dart';
 
 class WakeupControlScreen extends StatefulWidget {
   const WakeupControlScreen({super.key});
@@ -15,7 +16,7 @@ class _WakeupControlScreenState extends State<WakeupControlScreen> {
       appBar: AppBar(
         title: const Text('电脑唤醒'),
         actions: const [
-          IconButton(icon: Icon(Icons.more_horiz), onPressed: null),
+          IconButton(icon: AppIcon(AppIcons.menu, size: 24), onPressed: null),
         ],
       ),
       body: Center(
@@ -43,8 +44,8 @@ class _WakeupControlScreenState extends State<WakeupControlScreen> {
               child: isSending
                   ? const SizedBox(width: 40, height: 40, child: CircularProgressIndicator(color: Colors.white))
                   : isSuccess
-                      ? const Icon(Icons.check, size: 80, color: Colors.white)
-                      : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.flash_on, size: 80, color: Colors.white), Text('唤醒', style: TextStyle(color: Colors.white, fontSize: 24))]),
+                      ? const AppIcon(AppIcons.check, size: 80, color: Colors.white)
+                      : const Column(mainAxisAlignment: MainAxisAlignment.center, children: [AppIcon(AppIcons.bolt, size: 80, color: Colors.white), Text('唤醒', style: TextStyle(color: Colors.white, fontSize: 24))]),
             ),
           ),
           const SizedBox(height: 48),

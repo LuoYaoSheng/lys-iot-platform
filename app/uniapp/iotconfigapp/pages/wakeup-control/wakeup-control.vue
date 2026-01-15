@@ -8,8 +8,8 @@
       <!-- 唤醒按钮 -->
       <view class="wakeup-btn" :class="{ sending: sending, success: success }" @click="sendWakeup">
         <text v-if="sending" class="spinner"></text>
-        <text v-else-if="success" class="icon">✓</text>
-        <text v-else class="icon">⚡</text>
+        <AppIcon v-else-if="success" name="check" :size="160" color="#FFFFFF" />
+        <AppIcon v-else name="bolt" :size="160" color="#FFFFFF" />
         <text v-if="!sending && !success" class="btn-text">唤醒</text>
       </view>
 
@@ -31,7 +31,10 @@
 </template>
 
 <script>
+import AppIcon from '@/components/AppIcon.vue'
+
 export default {
+  components: { AppIcon },
   data() {
     return {
       sending: false,

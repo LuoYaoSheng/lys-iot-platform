@@ -1,208 +1,109 @@
-<!-- 扫码配网页 -->
+<!-- 扫码添加设备页 -->
 <!-- 作者: 罗耀生 -->
-<!-- 日期: 2026-01-13 -->
 
 <template>
-  <view class="scan-container">
-    <!-- 状态栏占位 -->
-    <view class="status-bar" :style="{ height: statusBarHeight + 'px' }"></view>
-
-    <view class="header">
-      <view class="back-btn" @click="goBack">
-        <text class="back-icon">‹</text>
-      </view>
-      <text class="title">添加设备</text>
+  <view class="scan">
+    <!-- 扫描状态 -->
+    <view class="scanning">
+      <view class="spinner"></view>
+      <text class="scanning-text">正在扫描附近的设备...</text>
     </view>
 
-    <view class="content">
-      <view v-if="scanning" class="scan-area">
-        <view class="scan-icon">
-          <text class="scan-symbol">🔍</text>
+    <!-- 设备列表 -->
+    <view class="device-list">
+      <view v-for="(device, index) in devices" :key="index" class="device-item" @click="connectDevice(device)">
+        <AppIcon :name="device.icon" :size="48" color="#007AFF" />
+        <view class="device-info">
+          <text class="device-name">{{ device.name }}</text>
+          <text class="device-type">{{ device.type }}</text>
         </view>
-        <text class="scan-text">正在扫描附近的设备...</text>
+        <view class="signal">
+          <view v-for="n in 5" :key="n" class="bar" :class="{ active: n <= device.signal }" :style="{ height: (n * 6 + 4) + 'rpx' }"></view>
+        </view>
+        <view class="connect-btn">连接</view>
       </view>
+    </view>
 
-      <view v-else class="device-list">
-        <text class="list-title">发现以下设备</text>
-        <view class="device-item" @tap="selectDevice('IoT-Switch-A1B2', 'servo')">
-          <view class="device-icon">
-            <text class="icon-symbol">🔘</text>
-          </view>
-          <view class="device-info">
-            <text class="device-name">IoT-Switch-A1B2</text>
-            <text class="device-type">舵机开关</text>
-          </view>
-          <view class="device-signal">
-            <text class="signal-dot active">●</text>
-            <text class="signal-dot active">●</text>
-            <text class="signal-dot active">●</text>
-            <text class="signal-dot active">●</text>
-            <text class="signal-dot">●</text>
-          </view>
-        </view>
-
-        <view class="device-item" @tap="selectDevice('IoT-Wakeup-C3D4', 'wakeup')">
-          <view class="device-icon">
-            <text class="icon-symbol">🔌</text>
-          </view>
-          <view class="device-info">
-            <text class="device-name">IoT-Wakeup-C3D4</text>
-            <text class="device-type">USB唤醒设备</text>
-          </view>
-          <view class="device-signal">
-            <text class="signal-dot active">●</text>
-            <text class="signal-dot active">●</text>
-            <text class="signal-dot active">●</text>
-            <text class="signal-dot active">●</text>
-            <text class="signal-dot active">●</text>
-          </view>
-        </view>
-      </view>
+    <view v-if="devices.length === 0" class="empty">
+      <text class="empty-text">未发现设备，请确保设备已开启</text>
     </view>
   </view>
 </template>
 
 <script>
+import AppIcon from '@/components/AppIcon.vue'
+
 export default {
-  name: 'Scan',
+  components: { AppIcon },
   data() {
     return {
-      statusBarHeight: 0,
-      scanning: true
-    };
-  },
-  onReady() {
-    const systemInfo = uni.getSystemInfoSync();
-    this.statusBarHeight = systemInfo.statusBarHeight || 0;
-    this.startScan();
+      devices: [
+        { name: 'IoT-Switch-A1B2', type: '舵机开关', icon: 'plug', signal: 4 },
+        { name: 'IoT-Wakeup-C3D4', type: 'USB唤醒', icon: 'bolt', signal: 5 },
+        { name: 'IoT-Switch-E5F6', type: '舵机开关', icon: 'plug', signal: 2 }
+      ]
+    }
   },
   methods: {
-    startScan() {
-      this.scanning = true;
-      setTimeout(() => {
-        this.scanning = false;
-      }, 2000);
-    },
-
-    selectDevice(deviceId, type) {
-      uni.navigateTo({
-        url: `/pages/config/config?deviceId=${deviceId}&type=${type}`
-      });
-    },
-
-    goBack() {
-      uni.navigateBack();
+    connectDevice(device) {
+      uni.navigateTo({ url: '/pages/config/config?name=' + device.name + '&type=' + device.type })
     }
   }
-};
+}
 </script>
 
-<style scoped>
-.scan-container {
+<style lang="scss">
+@import '@/styles/tokens.scss';
+
+.scan {
   min-height: 100vh;
-  background: #FFFFFF;
+  background: $color-bg;
+  padding: $spacing-lg;
+  box-sizing: border-box;
 }
 
-.status-bar {
-  width: 100%;
-  background: #FFFFFF;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  padding: 24rpx 32rpx;
-  background: #FFFFFF;
-  border-bottom: 1rpx solid #E5E5EA;
-}
-
-.back-btn {
-  width: 64rpx;
-  height: 64rpx;
+.scanning {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: $spacing-xl 0;
+  gap: $spacing-md;
 }
 
-.back-icon {
-  font-size: 64rpx;
-  color: #3A3A3C;
-  font-weight: 300;
+.spinner {
+  width: 40rpx;
+  height: 40rpx;
+  border: 4rpx solid $color-border;
+  border-top-color: $color-primary;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-.title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #3A3A3C;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.content {
-  padding: 32rpx;
-}
-
-.scan-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 120rpx 0;
-}
-
-.scan-icon {
-  width: 128rpx;
-  height: 128rpx;
-  background: #F5F5F7;
-  border-radius: 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 32rpx;
-}
-
-.scan-symbol {
-  font-size: 64rpx;
-}
-
-.scan-text {
-  font-size: 28rpx;
-  color: #8E8E93;
-}
-
-.list-title {
-  font-size: 32rpx;
-  font-weight: 500;
-  color: #3A3A3C;
-  margin-bottom: 24rpx;
+.scanning-text {
+  font-size: $font-sm;
+  color: $color-text-secondary;
 }
 
 .device-list {
-  margin-top: 32rpx;
+  margin-top: $spacing-md;
 }
 
 .device-item {
   display: flex;
   align-items: center;
-  padding: 24rpx 32rpx;
-  background: #F5F5F7;
-  border-radius: 24rpx;
-  margin-bottom: 16rpx;
+  background: $color-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
 }
 
 .device-icon {
-  width: 80rpx;
-  height: 80rpx;
-  background: #FFFFFF;
-  border-radius: 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 24rpx;
-}
-
-.icon-symbol {
-  font-size: 40rpx;
+  font-size: 48rpx;
+  margin-right: $spacing-md;
 }
 
 .device-info {
@@ -212,27 +113,46 @@ export default {
 }
 
 .device-name {
-  font-size: 32rpx;
-  color: #3A3A3C;
-  margin-bottom: 8rpx;
+  font-size: $font-md;
+  font-weight: 500;
+  color: $color-text;
+  margin-bottom: $spacing-xs;
 }
 
 .device-type {
-  font-size: 28rpx;
-  color: #8E8E93;
+  font-size: $font-xs;
+  color: $color-text-secondary;
 }
 
-.device-signal {
+.signal {
   display: flex;
+  align-items: flex-end;
   gap: 4rpx;
+  margin-right: $spacing-md;
 }
 
-.signal-dot {
-  font-size: 16rpx;
-  color: #E5E5EA;
+.bar {
+  width: 8rpx;
+  background: $color-border;
+  border-radius: 4rpx;
+  &.active { background: $color-success; }
 }
 
-.signal-dot.active {
-  color: #34C759;
+.connect-btn {
+  padding: $spacing-sm $spacing-md;
+  background: $color-primary;
+  color: #FFF;
+  border-radius: $radius-sm;
+  font-size: $font-xs;
+}
+
+.empty {
+  text-align: center;
+  padding: $spacing-2xl;
+}
+
+.empty-text {
+  font-size: $font-sm;
+  color: $color-text-secondary;
 }
 </style>

@@ -29,7 +29,7 @@
         <!-- 高级选项勾选 -->
         <view class="advanced-toggle" @click="showAdvanced = !showAdvanced">
           <view class="checkbox" :class="{ checked: showAdvanced }">
-            <text v-if="showAdvanced" class="check-icon">✓</text>
+            <AppIcon v-if="showAdvanced" name="check" :size="24" color="#FFFFFF" />
           </view>
           <text class="toggle-text">高级选项</text>
         </view>
@@ -126,7 +126,10 @@
 </template>
 
 <script>
+import AppIcon from '@/components/AppIcon.vue'
+
 export default {
+  components: { AppIcon },
   data() {
     return {
       device: { id: '', name: '', type: 'servo', status: 'online', firmware: 'v1.0.0' },

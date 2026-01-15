@@ -1,15 +1,10 @@
 /// 登录页
 /// 作者: 罗耀生
-/// 日期: 2026-01-13
 
 import 'package:flutter/material.dart';
 import '../../theme/app_tokens.dart';
-import '../../widgets/app_input.dart';
-import '../../widgets/app_button.dart';
-import '../../widgets/common/app_dialog.dart';
-import '../../widgets/common/app_toast.dart';
-import '../../core/routes.dart';
 import '../../core/app_router.dart';
+import '../../widgets/app_icon.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,10 +14,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'user@example.com');
-  final _passwordController = TextEditingController(text: 'password123');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _showPassword = false;
   bool _isLoading = false;
-  String _currentServerUrl = 'http://192.168.1.100:48080';
+  String _serverUrl = 'http://192.168.1.100:48080';
 
   @override
   void dispose() {
@@ -34,151 +30,130 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Stack(
           children: [
-            Center(
-              child: SingleChildScrollView(
-                padding: AppSpacing.paddingXL,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Logo
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.bolt,
-                        size: 36,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    const Text(
-                      'Open IoT',
-                      style: AppTextStyles.headlineSmall,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      '欢迎回来，请登录',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // 表单
-                    AppInput(
-                      controller: _emailController,
-                      hint: '邮箱',
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    AppInput(
-                      controller: _passwordController,
-                      hint: '密码',
-                      obscureText: true,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _handleLogin(),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-
-                    // 当前服务器地址 + 忘记密码
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            _currentServerUrl,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => AppRouter.goToForgotPassword(context),
-                            child: Text(
-                              '忘记密码？',
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // 登录按钮
-                    AppButton(
-                      text: '登 录',
-                      type: AppButtonType.primary,
-                      isLoading: _isLoading,
-                      isFullWidth: true,
-                      onPressed: _handleLogin,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-
-                    // 注册链接
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '还没有账号？',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => AppRouter.goToRegister(context),
-                          child: Text(
-                            '立即注册',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+            // 主内容
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 60),
+                  // Logo
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Center(
+                  child: AppIcon(AppIcons.bolt, size: 32, color: Colors.white),
                 ),
               ),
-            ),
-            // 服务器设置按钮（齿轮图标+文字"配置"）
-            Positioned(
-              top: AppSpacing.md,
-              right: AppSpacing.md,
-              child: GestureDetector(
-                onTap: () => _showServerSettings(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.bgSecondary,
-                    borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 24),
+              const Text(
+                'Open IoT',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF3A3A3C),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '欢迎回来，请登录',
+                style: TextStyle(fontSize: 14, color: Color(0xFF8E8E93)),
+              ),
+              const SizedBox(height: 40),
+
+              // 邮箱输入
+              _buildInput(
+                controller: _emailController,
+                hint: '邮箱',
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+
+              // 密码输入
+              _buildInput(
+                controller: _passwordController,
+                hint: '密码',
+                obscureText: !_showPassword,
+                suffix: GestureDetector(
+                  onTap: () => setState(() => _showPassword = !_showPassword),
+                  child: AppIcon(
+                    _showPassword ? AppIcons.eyeOff : AppIcons.eye,
+                    size: 20,
+                    color: AppColors.textSecondary,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.settings_outlined,
-                        size: 16,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '配置',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // 忘记密码
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => AppRouter.goToForgotPassword(context),
+                  child: const Text('忘记密码？', style: TextStyle(color: AppColors.primary)),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 登录按钮
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _handleLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('登录', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 注册链接
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('还没有账号？', style: TextStyle(color: Color(0xFF8E8E93))),
+                  TextButton(
+                    onPressed: () => AppRouter.goToRegister(context),
+                    child: const Text('立即注册', style: TextStyle(color: AppColors.primary)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+            // 右上角设置按钮（放在 ScrollView 之后，确保在上层可点击）
+            Positioned(
+              top: 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: _showServerConfig,
+                child: const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Center(
+                    child: AppIcon(AppIcons.settings, size: 24),
                   ),
                 ),
               ),
@@ -189,92 +164,117 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin() async {
-    // TODO: 实际登录逻辑
-    setState(() => _isLoading = true);
-
-    // 模拟网络请求
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) return;
-
-    setState(() => _isLoading = false);
-    AppToast.success(context, '登录成功');
-    AppRouter.goToMain(context);
-  }
-
-  void _showServerSettings() {
+  void _showServerConfig() {
+    final controller = TextEditingController(text: _serverUrl);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 拖动手柄
+              Container(width: 36, height: 4, decoration: BoxDecoration(color: const Color(0xFFE5E5EA), borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 24),
+              const Text('服务器配置', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 24),
+              const Align(alignment: Alignment.centerLeft, child: Text('API 服务器地址', style: TextStyle(fontSize: 14, color: Color(0xFF8E8E93)))),
+              const SizedBox(height: 8),
               Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.borderSecondary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // 关闭按钮
-              Align(
-                alignment: Alignment.topRight,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.close,
-                      color: AppColors.textSecondary,
-                    ),
+                height: 48,
+                decoration: BoxDecoration(color: const Color(0xFFF5F5F7), borderRadius: BorderRadius.circular(12)),
+                child: TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'API 服务器设置',
-                style: AppTextStyles.titleLarge,
-                textAlign: TextAlign.center,
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() => _serverUrl = controller.text);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已保存')));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text('保存配置', style: TextStyle(fontSize: 16)),
+                ),
               ),
-              const SizedBox(height: AppSpacing.xl),
-              AppInput(
-                hint: 'API 服务器地址',
-                keyboardType: TextInputType.url,
-                value: _currentServerUrl,
-                onChanged: (value) => _currentServerUrl = value,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              AppButton(
-                text: '保 存',
-                type: AppButtonType.primary,
-                isFullWidth: true,
-                onPressed: () {
-                  Navigator.pop(context);
-                  setState(() {}); // 更新UI显示
-                  AppToast.success(context, '服务器设置已保存');
-                },
-              ),
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildInput({
+    required TextEditingController controller,
+    required String hint,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    Widget? suffix,
+  }) {
+    return Container(
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F7),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xFFC7C7CC)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          suffixIcon: suffix != null
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: suffix,
+                )
+              : null,
+          suffixIconConstraints: const BoxConstraints(minHeight: 0, minWidth: 0),
+        ),
+      ),
+    );
+  }
+
+  void _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请输入邮箱和密码')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('登录成功')),
+    );
+    AppRouter.goToMain(context);
   }
 }

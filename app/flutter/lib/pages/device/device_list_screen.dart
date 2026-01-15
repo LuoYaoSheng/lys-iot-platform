@@ -1,31 +1,22 @@
 /// 设备列表页
 /// 作者: 罗耀生
-/// 日期: 2026-01-13
 
 import 'package:flutter/material.dart';
-import '../../theme/app_tokens.dart';
 import '../../widgets/app_icon.dart';
-import '../../widgets/app_card.dart';
-import '../../widgets/common/app_empty.dart';
-import '../../widgets/common/app_toast.dart';
-import '../../models/device.dart';
+import '../../theme/app_tokens.dart';
 import '../../core/app_router.dart';
 
 class DeviceListScreen extends StatefulWidget {
-  /// 是否嵌套在TabBar中（嵌套时不显示AppBar）
   final bool isNested;
 
-  const DeviceListScreen({
-    super.key,
-    this.isNested = false,
-  });
+  const DeviceListScreen({super.key, this.isNested = false});
 
   @override
   State<DeviceListScreen> createState() => _DeviceListScreenState();
 }
 
 class _DeviceListScreenState extends State<DeviceListScreen> {
-  List<Device> _devices = [];
+  List<Map<String, dynamic>> _devices = [];
 
   @override
   void initState() {
@@ -35,216 +26,163 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
 
   void _loadDevices() {
     setState(() {
-      _devices = MockData.devices;
+      _devices = [
+        {'id': '1', 'name': 'IoT-Switch-A1B2', 'type': 'servo', 'status': 'online', 'firmware': 'v1.2.0'},
+        {'id': '2', 'name': 'IoT-Wakeup-C3D4', 'type': 'wakeup', 'status': 'online', 'firmware': 'v1.0.0'},
+        {'id': '3', 'name': 'IoT-Switch-E5F6', 'type': 'servo', 'status': 'offline', 'firmware': 'v1.1.0'},
+      ];
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final content = _devices.isEmpty
-        ? AppEmpty(
-            message: '暂无设备',
-            actionText: '添加设备',
-            onAction: () => AppRouter.goToScan(context),
-          )
-        : RefreshIndicator(
-            onRefresh: () async => _loadDevices(),
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              itemCount: _devices.length,
-              itemBuilder: (context, index) {
-                final device = _devices[index];
-                return _DeviceCard(
-                  device: device,
-                  onTap: () => _openDevice(device),
-                  onLongPress: () => _showDeviceMenu(device),
-                );
-              },
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F7),
+      body: Column(
+        children: [
+          // 标题栏
+          Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 12,
+              left: 16,
+              right: 16,
+              bottom: 12,
             ),
-          );
-
-    if (widget.isNested) {
-      // 嵌套模式：只返回内容区域，有自定义标题栏和FAB
-      return Scaffold(
-        body: Column(
-          children: [
-            // 自定义标题栏
-            Container(
-              height: 44 + MediaQuery.of(context).padding.top,
-              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-              decoration: const BoxDecoration(
-                color: AppColors.bgPrimary,
-                border: Border(
-                  bottom: BorderSide(color: AppColors.borderSecondary, width: 0.5),
+            color: Colors.white,
+            child: const Row(
+              children: [
+                Text(
+                  '我的设备',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
-              ),
-              child: const Row(
-                children: [
-                  SizedBox(width: 16), // 左边距
-                  Text(
-                    '我的设备',
-                    style: AppTextStyles.headlineSmall,
-                  ),
-                ],
-              ),
+              ],
             ),
-            // 内容区域
-            Expanded(child: content),
-          ],
-        ),
-        // FAB添加设备按钮
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => AppRouter.goToScan(context),
-          backgroundColor: AppColors.primary,
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
-      );
-    } else {
-      // 独立模式：显示完整AppBar和FAB
-      return Scaffold(
-        appBar: const AppBar(
-          title: Text('我的设备'),
-        ),
-        body: content,
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => AppRouter.goToScan(context),
-          backgroundColor: AppColors.primary,
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
-      );
-    }
-  }
-
-  /// 设备卡片
-  Widget _DeviceCard({
-    required Device device,
-    required VoidCallback onTap,
-    required VoidCallback onLongPress,
-  }) {
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(12.0),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 卡片头部：状态点 + 设备名 + 状态文本 + 更多图标
-              Row(
-                children: [
-                  // 状态指示点
-                  Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.only(right: AppSpacing.sm),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: device.status == DeviceStatus.online
-                          ? const Color(0xFF34C759) // 在线绿色
-                          : const Color(0xFF8E8E93), // 离线灰色
-                    ),
-                  ),
-                  // 设备名称
-                  Expanded(
-                    child: Text(
-                      device.name,
-                      style: AppTextStyles.titleMedium,
-                    ),
-                  ),
-                  // 状态文本
-                  Text(
-                    device.statusText,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: device.status == DeviceStatus.online
-                          ? AppColors.textPrimary
-                          : const Color(0xFF8E8E93),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  // 更多图标（三个点）
-                  Icon(
-                    Icons.more_horiz,
-                    size: 20,
-                    color: AppColors.textSecondary,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              // 卡片底部：位置/型号 + 固件版本
-              Row(
-                children: [
-                  // 位置或型号信息
-                  Text(
-                    device.location != null
-                        ? '位置: ${device.location}'
-                        : device.model ?? '',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const Spacer(),
-                  // 固件版本
-                  Text(
-                    '固件: ${device.firmware ?? "未知"}',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
-        ),
+          // 设备列表
+          Expanded(
+            child: _devices.isEmpty
+                ? _buildEmpty()
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _devices.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == _devices.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            '长按设备可删除',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
+                          ),
+                        );
+                      }
+                      return _buildDeviceCard(_devices[index]);
+                    },
+                  ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => AppRouter.goToScan(context),
+        backgroundColor: AppColors.primary,
+        child: const AppIcon(AppIcons.add, size: 24, color: Colors.white),
       ),
     );
   }
 
-  /// 打开设备详情
-  void _openDevice(Device device) {
-    AppRouter.goToControl(context, device.id);
+  Widget _buildEmpty() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const AppIcon(AppIcons.inbox, size: 60, color: Color(0xFF8E8E93)),
+          const SizedBox(height: 16),
+          const Text('暂无设备', style: TextStyle(color: Color(0xFF8E8E93))),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => AppRouter.goToScan(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('添加设备'),
+          ),
+        ],
+      ),
+    );
   }
 
-  /// 显示设备菜单
-  void _showDeviceMenu(Device device) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
+  Widget _buildDeviceCard(Map<String, dynamic> device) {
+    final isOnline = device['status'] == 'online';
+
+    return GestureDetector(
+      onTap: () => AppRouter.goToControl(context, device['id']),
+      onLongPress: () => _showDeleteDialog(device),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('编辑设备'),
-              onTap: () {
-                Navigator.pop(context);
-                if (mounted) AppToast.show(context, '编辑设备: ${device.name}');
-              },
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isOnline ? const Color(0xFF34C759) : const Color(0xFF8E8E93),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    device['name'],
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                ),
+                Text(
+                  isOnline ? '在线' : '离线',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isOnline ? const Color(0xFF34C759) : const Color(0xFF8E8E93),
+                  ),
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('删除设备', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteConfirm(device);
-              },
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    device['type'] == 'servo' ? '舵机开关' : 'USB唤醒',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
+                  ),
+                  Text(
+                    '固件: ${device['firmware']}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93)),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
           ],
         ),
       ),
     );
   }
 
-  /// 显示删除确认对话框
-  void _showDeleteConfirm(Device device) {
+  void _showDeleteDialog(Map<String, dynamic> device) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('确定要删除设备"\${device.name}"吗？'),
+        title: const Text('删除设备'),
+        content: Text('确定删除「${device['name']}」？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -253,13 +191,14 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
           TextButton(
             onPressed: () {
               setState(() {
-                _devices.removeWhere((d) => d.id == device.id);
+                _devices.removeWhere((d) => d['id'] == device['id']);
               });
               Navigator.pop(context);
-              if (mounted) AppToast.show(context, '设备已删除');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('已删除')),
+              );
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('删除'),
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

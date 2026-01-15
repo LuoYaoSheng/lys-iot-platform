@@ -2,6 +2,7 @@
 /// 作者: 罗耀生
 
 import 'package:flutter/material.dart';
+import '../../widgets/app_icon.dart';
 import '../../theme/app_tokens.dart';
 
 class DeviceControlScreen extends StatefulWidget {
@@ -166,7 +167,7 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: _showAdvanced
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    ? const AppIcon(AppIcons.check, size: 14, color: Colors.white)
                     : null,
               ),
               const SizedBox(width: 8),
@@ -252,7 +253,18 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text(_pulseSending ? '发送中...' : (_pulseSuccess ? '✓ 已触发' : '触发脉冲'), style: const TextStyle(fontSize: 16)),
+            child: _pulseSending
+                ? const Text('发送中...', style: TextStyle(fontSize: 16))
+                : _pulseSuccess
+                    ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AppIcon(AppIcons.check, size: 16, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('已触发', style: TextStyle(fontSize: 16)),
+                        ],
+                      )
+                    : const Text('触发脉冲', style: TextStyle(fontSize: 16)),
           ),
         ),
         const SizedBox(height: 8),
@@ -304,7 +316,7 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.1), shape: BoxShape.circle),
-              child: const Center(child: Icon(Icons.power_settings_new, size: 48, color: AppColors.primary)),
+              child: Center(child: AppIcon(AppIcons.power, size: 48, color: AppColors.primary)),
             ),
             const SizedBox(height: 24),
             const Text('点击唤醒', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
@@ -334,7 +346,7 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
                     children: [
                       Text(_device['name'] ?? '', style: const TextStyle(fontSize: 16, color: Color(0xFF8E8E93))),
                       const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right, size: 20, color: Color(0xFF8E8E93)),
+                      const AppIcon(AppIcons.chevronRight, size: 20, color: Color(0xFF8E8E93)),
                     ],
                   ),
                 ],

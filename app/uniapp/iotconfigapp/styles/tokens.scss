@@ -1,0 +1,52 @@
+// Design Tokens - 精简版
+// 作者: 罗耀生
+
+// ============ 颜色 ============
+$color-primary: #007AFF;
+$color-primary-light: #3395FF;
+$color-primary-dark: #0056CC;
+
+$color-success: #34C759;
+$color-warning: #FF9500;
+$color-error: #FF3B30;
+
+$color-bg: #F5F5F7;
+$color-card: #FFFFFF;
+$color-text: #3A3A3C;
+$color-text-secondary: #8E8E93;
+$color-border: #E5E5EA;
+$color-placeholder: #C7C7CC;
+
+// ============ 间距 ============
+$spacing-xs: 8rpx;   // 4px
+$spacing-sm: 16rpx;  // 8px
+$spacing-md: 24rpx;  // 12px
+$spacing-lg: 32rpx;  // 16px
+$spacing-xl: 48rpx;  // 24px
+$spacing-2xl: 64rpx; // 32px
+
+// ============ 圆角 ============
+$radius-sm: 16rpx;  // 8px
+$radius-md: 24rpx;  // 12px
+$radius-lg: 32rpx;  // 16px
+$radius-full: 9999rpx;
+
+// ============ 字体大小 ============
+$font-xs: 24rpx;   // 12px
+$font-sm: 28rpx;   // 14px
+$font-md: 32rpx;   // 16px
+$font-lg: 36rpx;   // 18px
+$font-xl: 40rpx;   // 20px
+$font-2xl: 48rpx;  // 24px
+$font-3xl: 64rpx;  // 32px
+
+// ============ 组件尺寸 ============
+$height-input: 96rpx;  // 48px
+$height-button: 96rpx; // 48px
+$height-button-sm: 80rpx; // 40px
+$height-list-item: 112rpx; // 56px
+
+// ============ 阴影 ============
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.12);

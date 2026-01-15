@@ -2,6 +2,7 @@
 /// 作者: 罗耀生
 
 import 'package:flutter/material.dart';
+import '../../widgets/app_icon.dart';
 import '../../theme/app_tokens.dart';
 
 class ServoControlScreen extends StatefulWidget {
@@ -36,7 +37,7 @@ class _ServoControlScreenState extends State<ServoControlScreen> {
       appBar: AppBar(
         title: const Text('客厅开关'),
         actions: const [
-          IconButton(icon: Icon(Icons.more_horiz), onPressed: null),
+          IconButton(icon: AppIcon(AppIcons.menu, size: 24), onPressed: null),
         ],
       ),
       backgroundColor: const Color(0xFFF5F5F7),
@@ -166,7 +167,7 @@ class _ServoControlScreenState extends State<ServoControlScreen> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: showAdvanced
-                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                      ? const AppIcon(AppIcons.check, size: 14, color: Colors.white)
                       : null,
                 ),
                 const SizedBox(width: 8),

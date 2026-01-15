@@ -6,7 +6,7 @@
     <!-- 设备列表 -->
     <scroll-view class="list" scroll-y>
       <view v-if="devices.length === 0" class="empty">
-        <text class="empty-icon">📱</text>
+        <AppIcon name="device" :size="120" color="#C7C7CC" />
         <text class="empty-text">暂无设备</text>
         <button class="btn-add" @click="goScan">添加设备</button>
       </view>
@@ -53,7 +53,10 @@ const mockDevices = [
   { id: '3', name: 'IoT-Switch-E5F6', type: 'servo', status: 'offline', firmware: 'v1.1.0' }
 ]
 
+import AppIcon from '@/components/AppIcon.vue'
+
 export default {
+  components: { AppIcon },
   data() {
     return {
       devices: [],

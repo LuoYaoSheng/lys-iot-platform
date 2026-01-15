@@ -1,306 +1,225 @@
 <!-- 关于页 -->
 <!-- 作者: 罗耀生 -->
-<!-- 日期: 2026-01-13 -->
 
 <template>
-  <view class="about-container">
-    <view class="header">
-      <view class="back-btn" @click="goBack">
-        <text class="back-icon">‹</text>
-      </view>
-      <text class="title">关于</text>
-    </view>
-
-    <view class="content">
-      <view class="app-logo">
-        <text class="logo-icon">⚡</text>
+  <view class="about">
+    <!-- Logo -->
+    <view class="logo-section">
+      <view class="logo">
+        <AppIcon name="bolt" :size="64" color="#FFFFFF" />
       </view>
       <text class="app-name">Open IoT Platform</text>
-      <text class="app-version">版本 1.0.0</text>
+      <text class="app-desc">轻量级开源 IoT 设备管理平台</text>
+    </view>
 
-      <view class="link-section">
-        <text class="section-title">相关链接</text>
-        <view class="link-card">
-          <view class="link-item" v-for="link in links" :key="link.label" @click="handleLinkClick(link)">
-            <view class="link-left">
-              <text class="link-icon">{{ link.icon }}</text>
-              <text class="link-label">{{ link.label }}</text>
-            </view>
-            <text class="arrow-icon">›</text>
-          </view>
-        </view>
+    <!-- 版本信息 -->
+    <view class="card">
+      <view class="info-item">
+        <text class="info-label">版本号</text>
+        <text class="info-value">v1.0.0</text>
       </view>
-
-      <view class="info-section">
-        <view class="info-item" @click="copyText('落落在厦', '公众号')">
-          <view class="info-left">
-            <text class="info-icon">💬</text>
-            <view class="info-text">
-              <text class="info-label">公众号</text>
-              <text class="info-value">落落在厦</text>
-            </view>
-          </view>
-          <text class="copy-icon">📋</text>
-        </view>
+      <view class="info-item">
+        <text class="info-label">构建日期</text>
+        <text class="info-value">2026-01-14</text>
       </view>
+    </view>
 
-      <text class="copyright">© 2026 罗耀生</text>
+    <!-- 相关链接 -->
+    <text class="group-title">相关链接</text>
+    <view class="card">
+      <view class="link-item" @click="openLink('github')">
+        <AppIcon name="link" :size="32" color="#8E8E93" />
+        <text class="link-label">GitHub</text>
+        <text class="link-arrow">›</text>
+      </view>
+      <view class="link-item" @click="openLink('changelog')">
+        <AppIcon name="document" :size="32" color="#8E8E93" />
+        <text class="link-label">更新日志</text>
+        <text class="link-arrow">›</text>
+      </view>
+      <view class="link-item" @click="openLink('license')">
+        <AppIcon name="license" :size="32" color="#8E8E93" />
+        <text class="link-label">开源协议</text>
+        <text class="link-value">GPL v3</text>
+        <text class="link-arrow">›</text>
+      </view>
+    </view>
+
+    <!-- 作者信息 -->
+    <text class="group-title">作者</text>
+    <view class="card">
+      <view class="info-item">
+        <text class="info-label">作者</text>
+        <text class="info-value">罗耀生</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">邮箱</text>
+        <text class="info-value email">contact@i2kai.com</text>
+      </view>
+    </view>
+
+    <!-- 技术栈 -->
+    <text class="group-title">技术栈</text>
+    <view class="card">
+      <view class="tech-list">
+        <text class="tech-chip">Flutter</text>
+        <text class="tech-chip">UniApp</text>
+        <text class="tech-chip">Go</text>
+        <text class="tech-chip">MQTT</text>
+        <text class="tech-chip">MySQL</text>
+      </view>
+    </view>
+
+    <!-- 底部版权 -->
+    <view class="footer">
+      <text class="copyright">© 2026 Open IoT Platform</text>
+      <text class="copyright">All rights reserved</text>
     </view>
   </view>
 </template>
 
 <script>
-export default {
-  name: 'About',
-  data() {
-    return {
-      links: [
-        {
-          label: '项目落地页',
-          url: 'https://open.iot.i2kai.com',
-          icon: '🌐'
-        },
-        {
-          label: '个人主页',
-          url: 'https://i2kai.com',
-          icon: '👤'
-        },
-        {
-          label: 'Gitee 仓库',
-          url: 'https://gitee.com/luo-yao-sheng/open-iot-platform',
-          icon: '📦'
-        },
-        {
-          label: 'GitHub 仓库',
-          url: 'https://github.com/luoyaosheng/open-iot-platform',
-          icon: '📦'
-        }
-      ]
-    };
-  },
-  methods: {
-    goBack() {
-      uni.navigateBack();
-    },
+import AppIcon from '@/components/AppIcon.vue'
 
-    // 判断是否为小程序环境
-    isMiniProgram() {
-      // #ifdef MP-WEIXIN
-      return true;
-      // #endif
-      // #ifdef MP-ALIPAY
-      return true;
-      // #endif
-      // #ifdef MP-BAIDU
-      return true;
-      // #endif
-      // #ifdef MP-TOUTIAO
-      return true;
-      // #endif
-      // #ifdef MP-QQ
-      return true;
+export default {
+  components: { AppIcon },
+  methods: {
+    openLink(type) {
+      const urls = {
+        github: 'https://github.com/user/open-iot-platform',
+        changelog: 'https://github.com/user/open-iot-platform/blob/main/CHANGELOG.md',
+        license: 'https://github.com/user/open-iot-platform/blob/main/LICENSE'
+      }
+      // #ifdef APP-PLUS
+      plus.runtime.openURL(urls[type])
       // #endif
       // #ifdef H5
-      return false;
+      window.open(urls[type])
       // #endif
-      // #ifdef APP-PLUS
-      return false;
-      // #endif
-      return false;
-    },
-
-    handleLinkClick(link) {
-      // 小程序环境使用复制，其他环境直接打开链接
-      if (this.isMiniProgram()) {
-        this.copyText(link.url, link.label);
-      } else {
-        // App 或 H5 环境直接打开链接
-        plus.runtime.openURL(link.url);
-      }
-    },
-
-    copyText(text, label) {
-      uni.setClipboardData({
-        data: text,
-        success: () => {
-          uni.showToast({
-            title: `已复制${label}`,
-            icon: 'success'
-          });
-        }
-      });
     }
   }
-};
+}
 </script>
 
-<style scoped>
-.about-container {
+<style lang="scss">
+@import '@/styles/tokens.scss';
+
+.about {
   min-height: 100vh;
-  background: #FFFFFF;
+  background: $color-bg;
+  padding: $spacing-lg;
+  box-sizing: border-box;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  padding: 32rpx;
-  position: relative;
-}
-
-.back-btn {
-  width: 64rpx;
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.back-icon {
-  font-size: 64rpx;
-  color: #3A3A3C;
-  font-weight: 300;
-}
-
-.title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #3A3A3C;
-}
-
-.content {
+.logo-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 32rpx 32rpx;
+  padding: $spacing-2xl 0;
 }
 
-.app-logo {
+.logo {
   width: 128rpx;
   height: 128rpx;
-  background: #007AFF;
-  border-radius: 32rpx;
+  background: linear-gradient(135deg, $color-primary 0%, #5856D6 100%);
+  border-radius: $radius-lg;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 32rpx;
+  margin-bottom: $spacing-lg;
 }
 
 .logo-icon {
-  font-size: 72rpx;
-  color: #FFFFFF;
+  font-size: 64rpx;
 }
 
 .app-name {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #3A3A3C;
-  margin-bottom: 16rpx;
+  font-size: $font-xl;
+  font-weight: 600;
+  color: $color-text;
+  margin-bottom: $spacing-sm;
 }
 
-.app-version {
-  font-size: 28rpx;
-  color: #8E8E93;
-  margin-bottom: 64rpx;
+.app-desc {
+  font-size: $font-sm;
+  color: $color-text-secondary;
 }
 
-.link-section {
-  width: 100%;
-  margin-bottom: 32rpx;
+.group-title {
+  display: block;
+  font-size: $font-xs;
+  color: $color-text-secondary;
+  margin: $spacing-lg 0 $spacing-sm $spacing-sm;
 }
 
-.section-title {
-  font-size: 28rpx;
-  color: #8E8E93;
-  margin-bottom: 16rpx;
-  padding-left: 8rpx;
-}
-
-.link-card {
-  background: #F5F5F7;
-  border-radius: 24rpx;
+.card {
+  background: $color-card;
+  border-radius: $radius-lg;
   overflow: hidden;
+  margin-bottom: $spacing-md;
 }
 
-.link-item {
+.info-item, .link-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 32rpx;
-  border-bottom: 1rpx solid #E5E5EA;
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid $color-border;
+  &:last-child { border-bottom: none; }
 }
 
-.link-item:last-child {
-  border-bottom: none;
-}
-
-.link-left {
-  display: flex;
-  align-items: center;
+.info-label, .link-label {
   flex: 1;
+  font-size: $font-md;
+  color: $color-text;
+}
+
+.info-value {
+  font-size: $font-md;
+  color: $color-text-secondary;
+  &.email { color: $color-primary; }
 }
 
 .link-icon {
   font-size: 32rpx;
-  margin-right: 16rpx;
+  margin-right: $spacing-md;
 }
 
-.link-label {
+.link-value {
+  font-size: $font-sm;
+  color: $color-text-secondary;
+  margin-right: $spacing-sm;
+}
+
+.link-arrow {
   font-size: 32rpx;
-  color: #3A3A3C;
+  color: $color-placeholder;
 }
 
-.arrow-icon {
-  font-size: 40rpx;
-  color: #C7C7CC;
-}
-
-.info-section {
-  width: 100%;
-  background: #F5F5F7;
-  border-radius: 24rpx;
-  overflow: hidden;
-  margin-bottom: 64rpx;
-}
-
-.info-item {
+.tech-list {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx 32rpx;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  padding: $spacing-lg;
 }
 
-.info-left {
-  display: flex;
-  align-items: center;
-  flex: 1;
+.tech-chip {
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg;
+  border-radius: $radius-sm;
+  font-size: $font-xs;
+  color: $color-text-secondary;
 }
 
-.info-icon {
-  font-size: 32rpx;
-  margin-right: 16rpx;
-}
-
-.info-text {
+.footer {
   display: flex;
   flex-direction: column;
-}
-
-.info-label {
-  font-size: 24rpx;
-  color: #8E8E93;
-  margin-bottom: 4rpx;
-}
-
-.info-value {
-  font-size: 32rpx;
-  color: #3A3A3C;
+  align-items: center;
+  padding: $spacing-2xl 0;
 }
 
 .copyright {
-  font-size: 24rpx;
-  color: #C7C7CC;
+  font-size: $font-xs;
+  color: $color-placeholder;
+  margin-bottom: $spacing-xs;
 }
 </style>

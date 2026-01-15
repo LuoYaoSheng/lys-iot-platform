@@ -23,7 +23,7 @@
 
     <!-- 设备信息卡片 -->
     <view class="device-card">
-      <text class="device-icon">{{ deviceType === 'USB唤醒' ? '⚡' : '🔌' }}</text>
+      <AppIcon :name="deviceType === 'USB唤醒' ? 'bolt' : 'plug'" :size="48" color="#007AFF" />
       <view class="device-info">
         <text class="device-name">{{ deviceName }}</text>
         <text class="device-type">{{ deviceType }}</text>
@@ -61,7 +61,7 @@
 
     <!-- Step 3: 配置完成 -->
     <view v-if="step === 3" class="success-card">
-      <text class="success-icon">✓</text>
+      <AppIcon name="check" :size="64" color="#FFFFFF" />
       <text class="success-title">配置成功</text>
       <text class="success-desc">设备已添加到您的设备列表</text>
       <button class="btn-primary" @click="goDeviceList">返回设备列表</button>
@@ -70,7 +70,10 @@
 </template>
 
 <script>
+import AppIcon from '@/components/AppIcon.vue'
+
 export default {
+  components: { AppIcon },
   data() {
     return {
       step: 1,

@@ -1,0 +1,189 @@
+/**
+ * Design Tokens for Open IoT Platform
+ * 统一的设计令牌，确保跨组件视觉一致性
+ */
+
+/* ========== 颜色 ========== */
+/* 主色 */
+$color-primary: #007AFF;
+$color-primary-hover: #0051D5;
+$color-primary-active: #003999;
+$color-primary-light: #E6F2FF;
+
+/* 次要色 */
+$color-secondary: #5856D6;
+$color-secondary-hover: #4242B3;
+$color-secondary-active: #2E2E80;
+
+/* 中性色 - 文本 */
+$color-text-primary: #1A1A1A;
+$color-text-secondary: #666666;
+$color-text-tertiary: #999999;
+$color-text-disabled: #CCCCCC;
+
+/* 中性色 - 背景 */
+$color-bg-primary: #FFFFFF;
+$color-bg-secondary: #F5F5F7;
+$color-bg-tertiary: #EFEFF4;
+$color-bg-disabled: #F9F9F9;
+$color-bg-gray: #F2F2F7;
+
+/* 中性色 - 边框 */
+$color-border-primary: #E5E5EA;
+$color-border-secondary: #C5C5C7;
+$color-border-focus: #007AFF;
+
+/* 状态色 */
+$color-success: #34C759;
+$color-success-light: #E8F8ED;
+$color-warning: #FF9500;
+$color-warning-light: #FFF3E6;
+$color-error: #FF3B30;
+$color-error-light: #FFE6E6;
+$color-info: #5AC8FA;
+$color-info-light: #E6F7FF;
+
+/* 透明度 */
+$color-overlay: rgba(0, 0, 0, 0.5);
+$color-overlay-light: rgba(0, 0, 0, 0.25);
+$color-divider: rgba(0, 0, 0, 0.1);
+
+/* ========== 字体大小 ========== */
+$font-size-xs: 20rpx;   /* 10px */
+$font-size-sm: 24rpx;   /* 12px */
+$font-size-md: 28rpx;   /* 14px */
+$font-size-lg: 32rpx;   /* 16px */
+$font-size-xl: 36rpx;   /* 18px */
+$font-size-xxl: 40rpx;  /* 20px */
+$font-size-3xl: 48rpx;  /* 24px */
+$font-size-4xl: 56rpx;  /* 28px */
+$font-size-5xl: 64rpx;  /* 32px */
+
+/* ========== 字体粗细 ========== */
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+/* ========== 行高 ========== */
+$line-height-tight: 1.2;
+$line-height-normal: 1.5;
+$line-height-relaxed: 1.8;
+
+/* ========== 间距 ========== */
+$spacing-xs: 8rpx;    /* 4px */
+$spacing-sm: 16rpx;   /* 8px */
+$spacing-md: 32rpx;   /* 16px */
+$spacing-lg: 48rpx;   /* 24px */
+$spacing-xl: 64rpx;   /* 32px */
+$spacing-xxl: 96rpx;  /* 48px */
+
+/* ========== 圆角 ========== */
+$radius-xs: 8rpx;    /* 4px */
+$radius-sm: 12rpx;   /* 6px */
+$radius-md: 16rpx;   /* 8px */
+$radius-lg: 24rpx;   /* 12px */
+$radius-xl: 32rpx;   /* 16px */
+$radius-xxl: 48rpx;  /* 24px */
+$radius-full: 9999rpx;
+
+/* ========== 阴影 ========== */
+$shadow-sm: 0 4rpx 8rpx rgba(0, 0, 0, 0.04);
+$shadow-md: 0 8rpx 16rpx rgba(0, 0, 0, 0.05);
+$shadow-lg: 0 16rpx 32rpx rgba(0, 0, 0, 0.08);
+$shadow-xl: 0 32rpx 48rpx rgba(0, 0, 0, 0.10);
+
+/* ========== 动画时长 ========== */
+$duration-fast: 150ms;
+$duration-normal: 250ms;
+$duration-slow: 350ms;
+$duration-slower: 500ms;
+
+/* ========== 动画曲线 ========== */
+$ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+$ease-out: cubic-bezier(0, 0, 0.2, 1);
+$ease-in: cubic-bezier(0.4, 0, 1, 1);
+
+/* ========== Z-index ========== */
+$z-index-base: 0;
+$z-index-dropdown: 100;
+$z-index-sticky: 200;
+$z-index-fixed: 300;
+$z-index-modal-backdrop: 400;
+$z-index-modal: 500;
+$z-index-popover: 600;
+$z-index-tooltip: 700;
+$z-index-floating: 800;
+
+/* ========== 组件高度 ========== */
+$height-input-sm: 80rpx;   /* 40px */
+$height-input-md: 96rpx;   /* 48px */
+$height-input-lg: 112rpx;  /* 56px */
+
+$height-button-sm: 80rpx;  /* 40px */
+$height-button-md: 96rpx;  /* 48px */
+$height-button-lg: 112rpx; /* 56px */
+
+/* ========== 断点 ========== */
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+/* ========== Mixins ========== */
+// 文本省略
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 多行文本省略
+@mixin text-ellipsis-multiline($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 清除浮动
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// 居中
+@mixin center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flex 布局
+@mixin flex($direction: row, $justify: flex-start, $align: stretch) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+}
+
+// 安全区域适配
+@mixin safe-area($position: bottom) {
+  @if $position == bottom {
+    padding-bottom: calc(constant(safe-area-inset-bottom));
+    padding-bottom: calc(env(safe-area-inset-bottom));
+  } @else if $position == top {
+    padding-top: calc(constant(safe-area-inset-top));
+    padding-top: calc(env(safe-area-inset-top));
+  } @else if $position == left {
+    padding-left: calc(constant(safe-area-inset-left));
+    padding-left: calc(env(safe-area-inset-left));
+  } @else if $position == right {
+    padding-right: calc(constant(safe-area-inset-right));
+    padding-right: calc(env(safe-area-inset-right));
+  }
+}

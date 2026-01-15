@@ -5,13 +5,13 @@
   <view class="login">
     <!-- 右上角设置按钮 -->
     <view class="settings-btn" @click="showServerConfig = true">
-      <text class="settings-icon">⚙️</text>
+      <AppIcon name="settings" :size="48" color="#8E8E93" />
     </view>
 
     <!-- Logo -->
     <view class="header">
       <view class="logo">
-        <text class="logo-icon">⚡</text>
+        <AppIcon name="bolt" :size="64" color="#FFFFFF" />
       </view>
       <text class="title">Open IoT</text>
       <text class="subtitle">欢迎回来，请登录</text>
@@ -24,7 +24,7 @@
       </view>
       <view class="input-group">
         <input class="input" :type="showPwd ? 'text' : 'password'" placeholder="密码" v-model="password" />
-        <text class="input-action" @click="showPwd = !showPwd">{{ showPwd ? '隐藏' : '显示' }}</text>
+        <view class="input-action" @click="showPwd = !showPwd"><AppIcon :name="showPwd ? 'eyeOff' : 'eye'" :size="40" color="#8E8E93" /></view>
       </view>
 
       <view class="form-footer">
@@ -55,7 +55,10 @@
 </template>
 
 <script>
+import AppIcon from '@/components/AppIcon.vue'
+
 export default {
+  components: { AppIcon },
   data() {
     return {
       email: '',

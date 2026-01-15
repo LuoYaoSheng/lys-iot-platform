@@ -11,7 +11,7 @@
       <view class="input-group">
         <text class="label">密码</text>
         <input class="input" :type="showPwd ? 'text' : 'password'" placeholder="请输入密码" v-model="password" />
-        <text class="input-action" @click="showPwd = !showPwd">{{ showPwd ? '隐藏' : '显示' }}</text>
+        <view class="input-action" @click="showPwd = !showPwd"><AppIcon :name="showPwd ? 'eyeOff' : 'eye'" :size="40" color="#8E8E93" /></view>
       </view>
       <view class="input-group">
         <text class="label">确认密码</text>
@@ -19,7 +19,7 @@
       </view>
 
       <view class="tip">
-        <text class="tip-icon">⚠️</text>
+        <AppIcon name="warning" :size="32" color="#FF9500" />
         <text class="tip-text">密码至少8位，包含字母和数字</text>
       </view>
 
@@ -34,7 +34,10 @@
 </template>
 
 <script>
+import AppIcon from '@/components/AppIcon.vue'
+
 export default {
+  components: { AppIcon },
   data() {
     return {
       email: '',

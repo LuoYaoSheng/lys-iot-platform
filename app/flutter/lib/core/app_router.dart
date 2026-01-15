@@ -3,18 +3,18 @@
 /// 日期: 2026-01-13
 
 import 'package:flutter/material.dart';
-import 'package:iot_config_app/main.dart' show
-  SplashScreen,
-  LoginScreen,
-  RegisterScreen,
-  ForgotPasswordScreen,
-  DeviceListScreen,
-  ScanScreen,
-  ConfigScreen,
-  ControlScreen,
-  SettingsScreen,
-  AboutScreen;
 import 'routes.dart';
+import '../pages/splash/splash_screen.dart';
+import '../pages/main/main_screen.dart';
+import '../pages/auth/login_screen.dart';
+import '../pages/auth/register_screen.dart';
+import '../pages/auth/forgot_password_screen.dart';
+import '../pages/device/device_list_screen.dart';
+import '../pages/device/scan_screen.dart';
+import '../pages/device/config_screen.dart';
+import '../pages/device/device_control_screen.dart';
+import '../pages/settings/settings_screen.dart';
+import '../pages/settings/about_screen.dart';
 
 /// 路由管理器
 class AppRouter {
@@ -23,6 +23,9 @@ class AppRouter {
     switch (settings.name) {
       case AppRoutes.splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
+
+      case AppRoutes.main:
+        return MaterialPageRoute(builder: (_) => const MainScreen());
 
       case AppRoutes.login:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
@@ -39,16 +42,20 @@ class AppRouter {
       case AppRoutes.scan:
         return MaterialPageRoute(builder: (_) => const ScanScreen());
 
+
       case AppRoutes.config:
-        final args = settings.arguments as Map<String, dynamic>?;
-        return MaterialPageRoute(
-          builder: (_) => ConfigScreen(deviceInfo: args),
-        );
+        return MaterialPageRoute(builder: (_) => const ConfigScreen());
+
+
+
+
 
       case AppRoutes.control:
         final args = settings.arguments as Map<String, dynamic>?;
         return MaterialPageRoute(
-          builder: (_) => ControlScreen(deviceId: args?['deviceId'] ?? ''),
+          builder: (_) => DeviceControlScreen(
+            deviceId: args?['deviceId'] ?? '',
+          ),
         );
 
       case AppRoutes.settings:
@@ -68,7 +75,7 @@ class AppRouter {
     }
   }
 
-  /// 导航到登录页
+  /// 导航到登录页（清除历史）
   static void goToLogin(BuildContext context) {
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRoutes.login,
@@ -76,10 +83,18 @@ class AppRouter {
     );
   }
 
-  /// 导航到设备列表（清除历史）
+  /// 导航到主页（清除历史）
+  static void goToMain(BuildContext context) {
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      AppRoutes.main,
+      (route) => false,
+    );
+  }
+
+  /// 导航到设备列表（清除历史）- 重定向到主页
   static void goToDeviceList(BuildContext context) {
     Navigator.of(context).pushNamedAndRemoveUntil(
-      AppRoutes.deviceList,
+      AppRoutes.main,
       (route) => false,
     );
   }
@@ -118,6 +133,11 @@ class AppRouter {
   /// 导航到设置页
   static void goToSettings(BuildContext context) {
     Navigator.of(context).pushNamed(AppRoutes.settings);
+  }
+
+  /// 导航到关于页
+  static void goToAbout(BuildContext context) {
+    Navigator.of(context).pushNamed(AppRoutes.about);
   }
 
   /// 返回上一页

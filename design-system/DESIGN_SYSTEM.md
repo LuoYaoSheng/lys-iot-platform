@@ -19,49 +19,46 @@
 
 | 色名 | 用途 | HEX | RGB | Flutter | UniApp |
 |------|------|-----|-----|---------|--------|
-| **Primary** | 主要操作、品牌色 | `#6366F1` | `rgb(99, 102, 241)` | `Color(0xFF6366F1)` | `#6366F1` |
-| **Primary Light** | 悬停状态 | `#818CF8` | `rgb(129, 140, 248)` | `Color(0xFF818CF8)` | `#818CF8` |
-| **Primary Dark** | 按下状态 | `#4F46E5` | `rgb(79, 70, 229)` | `Color(0xFF4F46E5)` | `#4F46E5` |
-| **Primary Container** | 容器背景 | `#E0E7FF` | `rgb(224, 231, 255)` | `Color(0xFFE0E7FF)` | `#E0E7FF` |
+| **Primary** | 主要操作、品牌色 | `#007AFF` | `rgb(0, 122, 255)` | `Color(0xFF007AFF)` | `#007AFF` |
+| **Primary Light** | 悬停状态 | `#3395FF` | `rgb(51, 149, 255)` | `Color(0xFF3395FF)` | `#3395FF` |
+| **Primary Dark** | 按下状态 | `#0056CC` | `rgb(0, 86, 204)` | `Color(0xFF0056CC)` | `#0056CC` |
+| **Primary Container** | 容器背景 | `#E6F2FF` | `rgb(230, 242, 255)` | `Color(0xFFE6F2FF)` | `#E6F2FF` |
 | **On Primary** | 主色上的文字 | `#FFFFFF` | `rgb(255, 255, 255)` | `Color(0xFFFFFFFF)` | `#FFFFFF` |
 
 ### 1.2 语义色 (Semantic Colors)
 
 | 色名 | 用途 | HEX | Flutter | UniApp |
 |------|------|-----|---------|--------|
-| **Success** | 成功状态 | `#10B981` | `Color(0xFF10B981)` | `#10B981` |
-| **Success Light** | 成功背景 | `#D1FAE5` | `Color(0xFFD1FAE5)` | `#D1FAE5` |
-| **Warning** | 警告状态 | `#F59E0B` | `Color(0xFFF59E0B)` | `#F59E0B` |
-| **Warning Light** | 警告背景 | `#FEF3C7` | `Color(0xFFFEF3C7)` | `#FEF3C7` |
-| **Error** | 错误状态 | `#EF4444` | `Color(0xFFEF4444)` | `#EF4444` |
-| **Error Light** | 错误背景 | `#FEE2E2` | `Color(0xFFFEE2E2)` | `#FEE2E2` |
-| **Info** | 信息状态 | `#3B82F6` | `Color(0xFF3B82F6)` | `#3B82F6` |
-| **Info Light** | 信息背景 | `#DBEAFE` | `Color(0xFFDBEAFE)` | `#DBEAFE` |
+| **Success** | 成功状态 | `#34C759` | `Color(0xFF34C759)` | `#34C759` |
+| **Success Light** | 成功背景 | `#E8F8ED` | `Color(0xFFE8F8ED)` | `#E8F8ED` |
+| **Warning** | 警告状态 | `#FF9500` | `Color(0xFFFF9500)` | `#FF9500` |
+| **Warning Light** | 警告背景 | `#FFF3E6` | `Color(0xFFFFF3E6)` | `#FFF3E6` |
+| **Error** | 错误状态 | `#FF3B30` | `Color(0xFFFF3B30)` | `#FF3B30` |
+| **Error Light** | 错误背景 | `#FFE6E6` | `Color(0xFFFFE6E6)` | `#FFE6E6` |
+| **Info** | 信息状态 | `#5AC8FA` | `Color(0xFF5AC8FA)` | `#5AC8FA` |
+| **Info Light** | 信息背景 | `#E6F7FF` | `Color(0xFFE6F7FF)` | `#E6F7FF` |
 
 ### 1.3 中性色 (Neutral Colors)
 
 | 色名 | 用途 | HEX | Flutter | UniApp |
 |------|------|-----|---------|--------|
-| **Gray 50** | 背景色 | `#F9FAFB` | `Color(0xFFF9FAFB)` | `#F9FAFB` |
-| **Gray 100** | 浅背景 | `#F3F4F6` | `Color(0xFFF3F4F6)` | `#F3F4F6` |
-| **Gray 200** | 分割线 | `#E5E7EB` | `Color(0xFFE5E7EB)` | `#E5E7EB` |
-| **Gray 300** | 禁用边框 | `#D1D5DB` | `Color(0xFFD1D5DB)` | `#D1D5DB` |
-| **Gray 400** | 占位符 | `#9CA3AF` | `Color(0xFF9CA3AF)` | `#9CA3AF` |
-| **Gray 500** | 次要文字 | `#6B7280` | `Color(0xFF6B7280)` | `#6B7280` |
-| **Gray 600** | 辅助文字 | `#4B5563` | `Color(0xFF4B5563)` | `#4B5563` |
-| **Gray 700** | 主要文字 | `#374151` | `Color(0xFF374151)` | `#374151` |
-| **Gray 800** | 标题文字 | `#1F2937` | `Color(0xFF1F2937)` | `#1F2937` |
-| **Gray 900** | 强调文字 | `#111827` | `Color(0xFF111827)` | `#111827` |
-| **White** | 纯白 | `#FFFFFF` | `Color(0xFFFFFFFF)` | `#FFFFFF` |
+| **White** | 纯白/卡片背景 | `#FFFFFF` | `Color(0xFFFFFFFF)` | `#FFFFFF` |
+| **Gray 50** | 页面背景 | `#F5F5F7` | `Color(0xFFF5F5F7)` | `#F5F5F7` |
+| **Gray 100** | 边框/分割线 | `#E5E5EA` | `Color(0xFFE5E5EA)` | `#E5E5EA` |
+| **Gray 200** | 禁用边框 | `#D1D1D6` | `Color(0xFFD1D1D6)` | `#D1D1D6` |
+| **Gray 300** | 禁用状态/占位符 | `#C7C7CC` | `Color(0xFFC7C7CC)` | `#C7C7CC` |
+| **Gray 500** | 次要文本/图标 | `#8E8E93` | `Color(0xFF8E8E93)` | `#8E8E93` |
+| **Gray 700** | 主要文本/标题 | `#3A3A3C` | `Color(0xFF3A3A3C)` | `#3A3A3C` |
+| **Gray 900** | 纯黑/强对比 | `#000000` | `Color(0xFF000000)` | `#000000` |
 
 ### 1.4 设备状态色 (Device Status)
 
 | 状态 | HEX | 用途 |
 |------|-----|------|
-| **Online** | `#10B981` | 设备在线 |
-| **Offline** | `#9CA3AF` | 设备离线 |
-| **Connecting** | `#F59E0B` | 连接中 |
-| **Error** | `#EF4444` | 错误状态 |
+| **Online** | `#34C759` | 设备在线 |
+| **Offline** | `#8E8E93` | 设备离线 |
+| **Configuring** | `#FF9500` | 配置中 |
+| **Error** | `#FF3B30` | 错误状态 |
 
 ---
 

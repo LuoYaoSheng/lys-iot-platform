@@ -15,6 +15,9 @@ dependencies:
   # URL 启动
   url_launcher: ^6.3.1
 
+  # SVG 图标
+  flutter_svg: ^2.0.16
+
   # 状态管理
   provider: ^6.1.2
 

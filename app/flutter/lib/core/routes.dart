@@ -6,6 +6,7 @@
 class AppRoutes {
   // 静态常量
   static const String splash = '/';
+  static const String main = '/main';
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
@@ -20,6 +21,7 @@ class AppRoutes {
 /// 路由名称映射
 class RouteNames {
   static const String splash = '启动页';
+  static const String main = '主页';
   static const String login = '登录';
   static const String register = '注册';
   static const String forgotPassword = '忘记密码';

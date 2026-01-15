@@ -1,0 +1,382 @@
+
+.app-icon[data-v-7a8d850c] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.app-icon[data-v-7a8d850c] svg {
+  width: 100%;
+  height: 100%;
+}
+
+/**
+ * 这里是uni-app内置的常用样式变量
+ *
+ * uni-app 官方扩展插件及插件市场（https://ext.dcloud.net.cn）上很多三方插件均使用了这些样式变量
+ * 如果你是插件开发者，建议你使用scss预处理，并在插件代码中直接使用这些变量（无需 import 这个文件），方便用户通过搭积木的方式开发整体风格一致的App
+ *
+ */
+/**
+ * 如果你是App开发者（插件使用者），你可以通过修改这些变量来定制自己的插件主题，实现自定义主题功能
+ *
+ * 如果你的项目同样使用了scss预处理，你也可以直接在你的 scss 代码中使用如下变量，同时无需 import 这个文件
+ */
+/* 颜色变量 */
+/* 行为相关颜色 */
+/* 文字基本颜色 */
+/* 背景颜色 */
+/* 边框颜色 */
+/* 尺寸变量 */
+/* 文字尺寸 */
+/* 图片尺寸 */
+/* Border Radius */
+/* 水平间距 */
+/* 垂直间距 */
+/* 透明度 */
+/* 文章场景相关 */
+.control {
+  min-height: 100vh;
+  background: #F5F5F7;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.status-card {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  background: #8E8E93;
+}
+.status-dot.online {
+  background: #34C759;
+}
+.status-dot.offline {
+  background: #8E8E93;
+}
+.status-text {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #8E8E93;
+}
+.status-text.online {
+  color: #34C759;
+}
+.firmware {
+  font-size: 0.875rem;
+  color: #8E8E93;
+}
+.control-section, .info-section {
+  margin-bottom: 1rem;
+}
+.section-title {
+  display: block;
+  font-size: 0.875rem;
+  color: #8E8E93;
+  margin-bottom: 0.75rem;
+}
+.position-display {
+  background: #FFFFFF;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+.position-label {
+  display: block;
+  font-size: 0.875rem;
+  color: #8E8E93;
+  margin-bottom: 0.5rem;
+}
+.position-value {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #007AFF;
+}
+.position-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.pos-btn {
+  flex: 1;
+  height: 3rem;
+  background: #FFFFFF;
+  color: #3A3A3C;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.pos-btn.active {
+  background: #007AFF;
+  color: #FFF;
+}
+.pulse-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 0.03125rem solid #E5E5EA;
+}
+.pulse-btn {
+  width: 100%;
+  height: 3rem;
+  background: #007AFF;
+  color: #FFF;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  border: none;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.pulse-btn.sending {
+  background: #FF9500;
+}
+.pulse-btn.success {
+  background: #34C759;
+}
+.pulse-hint {
+  display: block;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #8E8E93;
+}
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.checkbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 0.0625rem solid #E5E5EA;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.checkbox.checked {
+  background: #007AFF;
+  border-color: #007AFF;
+}
+.check-icon {
+  font-size: 0.75rem;
+  color: #FFF;
+  font-weight: bold;
+}
+.toggle-text {
+  font-size: 0.875rem;
+  color: #3A3A3C;
+}
+.advanced-options {
+  background: #F5F5F7;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.option-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.option-label {
+  font-size: 0.875rem;
+  color: #3A3A3C;
+}
+.option-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #007AFF;
+}
+.duration-slider {
+  margin: 0.5rem 0;
+}
+.duration-hints {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.hint {
+  font-size: 0.75rem;
+  color: #8E8E93;
+}
+.preset-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+.preset-btn {
+  flex: 1;
+  height: 1.75rem;
+  border: 0.0625rem solid #E5E5EA;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #8E8E93;
+}
+.preset-btn.active {
+  background: rgba(0, 122, 255, 0.1);
+  border-color: #007AFF;
+  color: #007AFF;
+}
+.wakeup-card {
+  background: #FFFFFF;
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.wakeup-icon {
+  width: 3.75rem;
+  height: 3.75rem;
+  background: rgba(0, 122, 255, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+.power-img {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+.wakeup-label {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #3A3A3C;
+  margin-bottom: 0.25rem;
+}
+.wakeup-hint {
+  font-size: 0.875rem;
+  color: #8E8E93;
+}
+.info-card {
+  background: #FFFFFF;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 0.03125rem solid #E5E5EA;
+}
+.info-item:last-child {
+  border-bottom: none;
+}
+.info-item.editable {
+  cursor: pointer;
+}
+.info-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.info-label {
+  font-size: 1rem;
+  color: #3A3A3C;
+}
+.info-value {
+  font-size: 1rem;
+  color: #8E8E93;
+}
+.edit-icon {
+  font-size: 1.125rem;
+  color: #8E8E93;
+}
+.delete-section {
+  margin-top: 1.5rem;
+}
+.btn-delete {
+  width: 100%;
+  height: 3rem;
+  background: #FFFFFF;
+  color: #FF3B30;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-content {
+  width: 17.5rem;
+  background: #FFFFFF;
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+.modal-title {
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #3A3A3C;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.modal-input {
+  width: 100%;
+  height: 2.75rem;
+  background: #F5F5F7;
+  border: 0.0625rem solid #E5E5EA;
+  border-radius: 0.75rem;
+  padding: 0 0.75rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
+}
+.modal-btns {
+  display: flex;
+  gap: 0.75rem;
+}
+.btn-cancel, .btn-confirm {
+  flex: 1;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.btn-cancel {
+  background: #F5F5F7;
+  color: #8E8E93;
+}
+.btn-confirm {
+  background: #007AFF;
+  color: #FFF;
+}
