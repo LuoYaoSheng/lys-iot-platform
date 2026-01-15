@@ -18,6 +18,8 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
   String _position = 'middle';
   bool _pulseSending = false;
   bool _pulseSuccess = false;
+  bool _showAdvanced = false;
+  double _pulseDuration = 500;
 
   @override
   void initState() {
@@ -145,7 +147,101 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
 
   Widget _buildPulseButton() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // 高级选项勾选框
+        GestureDetector(
+          onTap: () => setState(() => _showAdvanced = !_showAdvanced),
+          child: Row(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: _showAdvanced ? AppColors.primary : Colors.white,
+                  border: Border.all(
+                    color: _showAdvanced ? AppColors.primary : const Color(0xFFE5E5EA),
+                    width: 1.5,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: _showAdvanced
+                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                '高级选项',
+                style: TextStyle(fontSize: 14, color: Color(0xFF3A3A3C)),
+              ),
+            ],
+          ),
+        ),
+        // 高级选项内容
+        if (_showAdvanced) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F7),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '脉冲时长',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF3A3A3C)),
+                    ),
+                    Text(
+                      '${_pulseDuration.toInt()}ms',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    activeTrackColor: AppColors.primary,
+                    inactiveTrackColor: const Color(0xFFE5E5EA),
+                    thumbColor: AppColors.primary,
+                  ),
+                  child: Slider(
+                    value: _pulseDuration,
+                    min: 100,
+                    max: 2000,
+                    divisions: 19,
+                    onChanged: (value) => setState(() => _pulseDuration = value),
+                  ),
+                ),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('100ms', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
+                    Text('2000ms', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildPresetButton('快速', 200),
+                    const SizedBox(width: 8),
+                    _buildPresetButton('标准', 500),
+                    const SizedBox(width: 8),
+                    _buildPresetButton('慢速', 1000),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           height: 48,
@@ -160,14 +256,35 @@ class _DeviceControlScreenState extends State<DeviceControlScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text('短暂触发后自动恢复', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93))),
+        const Center(child: Text('短暂触发后自动恢复', style: TextStyle(fontSize: 12, color: Color(0xFF8E8E93)))),
       ],
+    );
+  }
+
+  Widget _buildPresetButton(String label, double value) {
+    final isActive = _pulseDuration == value;
+    return Expanded(
+      child: OutlinedButton(
+        onPressed: () => setState(() => _pulseDuration = value),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: isActive ? const Color(0xFFE6F2FF) : Colors.white,
+          foregroundColor: isActive ? AppColors.primary : const Color(0xFF8E8E93),
+          side: BorderSide(
+            color: isActive ? AppColors.primary : const Color(0xFFE5E5EA),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+        ),
+        child: Text(label, style: const TextStyle(fontSize: 12)),
+      ),
     );
   }
 
   void _triggerPulse() async {
     setState(() { _pulseSending = true; _pulseSuccess = false; });
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(Duration(milliseconds: _pulseDuration.toInt()));
     if (!mounted) return;
     setState(() { _pulseSending = false; _pulseSuccess = true; });
     Future.delayed(const Duration(seconds: 2), () { if (mounted) setState(() => _pulseSuccess = false); });

@@ -1,72 +1,54 @@
 <!-- 登录页 -->
 <!-- 作者: 罗耀生 -->
-<!-- 日期: 2026-01-13 -->
 
 <template>
-  <view class="login-container">
-    <!-- 服务器设置按钮 -->
-    <view class="settings-btn" @tap="showServerSettings">
+  <view class="login">
+    <!-- 右上角设置按钮 -->
+    <view class="settings-btn" @click="showServerConfig = true">
       <text class="settings-icon">⚙️</text>
-      <text class="settings-text">配置</text>
     </view>
 
     <!-- Logo -->
-    <view class="logo-section">
-      <view class="logo-icon">
-        <text class="logo-symbol">⚡</text>
+    <view class="header">
+      <view class="logo">
+        <text class="logo-icon">⚡</text>
       </view>
-      <text class="brand-name">Open IoT</text>
-      <text class="brand-subtitle">欢迎回来，请登录</text>
+      <text class="title">Open IoT</text>
+      <text class="subtitle">欢迎回来，请登录</text>
     </view>
 
     <!-- 表单 -->
-    <view class="form-section">
+    <view class="form">
       <view class="input-group">
         <input class="input" type="text" placeholder="邮箱" v-model="email" />
       </view>
       <view class="input-group">
-        <input class="input" type="password" placeholder="密码" v-model="password" />
+        <input class="input" :type="showPwd ? 'text' : 'password'" placeholder="密码" v-model="password" />
+        <text class="input-action" @click="showPwd = !showPwd">{{ showPwd ? '隐藏' : '显示' }}</text>
       </view>
 
-      <view class="form-actions">
-        <text class="server-info">{{ currentServerUrl }}</text>
-        <text class="forgot-link" @click="goToForgotPassword">忘记密码？</text>
+      <view class="form-footer">
+        <text class="link" @click="goForgotPassword">忘记密码？</text>
       </view>
 
-      <button class="btn-primary" @click="handleLogin">登 录</button>
+      <button class="btn-primary" @click="handleLogin">登录</button>
 
-      <view class="register-link">
-        <text class="register-text">还没有账号？</text>
-        <text class="register-btn" @click="goToRegister">立即注册</text>
+      <view class="register-row">
+        <text class="text">还没有账号？</text>
+        <text class="link" @click="goRegister">立即注册</text>
       </view>
     </view>
 
-    <!-- 服务器设置底部弹窗 -->
-    <view class="bottom-sheet-overlay" v-if="showServerModal" @tap="closeServerSettings">
-      <view class="bottom-sheet" @tap.stop>
-        <!-- 拖动手柄 -->
-        <view class="drag-handle"></view>
-
-        <!-- 关闭按钮 -->
-        <view class="close-btn" @tap="closeServerSettings">
-          <text class="close-icon">×</text>
+    <!-- 服务器配置弹窗 -->
+    <view class="modal-mask" v-if="showServerConfig" @click="showServerConfig = false">
+      <view class="modal-content" @click.stop>
+        <view class="modal-handle"></view>
+        <text class="modal-title">服务器配置</text>
+        <view class="modal-form">
+          <text class="modal-label">API 服务器地址</text>
+          <input class="modal-input" type="text" v-model="serverUrl" placeholder="http://192.168.1.100:48080" />
         </view>
-
-        <!-- 弹窗内容 -->
-        <view class="sheet-content">
-          <text class="sheet-title">API 服务器设置</text>
-
-          <view class="input-group">
-            <text class="input-label">服务器地址</text>
-            <input
-              class="input"
-              v-model="serverUrl"
-              placeholder="http://192.168.1.100:48080"
-            />
-          </view>
-
-          <button class="btn-save" @tap="saveServerSettings">保 存</button>
-        </view>
+        <button class="btn-primary" @click="saveServerConfig">保存配置</button>
       </view>
     </view>
   </view>
@@ -74,299 +56,233 @@
 
 <script>
 export default {
-  name: 'Login',
   data() {
     return {
-      email: 'user@example.com',
-      password: 'password123',
-      showServerModal: false,
-      serverUrl: 'http://192.168.1.100:48080',
-      currentServerUrl: 'http://192.168.1.100:48080'
-    };
-  },
-  onShow() {
-    // 加载已保存的服务器配置
-    const savedUrl = uni.getStorageSync('serverUrl');
-    if (savedUrl) {
-      this.serverUrl = savedUrl;
-      this.currentServerUrl = savedUrl;
+      email: '',
+      password: '',
+      showPwd: false,
+      showServerConfig: false,
+      serverUrl: ''
     }
+  },
+  onLoad() {
+    this.serverUrl = uni.getStorageSync('serverUrl') || 'http://192.168.1.100:48080'
   },
   methods: {
+    saveServerConfig() {
+      uni.setStorageSync('serverUrl', this.serverUrl)
+      this.showServerConfig = false
+      uni.showToast({ title: '已保存', icon: 'success' })
+    },
     handleLogin() {
-      // TODO: 实际登录逻辑
       if (!this.email || !this.password) {
-        uni.showToast({
-          title: '请输入邮箱和密码',
-          icon: 'none'
-        });
-        return;
+        uni.showToast({ title: '请输入邮箱和密码', icon: 'none' })
+        return
       }
-
-      // 模拟登录成功
-      uni.setStorageSync('token', 'demo-token');
-      // 使用 switchTab 跳转到 TabBar 页面
-      uni.switchTab({
-        url: '/pages/device-list/device-list'
-      });
+      // Mock登录
+      uni.setStorageSync('token', 'mock_token')
+      uni.setStorageSync('userInfo', { email: this.email })
+      uni.switchTab({ url: '/pages/device-list/device-list' })
     },
-
-    goToRegister() {
-      uni.navigateTo({
-        url: '/pages/register/register'
-      });
+    goRegister() {
+      uni.navigateTo({ url: '/pages/register/register' })
     },
-
-    goToForgotPassword() {
-      uni.navigateTo({
-        url: '/pages/forgot-password/forgot-password'
-      });
-    },
-
-    showServerSettings() {
-      this.showServerModal = true;
-    },
-
-    closeServerSettings() {
-      this.showServerModal = false;
-    },
-
-    saveServerSettings() {
-      // 保存服务器配置
-      uni.setStorageSync('serverUrl', this.serverUrl);
-      this.currentServerUrl = this.serverUrl;
-      this.closeServerSettings();
-      uni.showToast({
-        title: '服务器设置已保存',
-        icon: 'success'
-      });
+    goForgotPassword() {
+      uni.navigateTo({ url: '/pages/forgot-password/forgot-password' })
     }
   }
-};
+}
 </script>
 
-<style scoped>
-.login-container {
+<style lang="scss">
+@import '@/styles/tokens.scss';
+
+.login {
   min-height: 100vh;
-  padding: 48rpx;
-  background: #FFFFFF;
-  position: relative;
+  background: $color-card;
+  padding: $spacing-xl;
+  box-sizing: border-box;
 }
 
-/* 服务器设置按钮 */
-.settings-btn {
-  position: absolute;
-  top: 48rpx;
-  right: 48rpx;
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  padding: 12rpx 20rpx;
-  background: #F5F5F7;
-  border-radius: 20rpx;
-}
-
-.settings-icon {
-  font-size: 32rpx;
-}
-
-.settings-text {
-  font-size: 28rpx;
-  color: #3A3A3C;
-}
-
-.logo-section {
+.header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 120rpx;
-  margin-bottom: 80rpx;
+  padding: 180rpx 0 80rpx; // 增加顶部间距，对齐 Flutter SafeArea
 }
 
-.logo-icon {
+.logo {
   width: 128rpx;
   height: 128rpx;
-  background: #007AFF;
-  border-radius: 32rpx;
+  background: $color-primary;
+  border-radius: $radius-lg;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 32rpx;
+  margin-bottom: $spacing-xl;
 }
 
-.logo-symbol {
-  font-size: 72rpx;
+.logo-icon {
+  font-size: 64rpx;
   color: #FFFFFF;
 }
 
-.brand-name {
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #3A3A3C;
-  margin-bottom: 16rpx;
+.title {
+  font-size: $font-2xl;
+  font-weight: 600;
+  color: $color-text;
+  margin-bottom: $spacing-sm;
 }
 
-.brand-subtitle {
-  font-size: 28rpx;
-  color: #8E8E93;
+.subtitle {
+  font-size: $font-sm;
+  color: $color-text-secondary;
 }
 
-.form-section {
+.form {
   width: 100%;
 }
 
 .input-group {
-  margin-bottom: 32rpx;
-}
-
-.input-label {
-  font-size: 28rpx;
-  color: #3A3A3C;
-  margin-bottom: 12rpx;
-  display: block;
+  position: relative;
+  margin-bottom: $spacing-lg;
 }
 
 .input {
   width: 100%;
-  height: 96rpx;
-  padding: 0 32rpx;
-  background: #F5F5F7;
-  border-radius: 16rpx;
-  font-size: 32rpx;
+  height: $height-input;
+  background: $color-bg;
+  border-radius: $radius-md;
+  padding: 0 $spacing-lg;
+  font-size: $font-md;
   box-sizing: border-box;
 }
 
-.form-actions {
+.input-action {
+  position: absolute;
+  right: $spacing-lg;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: $font-sm;
+  color: $color-primary;
+}
+
+.form-footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 48rpx;
+  justify-content: flex-end;
+  margin-bottom: $spacing-xl;
 }
 
-.server-info {
-  font-size: 24rpx;
-  color: #8E8E93;
-  flex: 1;
+.link {
+  font-size: $font-sm;
+  color: $color-primary;
 }
 
-.forgot-link {
-  font-size: 28rpx;
-  color: #007AFF;
-  margin-left: 16rpx;
+.text {
+  font-size: $font-sm;
+  color: $color-text-secondary;
 }
 
 .btn-primary {
   width: 100%;
-  height: 96rpx;
-  background: #007AFF;
+  height: $height-button;
+  background: $color-primary;
   color: #FFFFFF;
-  border-radius: 16rpx;
-  font-size: 32rpx;
+  font-size: $font-md;
+  font-weight: 500;
+  border-radius: $radius-md;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
-.register-link {
+.btn-primary:active {
+  background: $color-primary-dark;
+}
+
+.register-row {
   display: flex;
   justify-content: center;
-  margin-top: 32rpx;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-top: $spacing-lg;
 }
 
-.register-text {
-  font-size: 28rpx;
-  color: #8E8E93;
+// 右上角设置按钮
+.settings-btn {
+  position: absolute;
+  top: 100rpx;
+  right: $spacing-xl;
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 
-.register-btn {
-  font-size: 28rpx;
-  color: #007AFF;
-  margin-left: 8rpx;
+.settings-icon {
+  font-size: 48rpx;
 }
 
-/* 底部弹窗 */
-.bottom-sheet-overlay {
+// 弹窗样式
+.modal-mask {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  align-items: flex-end;
+  z-index: 100;
 }
 
-.bottom-sheet {
-  position: relative;
-  background: #FFFFFF;
-  border-radius: 24rpx 24rpx 0 0;
-  padding-bottom: 68rpx;
-  animation: slideUp 0.3s ease-out;
+.modal-content {
+  width: 100%;
+  background: $color-card;
+  border-radius: 40rpx 40rpx 0 0;
+  padding: $spacing-xl;
+  box-sizing: border-box;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-/* 拖动手柄 */
-.drag-handle {
+.modal-handle {
   width: 72rpx;
   height: 8rpx;
-  background: #C7C7CC;
+  background: #E5E5EA;
   border-radius: 4rpx;
-  margin: 16rpx auto 24rpx;
+  margin: 0 auto $spacing-xl;
 }
 
-/* 关闭按钮 */
-.close-btn {
-  position: absolute;
-  top: 24rpx;
-  right: 32rpx;
-  width: 48rpx;
-  height: 48rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-icon {
-  font-size: 56rpx;
-  color: #8E8E93;
-  font-weight: 300;
-  line-height: 1;
-}
-
-/* 弹窗内容 */
-.sheet-content {
-  padding: 0 48rpx 48rpx;
-}
-
-.sheet-title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #3A3A3C;
-  margin-bottom: 48rpx;
+.modal-title {
   display: block;
   text-align: center;
+  font-size: $font-lg;
+  font-weight: 600;
+  color: $color-text;
+  margin-bottom: $spacing-xl;
 }
 
-.btnSave {
+.modal-form {
+  margin-bottom: $spacing-xl;
+}
+
+.modal-label {
+  display: block;
+  font-size: $font-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.modal-input {
   width: 100%;
-  height: 96rpx;
-  background: #007AFF;
-  color: #FFFFFF;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 48rpx;
+  height: $height-input;
+  background: $color-bg;
+  border-radius: $radius-md;
+  padding: 0 $spacing-lg;
+  font-size: $font-md;
+  box-sizing: border-box;
 }
 </style>

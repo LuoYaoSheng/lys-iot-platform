@@ -1,30 +1,22 @@
 <!-- 忘记密码页 -->
 <!-- 作者: 罗耀生 -->
-<!-- 日期: 2026-01-13 -->
 
 <template>
-  <view class="forgot-container">
-    <view class="header">
-      <view class="back-btn" @click="goBack">
-        <text class="back-icon">‹</text>
-      </view>
-      <text class="title">忘记密码</text>
+  <view class="forgot">
+    <view class="desc">
+      <text class="desc-text">请输入您的注册邮箱，我们将发送密码重置链接。</text>
     </view>
 
-    <view class="content">
-      <text class="page-title">找回密码</text>
-      <text class="page-desc">请输入您的注册邮箱，我们将发送密码重置链接。</text>
+    <view class="form">
+      <view class="input-group">
+        <text class="label">邮箱</text>
+        <input class="input" type="text" placeholder="请输入邮箱" v-model="email" />
+      </view>
 
-      <view class="form">
-        <view class="input-group">
-          <text class="input-label">邮箱</text>
-          <input class="input" type="text" placeholder="请输入邮箱" v-model="email" />
-        </view>
+      <button class="btn-primary" @click="handleSubmit">发送重置链接</button>
 
-        <button class="btn-primary" @click="handleSubmit">发送重置链接</button>
-        <view class="back-link" @click="goBack">
-          <text>返回登录</text>
-        </view>
+      <view class="footer">
+        <text class="link" @click="goBack">返回登录</text>
       </view>
     </view>
   </view>
@@ -32,93 +24,45 @@
 
 <script>
 export default {
-  name: 'ForgotPassword',
   data() {
     return {
       email: ''
-    };
+    }
   },
   methods: {
     handleSubmit() {
       if (!this.email) {
-        uni.showToast({
-          title: '请输入邮箱',
-          icon: 'none'
-        });
-        return;
+        uni.showToast({ title: '请输入邮箱', icon: 'none' })
+        return
       }
-
-      // TODO: 实际发送逻辑
-      uni.showToast({
-        title: '重置链接已发送',
-        icon: 'success'
-      });
-
-      setTimeout(() => {
-        uni.navigateBack();
-      }, 1500);
+      uni.showToast({ title: '重置链接已发送', icon: 'success' })
+      setTimeout(() => uni.navigateBack(), 1500)
     },
-
     goBack() {
-      uni.navigateBack();
+      uni.navigateBack()
     }
   }
-};
+}
 </script>
 
-<style scoped>
-.forgot-container {
+<style lang="scss">
+@import '@/styles/tokens.scss';
+
+.forgot {
   min-height: 100vh;
-  background: #FFFFFF;
+  background: $color-bg;
+  padding: $spacing-xl;
+  box-sizing: border-box;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  padding: 32rpx;
-  position: relative;
+.desc {
+  margin-bottom: $spacing-xl;
 }
 
-.back-btn {
-  width: 64rpx;
-  height: 64rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.back-icon {
-  font-size: 64rpx;
-  color: #3A3A3C;
-  font-weight: 300;
-}
-
-.title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #3A3A3C;
-}
-
-.content {
-  padding: 32rpx;
-}
-
-.page-title {
-  display: block;
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #3A3A3C;
-  margin-bottom: 16rpx;
-}
-
-.page-desc {
-  font-size: 28rpx;
-  display: block;
-  color: #8E8E93;
-  margin-bottom: 64rpx;
+.desc-text {
+  font-size: $font-sm;
+  color: $color-text-secondary;
+  line-height: 1.6;
 }
 
 .form {
@@ -126,44 +70,49 @@ export default {
 }
 
 .input-group {
-  margin-bottom: 32rpx;
+  margin-bottom: $spacing-xl;
 }
 
-.input-label {
+.label {
   display: block;
-  font-size: 28rpx;
-  color: #3A3A3C;
-  margin-bottom: 12rpx;
+  font-size: $font-sm;
+  color: $color-text;
+  margin-bottom: $spacing-sm;
 }
 
 .input {
   width: 100%;
-  height: 96rpx;
-  padding: 0 32rpx;
-  background: #F5F5F7;
-  border-radius: 16rpx;
-  font-size: 32rpx;
+  height: $height-input;
+  background: $color-card;
+  border-radius: $radius-md;
+  padding: 0 $spacing-lg;
+  font-size: $font-md;
+  box-sizing: border-box;
 }
 
 .btn-primary {
   width: 100%;
-  height: 96rpx;
-  background: #007AFF;
+  height: $height-button;
+  background: $color-primary;
   color: #FFFFFF;
-  border-radius: 16rpx;
-  font-size: 32rpx;
+  font-size: $font-md;
+  font-weight: 500;
+  border-radius: $radius-md;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
-.back-link {
-  text-align: center;
-  margin-top: 32rpx;
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-top: $spacing-lg;
+}
 
-  text {
-    color: #007AFF;
-    font-size: 28rpx;
-  }
+.link {
+  font-size: $font-sm;
+  color: $color-primary;
 }
 </style>

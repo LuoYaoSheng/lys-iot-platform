@@ -247,6 +247,10 @@ export default {
   border-radius: $radius-md;
   font-size: $font-md;
   border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .btn-cancel {
