@@ -10,21 +10,20 @@
       </view>
       <text class="user-name">用户</text>
       <text class="user-email">user@example.com</text>
-    </view>
-
-    <!-- 统计 -->
-    <view class="stats">
-      <view class="stat-item">
-        <text class="stat-value">{{ deviceCount }}</text>
-        <text class="stat-label">设备总数</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-value online">{{ onlineCount }}</text>
-        <text class="stat-label">在线设备</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-value">1.0</text>
-        <text class="stat-label">版本</text>
+      <!-- 统计 - 在头部内部 -->
+      <view class="stats">
+        <view class="stat-item">
+          <text class="stat-value">{{ deviceCount }}</text>
+          <text class="stat-label">设备总数</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value online">{{ onlineCount }}</text>
+          <text class="stat-label">在线设备</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">1.0</text>
+          <text class="stat-label">版本</text>
+        </view>
       </view>
     </view>
 
@@ -114,7 +113,8 @@ export default {
 
 .header {
   background: linear-gradient(180deg, $color-primary 0%, #5856D6 100%);
-  padding: 80rpx $spacing-xl $spacing-xl;
+  padding: calc(var(--status-bar-height) + 44rpx + 40rpx) $spacing-xl 0;
+  padding-bottom: 16rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -151,11 +151,10 @@ export default {
 
 .stats {
   display: flex;
-  margin: -40rpx $spacing-lg $spacing-lg;
-  background: $color-card;
-  border-radius: $radius-lg;
+  margin-top: 40rpx;
+  margin-bottom: 16rpx;
   padding: $spacing-lg 0;
-  box-shadow: $shadow-md;
+  width: 100%;
 }
 
 .stat-item {
@@ -163,25 +162,29 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 24rpx 16rpx;
+  margin: 0 4rpx;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 24rpx;
 }
 
 .stat-value {
   font-size: 40rpx;
   font-weight: 600;
-  color: $color-text;
+  color: #FFF;
   margin-bottom: $spacing-xs;
-  &.online { color: $color-success; }
+  &.online { color: #34C759; }
 }
 
 .stat-label {
   font-size: $font-xs;
-  color: $color-text-secondary;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .menu-section {
   background: $color-card;
   border-radius: $radius-lg;
-  margin: 0 $spacing-lg $spacing-md;
+  margin: 24rpx $spacing-lg $spacing-md;
   overflow: hidden;
 }
 
