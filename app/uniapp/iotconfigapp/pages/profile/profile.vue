@@ -6,10 +6,10 @@
     <!-- 头部 -->
     <view class="header">
       <view class="avatar">
-        <text class="avatar-text">U</text>
+        <text class="avatar-text">{{ displayName ? displayName[0].toUpperCase() : 'U' }}</text>
       </view>
-      <text class="user-name">用户</text>
-      <text class="user-email">user@example.com</text>
+      <text class="user-name">{{ displayName }}</text>
+      <text class="user-email">{{ userEmail }}</text>
       <!-- 统计 - 在头部内部 -->
       <view class="stats">
         <view class="stat-item">
@@ -60,23 +60,42 @@
 
 <script>
 import AppIcon from '@/components/AppIcon.vue'
+import auth from '@/utils/auth.js'
+import deviceApi from '@/utils/device.js'
 
 export default {
   components: { AppIcon },
   data() {
     return {
       deviceCount: 0,
-      onlineCount: 0
+      onlineCount: 0,
+      displayName: '用户',
+      userEmail: 'user@example.com'
     }
   },
   onShow() {
+    this.loadUserInfo()
     this.loadStats()
   },
   methods: {
-    loadStats() {
-      const devices = uni.getStorageSync('devices') || []
-      this.deviceCount = devices.length
-      this.onlineCount = devices.filter(d => d.status === 'online').length
+    loadUserInfo() {
+      this.displayName = auth.getDisplayName()
+      const user = auth.getUserInfo()
+      if (user) {
+        this.userEmail = user.email || 'user@example.com'
+      }
+    },
+    async loadStats() {
+      try {
+        const result = await deviceApi.getDeviceList()
+        if (result.success) {
+          const devices = result.data.list
+          this.deviceCount = result.data.total || devices.length
+          this.onlineCount = devices.filter(d => d.status === 'online').length
+        }
+      } catch (e) {
+        // 保持当前数据
+      }
     },
     goDeviceList() {
       uni.switchTab({ url: '/pages/device-list/device-list' })
@@ -91,9 +110,9 @@ export default {
       uni.showModal({
         title: '确认退出',
         content: '确定要退出登录吗？',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
-            uni.removeStorageSync('token')
+            await auth.logout()
             uni.reLaunch({ url: '/pages/login/login' })
           }
         }

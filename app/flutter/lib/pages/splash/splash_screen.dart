@@ -2,9 +2,11 @@
 /// 作者: 罗耀生
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../theme/app_tokens.dart';
 import '../../core/app_router.dart';
 import '../../widgets/app_icon.dart';
+import '../../providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,13 +23,16 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 1500));
+    // 等待AuthProvider初始化完成
+    final authProvider = context.read<AuthProvider>();
+
+    // 确保初始化完成
+    await Future.delayed(const Duration(milliseconds: 800));
+
     if (!mounted) return;
 
-    // TODO: 检查登录状态
-    final isLoggedIn = false;
-
-    if (isLoggedIn) {
+    // 检查登录状态
+    if (authProvider.isAuthenticated) {
       AppRouter.goToMain(context);
     } else {
       AppRouter.goToLogin(context);

@@ -3,108 +3,116 @@
 
 <template>
   <view class="control">
-    <!-- 状态卡片 -->
-    <view class="status-card">
-      <view class="status-dot" :class="device.status"></view>
-      <text class="status-text" :class="device.status">{{ statusText(device.status) }}</text>
-      <text class="firmware">固件: {{ device.firmware }}</text>
+    <!-- 加载状态 -->
+    <view v-if="isLoading" class="loading">
+      <text class="loading-text">加载中...</text>
     </view>
 
-    <!-- 舵机控制 -->
-    <view v-if="device.type === 'servo'" class="control-section">
-      <text class="section-title">位置控制</text>
-      <view class="position-display">
-        <text class="position-label">当前位置</text>
-        <text class="position-value">{{ positionText }}</text>
-      </view>
-      <view class="position-buttons">
-        <button class="pos-btn" :class="{ active: position === 'up' }" @click="setPosition('up')">上</button>
-        <button class="pos-btn" :class="{ active: position === 'middle' }" @click="setPosition('middle')">中</button>
-        <button class="pos-btn" :class="{ active: position === 'down' }" @click="setPosition('down')">下</button>
+    <!-- 内容 -->
+    <template v-else>
+      <!-- 状态卡片 -->
+      <view class="status-card">
+        <view class="status-dot" :class="{ online: device.status === 'online' }"></view>
+        <text class="status-text" :class="{ online: device.status === 'online' }">{{ device.statusText || statusText(device.status) }}</text>
+        <text class="firmware">固件: {{ device.firmware }}</text>
       </view>
 
-      <view class="pulse-section">
-        <text class="section-title">脉冲触发</text>
-
-        <!-- 高级选项勾选 -->
-        <view class="advanced-toggle" @click="showAdvanced = !showAdvanced">
-          <view class="checkbox" :class="{ checked: showAdvanced }">
-            <AppIcon v-if="showAdvanced" name="check" :size="24" color="#FFFFFF" />
-          </view>
-          <text class="toggle-text">高级选项</text>
+      <!-- 舵机控制 -->
+      <view v-if="device.type === 'servo'" class="control-section">
+        <text class="section-title">位置控制</text>
+        <view class="position-display">
+          <text class="position-label">当前位置</text>
+          <text class="position-value">{{ positionText }}</text>
+        </view>
+        <view class="position-buttons">
+          <button class="pos-btn" :class="{ active: position === 'up' }" @click="setPosition('up')">上</button>
+          <button class="pos-btn" :class="{ active: position === 'middle' }" @click="setPosition('middle')">中</button>
+          <button class="pos-btn" :class="{ active: position === 'down' }" @click="setPosition('down')">下</button>
         </view>
 
-        <!-- 脉冲时长设置 -->
-        <view class="advanced-options" v-if="showAdvanced">
-          <view class="option-row">
-            <text class="option-label">脉冲时长</text>
-            <text class="option-value">{{ pulseDuration }}ms</text>
-          </view>
-          <slider
-            class="duration-slider"
-            :value="pulseDuration"
-            :min="100"
-            :max="2000"
-            :step="100"
-            activeColor="#007AFF"
-            @change="onDurationChange"
-          />
-          <view class="duration-hints">
-            <text class="hint">100ms</text>
-            <text class="hint">2000ms</text>
-          </view>
-          <view class="preset-btns">
-            <view class="preset-btn" :class="{ active: pulseDuration === 200 }" @click="pulseDuration = 200">快速</view>
-            <view class="preset-btn" :class="{ active: pulseDuration === 500 }" @click="pulseDuration = 500">标准</view>
-            <view class="preset-btn" :class="{ active: pulseDuration === 1000 }" @click="pulseDuration = 1000">慢速</view>
-          </view>
-        </view>
+        <view class="pulse-section">
+          <text class="section-title">脉冲触发</text>
 
-        <button class="pulse-btn" :class="{ sending: pulseSending, success: pulseSuccess }" @click="triggerPulse">
-          {{ pulseSending ? '发送中...' : (pulseSuccess ? '✓ 已触发' : '触发脉冲') }}
-        </button>
-        <text class="pulse-hint">短暂触发后自动恢复</text>
-      </view>
-    </view>
-
-    <!-- USB唤醒控制 -->
-    <view v-else class="control-section">
-      <text class="section-title">电脑唤醒</text>
-      <view class="wakeup-card" @click="triggerWakeup">
-        <view class="wakeup-icon">
-          <image src="/static/icons/power.svg" class="power-img" mode="aspectFit"></image>
-        </view>
-        <text class="wakeup-label">点击唤醒</text>
-        <text class="wakeup-hint">电脑将立即启动</text>
-      </view>
-    </view>
-
-    <!-- 设备信息 -->
-    <view class="info-section">
-      <text class="section-title">设备信息</text>
-      <view class="info-card">
-        <view class="info-item editable" @click="editDeviceName">
-          <text class="info-label">设备名称</text>
-          <view class="info-right">
-            <text class="info-value">{{ device.name }}</text>
-            <text class="edit-icon">›</text>
+          <!-- 高级选项勾选 -->
+          <view class="advanced-toggle" @click="showAdvanced = !showAdvanced">
+            <view class="checkbox" :class="{ checked: showAdvanced }">
+              <AppIcon v-if="showAdvanced" name="check" :size="24" color="#FFFFFF" />
+            </view>
+            <text class="toggle-text">高级选项</text>
           </view>
-        </view>
-        <view class="info-item">
-          <text class="info-label">设备ID</text>
-          <text class="info-value">{{ device.id }}</text>
-        </view>
-        <view class="info-item">
-          <text class="info-label">设备类型</text>
-          <text class="info-value">{{ device.type === 'servo' ? '舵机开关' : 'USB唤醒' }}</text>
+
+          <!-- 脉冲时长设置 -->
+          <view class="advanced-options" v-if="showAdvanced">
+            <view class="option-row">
+              <text class="option-label">脉冲时长</text>
+              <text class="option-value">{{ pulseDuration }}ms</text>
+            </view>
+            <slider
+              class="duration-slider"
+              :value="pulseDuration"
+              :min="100"
+              :max="2000"
+              :step="100"
+              activeColor="#007AFF"
+              @change="onDurationChange"
+            />
+            <view class="duration-hints">
+              <text class="hint">100ms</text>
+              <text class="hint">2000ms</text>
+            </view>
+            <view class="preset-btns">
+              <view class="preset-btn" :class="{ active: pulseDuration === 200 }" @click="pulseDuration = 200">快速</view>
+              <view class="preset-btn" :class="{ active: pulseDuration === 500 }" @click="pulseDuration = 500">标准</view>
+              <view class="preset-btn" :class="{ active: pulseDuration === 1000 }" @click="pulseDuration = 1000">慢速</view>
+            </view>
+          </view>
+
+          <button class="pulse-btn" :class="{ sending: pulseSending, success: pulseSuccess }" @click="triggerPulse">
+            {{ pulseSending ? '发送中...' : (pulseSuccess ? '✓ 已触发' : '触发脉冲') }}
+          </button>
+          <text class="pulse-hint">短暂触发后自动恢复</text>
         </view>
       </view>
-    </view>
 
-    <!-- 删除按钮 -->
-    <view class="delete-section">
-      <button class="btn-delete" @click="confirmDelete">删除设备</button>
-    </view>
+      <!-- USB唤醒控制 -->
+      <view v-else class="control-section">
+        <text class="section-title">电脑唤醒</text>
+        <view class="wakeup-card" @click="triggerWakeup">
+          <view class="wakeup-icon">
+            <AppIcon name="power" :size="96" color="#007AFF" />
+          </view>
+          <text class="wakeup-label">点击唤醒</text>
+          <text class="wakeup-hint">电脑将立即启动</text>
+        </view>
+      </view>
+
+      <!-- 设备信息 -->
+      <view class="info-section">
+        <text class="section-title">设备信息</text>
+        <view class="info-card">
+          <view class="info-item editable" @click="editDeviceName">
+            <text class="info-label">设备名称</text>
+            <view class="info-right">
+              <text class="info-value">{{ device.name }}</text>
+              <text class="edit-icon">›</text>
+            </view>
+          </view>
+          <view class="info-item">
+            <text class="info-label">设备ID</text>
+            <text class="info-value">{{ device.deviceId || device.id }}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">设备类型</text>
+            <text class="info-value">{{ device.type === 'servo' ? '舵机开关' : 'USB唤醒' }}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 删除按钮 -->
+      <view class="delete-section">
+        <button class="btn-delete" @click="confirmDelete">删除设备</button>
+      </view>
+    </template>
 
     <!-- 编辑名称弹窗 -->
     <view class="modal" v-if="showEditModal" @click="showEditModal = false">
@@ -127,92 +135,182 @@
 
 <script>
 import AppIcon from '@/components/AppIcon.vue'
+import deviceApi from '@/utils/device.js'
 
 export default {
   components: { AppIcon },
   data() {
     return {
-      device: { id: '', name: '', type: 'servo', status: 'online', firmware: 'v1.0.0' },
+      deviceId: '',
+      device: { deviceId: '', name: '', type: 'servo', status: 'offline', firmware: 'v1.0.0' },
       position: 'middle',
       pulseSending: false,
       pulseSuccess: false,
       showAdvanced: false,
       pulseDuration: 500,
       showEditModal: false,
-      editName: ''
+      editName: '',
+      isLoading: true
     }
   },
   computed: {
     positionText() {
-      return { up: '上', middle: '中', down: '下' }[this.position]
+      return { up: '上', middle: '中', down: '下' }[this.position] || '中'
     }
   },
   onLoad(options) {
     if (options.id) {
+      this.deviceId = options.id
       this.loadDevice(options.id)
     }
   },
   methods: {
-    loadDevice(id) {
-      const devices = uni.getStorageSync('devices') || []
-      const device = devices.find(d => d.id === id)
-      if (device) this.device = device
+    async loadDevice(id) {
+      this.isLoading = true
+      try {
+        const result = await deviceApi.getDevice(id)
+        if (result.success && result.data) {
+          // 转换API数据到页面格式
+          const apiDevice = result.data
+          this.device = {
+            deviceId: apiDevice.deviceId || apiDevice.id,
+            id: apiDevice.deviceId || apiDevice.id,
+            name: apiDevice.name || '未知设备',
+            type: apiDevice.type || (apiDevice.productKey?.includes('wakeup') ? 'wakeup' : 'servo'),
+            status: apiDevice.isOnline ? 'online' : 'offline',
+            statusText: deviceApi.getStatusText(apiDevice),
+            firmware: apiDevice.firmware || apiDevice.firmwareVersion || 'v1.0.0'
+          }
+
+          // 获取实时状态
+          this.loadDeviceStatus()
+        } else {
+          // 从本地缓存加载
+          this.loadFromCache()
+        }
+      } catch (e) {
+        console.error('加载设备失败:', e)
+        this.loadFromCache()
+      } finally {
+        this.isLoading = false
+      }
     },
+
+    async loadDeviceStatus() {
+      try {
+        const result = await deviceApi.getDeviceStatus(this.deviceId)
+        if (result.success && result.data) {
+          const statusData = result.data
+          // 更新在线状态
+          this.device.status = statusData.online ? 'online' : 'offline'
+          // 更新位置
+          if (statusData.position) {
+            this.position = statusData.position
+          }
+        }
+      } catch (e) {
+        // 静默失败，使用默认值
+      }
+    },
+
+    loadFromCache() {
+      const devices = uni.getStorageSync('cache_devices') || []
+      const device = devices.find(d => d.deviceId === this.deviceId || d.id === this.deviceId)
+      if (device) {
+        this.device = {
+          deviceId: device.deviceId || device.id,
+          id: device.deviceId || device.id,
+          name: device.name,
+          type: device.type,
+          status: device.status,
+          statusText: deviceApi.getStatusText(device),
+          firmware: device.firmware
+        }
+      }
+    },
+
     statusText(status) {
       return { online: '在线', offline: '离线', configuring: '配置中' }[status] || '未知'
     },
-    setPosition(pos) {
-      this.position = pos
-      uni.showToast({ title: '已设置到' + this.positionText, icon: 'success' })
+
+    async setPosition(pos) {
+      const result = await deviceApi.togglePosition(this.deviceId, pos)
+      if (result.success) {
+        this.position = pos
+        uni.showToast({ title: '已切换到' + this.positionText, icon: 'success' })
+      } else {
+        uni.showToast({ title: result.message || '切换失败', icon: 'none' })
+      }
     },
+
     onDurationChange(e) {
       this.pulseDuration = e.detail.value
     },
-    triggerPulse() {
+
+    async triggerPulse() {
       if (this.pulseSending) return
+
       this.pulseSending = true
       this.pulseSuccess = false
-      setTimeout(() => {
+
+      try {
+        const result = await deviceApi.triggerPulse(this.deviceId, this.pulseDuration)
+        if (result.success) {
+          // 模拟延迟显示效果
+          setTimeout(() => {
+            this.pulseSending = false
+            this.pulseSuccess = true
+            setTimeout(() => { this.pulseSuccess = false }, 2000)
+          }, this.pulseDuration)
+        } else {
+          this.pulseSending = false
+          uni.showToast({ title: result.message || '触发失败', icon: 'none' })
+        }
+      } catch (e) {
         this.pulseSending = false
-        this.pulseSuccess = true
-        setTimeout(() => { this.pulseSuccess = false }, 2000)
-      }, this.pulseDuration)
+        uni.showToast({ title: '触发失败', icon: 'none' })
+      }
     },
-    triggerWakeup() {
-      uni.showToast({ title: '唤醒信号已发送', icon: 'success' })
+
+    async triggerWakeup() {
+      const result = await deviceApi.triggerWakeup(this.deviceId)
+      if (result.success) {
+        uni.showToast({ title: '唤醒信号已发送', icon: 'success' })
+      } else {
+        uni.showToast({ title: result.message || '唤醒失败', icon: 'none' })
+      }
     },
+
     editDeviceName() {
       this.editName = this.device.name
       this.showEditModal = true
     },
-    saveDeviceName() {
+
+    async saveDeviceName() {
       const newName = this.editName.trim()
       if (!newName) {
         uni.showToast({ title: '名称不能为空', icon: 'none' })
         return
       }
-      // 更新本地存储
-      const devices = uni.getStorageSync('devices') || []
-      const index = devices.findIndex(d => d.id === this.device.id)
-      if (index !== -1) {
-        devices[index].name = newName
-        uni.setStorageSync('devices', devices)
-        this.device.name = newName
-      }
+      this.device.name = newName
       this.showEditModal = false
       uni.showToast({ title: '修改成功', icon: 'success' })
+      // TODO: 调用API更新设备名称
     },
-    confirmDelete() {
+
+    async confirmDelete() {
       uni.showModal({
         title: '删除设备',
         content: '确定要删除「' + this.device.name + '」吗？',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
-            const devices = uni.getStorageSync('devices') || []
-            const newDevices = devices.filter(d => d.id !== this.device.id)
-            uni.setStorageSync('devices', newDevices)
-            uni.showToast({ title: '已删除', icon: 'success' })
-            setTimeout(() => uni.navigateBack(), 1500)
+            const result = await deviceApi.deleteDevice(this.deviceId)
+            if (result.success) {
+              uni.showToast({ title: '已删除', icon: 'success' })
+              setTimeout(() => uni.navigateBack(), 1500)
+            } else {
+              uni.showToast({ title: result.message || '删除失败', icon: 'none' })
+            }
           }
         }
       })
@@ -231,6 +329,18 @@ export default {
   box-sizing: border-box;
 }
 
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 200rpx;
+}
+
+.loading-text {
+  font-size: $font-md;
+  color: $color-text-secondary;
+}
+
 .status-card {
   display: flex;
   align-items: center;
@@ -247,7 +357,6 @@ export default {
   margin-right: $spacing-sm;
   background: $color-text-secondary;
   &.online { background: $color-success; }
-  &.offline { background: $color-text-secondary; }
 }
 
 .status-text {
@@ -463,11 +572,6 @@ export default {
   align-items: center;
   justify-content: center;
   margin-bottom: $spacing-md;
-}
-
-.power-img {
-  width: 56rpx;
-  height: 56rpx;
 }
 
 .wakeup-label {

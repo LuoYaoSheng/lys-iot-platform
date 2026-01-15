@@ -31,7 +31,9 @@
         <text class="link" @click="goForgotPassword">忘记密码？</text>
       </view>
 
-      <button class="btn-primary" @click="handleLogin">登录</button>
+      <button class="btn-primary" :disabled="isLoading" @click="handleLogin">
+        {{ isLoading ? '登录中...' : '登录' }}
+      </button>
 
       <view class="register-row">
         <text class="text">还没有账号？</text>
@@ -46,7 +48,7 @@
         <text class="modal-title">服务器配置</text>
         <view class="modal-form">
           <text class="modal-label">API 服务器地址</text>
-          <input class="modal-input" type="text" v-model="serverUrl" placeholder="http://192.168.1.100:48080" />
+          <input class="modal-input" type="text" v-model="serverUrl" placeholder="http://117.50.216.173:48080" />
         </view>
         <button class="btn-primary" @click="saveServerConfig">保存配置</button>
       </view>
@@ -56,6 +58,8 @@
 
 <script>
 import AppIcon from '@/components/AppIcon.vue'
+import http from '@/utils/http.js'
+import auth from '@/utils/auth.js'
 
 export default {
   components: { AppIcon },
@@ -65,27 +69,43 @@ export default {
       password: '',
       showPwd: false,
       showServerConfig: false,
-      serverUrl: ''
+      serverUrl: '',
+      isLoading: false
     }
   },
   onLoad() {
-    this.serverUrl = uni.getStorageSync('serverUrl') || 'http://192.168.1.100:48080'
+    // 从本地存储读取服务器地址
+    this.serverUrl = uni.getStorageSync('api_url') || 'http://117.50.216.173:48080'
   },
   methods: {
     saveServerConfig() {
-      uni.setStorageSync('serverUrl', this.serverUrl)
+      http.setBaseUrl(this.serverUrl)
+      uni.setStorageSync('api_url', this.serverUrl)
       this.showServerConfig = false
       uni.showToast({ title: '已保存', icon: 'success' })
     },
-    handleLogin() {
+    async handleLogin() {
       if (!this.email || !this.password) {
         uni.showToast({ title: '请输入邮箱和密码', icon: 'none' })
         return
       }
-      // Mock登录
-      uni.setStorageSync('token', 'mock_token')
-      uni.setStorageSync('userInfo', { email: this.email })
-      uni.switchTab({ url: '/pages/device-list/device-list' })
+
+      this.isLoading = true
+
+      try {
+        const result = await auth.login(this.email, this.password)
+
+        if (result.success) {
+          uni.showToast({ title: '登录成功', icon: 'success' })
+          uni.switchTab({ url: '/pages/device-list/device-list' })
+        } else {
+          uni.showToast({ title: result.message || '登录失败', icon: 'none' })
+        }
+      } catch (e) {
+        uni.showToast({ title: '网络错误，请检查服务器地址', icon: 'none' })
+      } finally {
+        this.isLoading = false
+      }
     },
     goRegister() {
       uni.navigateTo({ url: '/pages/register/register' })
@@ -111,7 +131,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 180rpx 0 80rpx; // 增加顶部间距，对齐 Flutter SafeArea
+  padding: 180rpx 0 80rpx;
 }
 
 .logo {
@@ -203,6 +223,10 @@ export default {
 
 .btn-primary:active {
   background: $color-primary-dark;
+}
+
+.btn-primary[disabled] {
+  opacity: 0.6;
 }
 
 .register-row {

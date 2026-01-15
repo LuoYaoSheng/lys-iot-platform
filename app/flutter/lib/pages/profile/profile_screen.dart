@@ -2,9 +2,12 @@
 /// 作者: 罗耀生
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../widgets/app_icon.dart';
 import '../../theme/app_tokens.dart';
 import '../../core/app_router.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/device_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   final bool isNested;
@@ -18,128 +21,136 @@ class ProfileScreen extends StatelessWidget {
       body: Column(
         children: [
           // 渐变头部
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF007AFF), Color(0xFF5856D6)],
-              ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    // 头像
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(35),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'U',
-                          style: TextStyle(
-                            fontSize: 28,
+          Consumer2<AuthProvider, DeviceProvider>(
+            builder: (context, auth, deviceProvider, child) {
+              return Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF007AFF), Color(0xFF5856D6)],
+                  ),
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        // 头像
+                        Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(35),
+                          ),
+                          child: Center(
+                            child: Text(
+                              auth.displayName.isNotEmpty ? auth.displayName[0].toUpperCase() : 'U',
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          auth.displayName,
+                          style: const TextStyle(
+                            fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      '用户',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'user@example.com',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    // 统计
-                    Row(
-                      children: [
-                        _buildStatItem('3', '设备总数'),
-                        const SizedBox(width: 12),
-                        _buildStatItem('2', '在线设备', isGreen: true),
-                        const SizedBox(width: 12),
-                        _buildStatItem('1.0', '版本'),
+                        const SizedBox(height: 4),
+                        Text(
+                          auth.user?.email ?? 'user@example.com',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // 统计
+                        Row(
+                          children: [
+                            _buildStatItem('${deviceProvider.total}', '设备总数'),
+                            const SizedBox(width: 12),
+                            _buildStatItem('${deviceProvider.onlineCount}', '在线设备', isGreen: true),
+                            const SizedBox(width: 12),
+                            _buildStatItem('1.0', '版本'),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
 
           // 菜单列表
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // 设备管理
-                _buildMenuCard(
-                  context,
-                  items: [
-                    _MenuItem(
-                      iconName: AppIcons.device,
-                      title: '设备管理',
-                      trailing: '3 台',
-                      onTap: () => AppRouter.goToDeviceList(context),
+            child: Consumer<DeviceProvider>(
+              builder: (context, deviceProvider, child) {
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // 设备管理
+                    _buildMenuCard(
+                      context,
+                      items: [
+                        _MenuItem(
+                          iconName: AppIcons.device,
+                          title: '设备管理',
+                          trailing: '${deviceProvider.total} 台',
+                          onTap: () => AppRouter.goToDeviceList(context),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // 设置
-                _buildMenuCard(
-                  context,
-                  items: [
-                    _MenuItem(
-                      iconName: AppIcons.settings,
-                      title: '设置',
-                      onTap: () => AppRouter.goToSettings(context),
+                    const SizedBox(height: 12),
+                    // 设置
+                    _buildMenuCard(
+                      context,
+                      items: [
+                        _MenuItem(
+                          iconName: AppIcons.settings,
+                          title: '设置',
+                          onTap: () => AppRouter.goToSettings(context),
+                        ),
+                        _MenuItem(
+                          iconName: AppIcons.info,
+                          title: '关于',
+                          trailing: 'v1.0.0',
+                          onTap: () => AppRouter.goToAbout(context),
+                        ),
+                      ],
                     ),
-                    _MenuItem(
-                      iconName: AppIcons.info,
-                      title: '关于',
-                      trailing: 'v1.0.0',
-                      onTap: () => AppRouter.goToAbout(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // 退出登录
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () => _logout(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF3B30),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 24),
+                    // 退出登录
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () => _logout(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF3B30),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('退出登录', style: TextStyle(fontSize: 16)),
                       ),
                     ),
-                    child: const Text('退出登录', style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -230,6 +241,8 @@ class ProfileScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              final auth = context.read<AuthProvider>();
+              auth.logout();
               Navigator.pop(context);
               AppRouter.goToLogin(context);
             },

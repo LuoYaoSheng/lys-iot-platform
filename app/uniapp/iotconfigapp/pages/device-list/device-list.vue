@@ -4,8 +4,12 @@
 <template>
   <view class="device-list">
     <!-- 设备列表 -->
-    <scroll-view class="list" scroll-y>
-      <view v-if="devices.length === 0" class="empty">
+    <scroll-view class="list" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+      <view v-if="isLoading" class="loading">
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <view v-else-if="devices.length === 0" class="empty">
         <AppIcon name="device" :size="120" color="#C7C7CC" />
         <text class="empty-text">暂无设备</text>
         <button class="btn-add" @click="goScan">添加设备</button>
@@ -15,7 +19,7 @@
         <view class="card-header">
           <view class="status-dot" :class="device.status"></view>
           <text class="device-name">{{ device.name }}</text>
-          <text class="device-status" :class="device.status">{{ statusText(device.status) }}</text>
+          <text class="device-status" :class="device.status">{{ device.statusText || statusText(device) }}</text>
         </view>
         <view class="card-footer">
           <text class="device-info">{{ device.type === 'servo' ? '舵机开关' : 'USB唤醒' }}</text>
@@ -46,14 +50,8 @@
 </template>
 
 <script>
-// Mock数据
-const mockDevices = [
-  { id: '1', name: 'IoT-Switch-A1B2', type: 'servo', status: 'online', firmware: 'v1.2.0' },
-  { id: '2', name: 'IoT-Wakeup-C3D4', type: 'wakeup', status: 'online', firmware: 'v1.0.0' },
-  { id: '3', name: 'IoT-Switch-E5F6', type: 'servo', status: 'offline', firmware: 'v1.1.0' }
-]
-
 import AppIcon from '@/components/AppIcon.vue'
+import deviceApi from '@/utils/device.js'
 
 export default {
   components: { AppIcon },
@@ -61,37 +59,87 @@ export default {
     return {
       devices: [],
       showModal: false,
-      currentDevice: null
+      currentDevice: null,
+      isLoading: false,
+      refreshing: false
     }
   },
   onShow() {
     this.loadDevices()
   },
   methods: {
-    loadDevices() {
-      // 从本地存储获取，如果没有则用mock数据
-      const saved = uni.getStorageSync('devices')
-      this.devices = saved || mockDevices
-      if (!saved) uni.setStorageSync('devices', mockDevices)
+    async loadDevices() {
+      this.isLoading = true
+      try {
+        const result = await deviceApi.getDeviceList()
+        if (result.success) {
+          this.devices = result.data.list.map(device => ({
+            ...device,
+            statusText: deviceApi.getStatusText(device)
+          }))
+        } else {
+          uni.showToast({ title: result.message || '加载失败', icon: 'none' })
+          // 加载失败时使用本地缓存
+          this.loadFromCache()
+        }
+      } catch (e) {
+        console.error('加载设备列表失败:', e)
+        this.loadFromCache()
+      } finally {
+        this.isLoading = false
+      }
     },
-    statusText(status) {
-      return { online: '在线', offline: '离线', configuring: '配置中' }[status] || '未知'
+    loadFromCache() {
+      try {
+        const cached = uni.getStorageSync('cache_devices')
+        if (cached) {
+          this.devices = cached
+        }
+      } catch (e) {
+        // 忽略
+      }
+    },
+    saveToCache() {
+      try {
+        uni.setStorageSync('cache_devices', this.devices)
+      } catch (e) {
+        // 忽略
+      }
+    },
+    async onRefresh() {
+      this.refreshing = true
+      await this.loadDevices()
+      this.refreshing = false
+    },
+    statusText(device) {
+      return deviceApi.getStatusText(device)
     },
     goScan() {
       uni.navigateTo({ url: '/pages/scan/scan' })
     },
     goControl(device) {
-      uni.navigateTo({ url: '/pages/device-control/device-control?id=' + device.id })
+      uni.navigateTo({ url: '/pages/device-control/device-control?id=' + device.deviceId })
     },
     showDelete(device) {
       this.currentDevice = device
       this.showModal = true
     },
-    doDelete() {
-      this.devices = this.devices.filter(d => d.id !== this.currentDevice.id)
-      uni.setStorageSync('devices', this.devices)
-      this.showModal = false
-      uni.showToast({ title: '已删除', icon: 'success' })
+    async doDelete() {
+      if (!this.currentDevice) return
+
+      try {
+        const result = await deviceApi.deleteDevice(this.currentDevice.deviceId)
+        if (result.success) {
+          this.devices = this.devices.filter(d => d.deviceId !== this.currentDevice.deviceId)
+          this.saveToCache()
+          this.showModal = false
+          uni.showToast({ title: '已删除', icon: 'success' })
+        } else {
+          uni.showToast({ title: result.message || '删除失败', icon: 'none' })
+        }
+      } catch (e) {
+        uni.showToast({ title: '删除失败', icon: 'none' })
+      }
     }
   }
 }
@@ -110,6 +158,18 @@ export default {
   height: calc(100vh - 100rpx);
   padding: $spacing-lg;
   box-sizing: border-box;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 200rpx;
+}
+
+.loading-text {
+  font-size: $font-md;
+  color: $color-text-secondary;
 }
 
 .empty {
