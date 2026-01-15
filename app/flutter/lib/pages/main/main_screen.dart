@@ -39,11 +39,13 @@ class _MainScreenState extends State<MainScreen> {
         elevation: 8,
         items: const [
           BottomNavigationBarItem(
-            icon: AppIcon(AppIcons.device, size: 24),
+            icon: AppIcon(AppIcons.device, size: 24, color: Color(0xFF8E8E93)),
+            activeIcon: AppIcon(AppIcons.device, size: 24, color: AppColors.primary),
             label: '设备',
           ),
           BottomNavigationBarItem(
-            icon: AppIcon(AppIcons.person, size: 24),
+            icon: AppIcon(AppIcons.person, size: 24, color: Color(0xFF8E8E93)),
+            activeIcon: AppIcon(AppIcons.person, size: 24, color: AppColors.primary),
             label: '我的',
           ),
         ],
