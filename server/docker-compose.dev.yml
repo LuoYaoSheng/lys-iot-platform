@@ -1,137 +1,97 @@
 # ========================================
-# IoT Platform - 开发环境 Docker Compose
+# IoT Platform Core - Docker Compose 开发配置
 # 作者: 罗耀生
-# 日期: 2026-01-10
-# 说明: 本地构建，支持代码热重载，适用于开发调试
-# 代码库: https://gitee.com/luoyaosheng/open-iot-platform
+# 日期: 2025-12-16
 # ========================================
 #
-# 使用说明:
-# 1. 启动服务: docker compose -f docker-compose.dev.yml up -d --build
-# 2. 重新构建: docker compose -f docker-compose.dev.yml up -d --build
-# 3. 查看日志: docker compose -f docker-compose.dev.yml logs -f iot-platform
-# 4. 进入容器: docker exec -it iot-platform-dev sh
+# 用途：本地开发时使用
+# 特点：只启动基础服务（MySQL/Redis/EMQX），不启动后端服务
+# 使用：docker compose -f docker-compose.dev.yml up -d
 #
-# 访问地址:
-# - API: http://localhost:48080
-# - MQTT TCP: localhost:1883
-# - MQTT WS: localhost:8083
 # ========================================
 
-name: open-iot-platform-dev
+name: iot-platform
 
 services:
-  # ==================== MySQL 数据库 ====================
+  # MySQL 数据库
   mysql:
     image: mysql:8.0
-    container_name: iot-platform-mysql-dev
+    container_name: iot-platform_mysql
     environment:
       MYSQL_ROOT_PASSWORD: root123456
       MYSQL_DATABASE: iot_platform
       MYSQL_USER: iot_user
       MYSQL_PASSWORD: iot123456
-      TZ: Asia/Shanghai
-      # 强制 UTF-8 编码
-      MYSQL_CHARSET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_unicode_ci
     ports:
-      - "44306:3306"
+      - "48306:3306"    # MySQL: 48306
     volumes:
-      - mysql_dev_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    command: >
-      --default-authentication-plugin=mysql_native_password
-      --character-set-server=utf8mb4
-      --collation-server=utf8mb4_unicode_ci
-      --general-log=1
-      --general-log-file=/var/lib/mysql/general.log
+    command: --default-authentication-plugin=mysql_native_password
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123456"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
     networks:
-      - iot-dev-network
+      - iot-network
     restart: unless-stopped
 
-  # ==================== Redis 缓存 ====================
+  # Redis 缓存
   redis:
     image: redis:7-alpine
-    container_name: iot-platform-redis-dev
-    command: redis-server --appendonly yes
+    container_name: iot-platform_redis
     ports:
-      - "47379:6379"
+      - "48379:6379"    # Redis: 48379
     volumes:
-      - redis_dev_data:/data
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - iot-dev-network
+      - iot-network
     restart: unless-stopped
 
-  # ==================== IoT Platform 服务（本地构建）====================
-  iot-platform:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: iot-platform-dev
+  # EMQX MQTT Broker
+  emqx:
+    image: emqx/emqx:5.3.0
+    container_name: iot-platform_emqx
     environment:
-      # 数据库配置
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: iot_user
-      DB_PASSWORD: iot123456
-      DB_NAME: iot_platform
-
-      # Redis 配置
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DEVICE_TTL: 120
-
-      # 服务配置
-      SERVER_PORT: 48080
-
-      # MQTT 配置（内置 Broker）
-      MQTT_PORT: 1883
-      MQTT_WS_PORT: 8083
-
-      # JWT 配置
-      JWT_SECRET: dev-secret-key
-      JWT_EXPIRE_HOURS: 168
-
-      # 开发模式
-      GIN_MODE: debug
-      TZ: Asia/Shanghai
+      EMQX_NAME: iot-emqx
+      EMQX_HOST: 127.0.0.1
+      # 启用 HTTP 认证（连接后端API进行设备认证）
+      # 注意：开发模式下后端运行在宿主机，使用 host.docker.internal
+      EMQX_AUTHENTICATION__1__MECHANISM: password_based
+      EMQX_AUTHENTICATION__1__BACKEND: http
+      EMQX_AUTHENTICATION__1__ENABLE: "true"
+      EMQX_AUTHENTICATION__1__METHOD: get
+      EMQX_AUTHENTICATION__1__URL: http://host.docker.internal:48080/api/v1/mqtt/auth?username=$${username}&password=$${password}&clientid=$${clientid}
+      # 开发模式: 允许未匹配的 ACL
+      EMQX_AUTHORIZATION__NO_MATCH: allow
     ports:
-      - "48080:48080"   # API 服务
-      - "1883:1883"     # MQTT TCP
-      - "8083:8083"     # MQTT WebSocket
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - "48883:1883"    # MQTT: 48883
+      - "48803:8083"    # MQTT WebSocket: 48803
+      - "48884:18083"   # Dashboard: 48884 (admin/public)
+    volumes:
+      - emqx_data:/opt/emqx/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:48080/health"]
+      test: ["CMD", "emqx", "ctl", "status"]
       interval: 10s
-      timeout: 3s
+      timeout: 5s
       retries: 5
     networks:
-      - iot-dev-network
+      - iot-network
     restart: unless-stopped
 
-# ==================== 数据卷 ====================
 volumes:
-  mysql_dev_data:
-    name: iot-platform-mysql-dev-data
-  redis_dev_data:
-    name: iot-platform-redis-dev-data
+  mysql_data:
+  redis_data:
+  emqx_data:
 
-# ==================== 网络 ====================
 networks:
-  iot-dev-network:
-    name: iot-dev-network
+  iot-network:
     driver: bridge

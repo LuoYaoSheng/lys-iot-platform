@@ -38,7 +38,7 @@ EMQX 需要配置以下 3 项：
 
 #### A. 登录 EMQX Dashboard
 
-访问：`http://你的IP:49084`
+访问：`http://你的IP:48884`
 - 账号: `admin`
 - 密码: `public`
 
@@ -159,7 +159,7 @@ EMQX 需要配置以下 3 项：
 
 ```bash
 # 正确的设备凭证
-mosquitto_pub -h 你的IP -p 42883 \
+mosquitto_pub -h 你的IP -p 48883 \
   -u "switch-001&device_xxx" \
   -P "设备密钥" \
   -t "/sys/switch-001/device_xxx/status" \
@@ -170,7 +170,7 @@ mosquitto_pub -h 你的IP -p 42883 \
 
 ```bash
 # 错误的密码
-mosquitto_pub -h 你的IP -p 42883 \
+mosquitto_pub -h 你的IP -p 48883 \
   -u "switch-001&device_xxx" \
   -P "wrong_password" \
   -t "/sys/switch-001/device_xxx/status" \
@@ -185,7 +185,7 @@ mosquitto_pub -h 你的IP -p 42883 \
 
 ```bash
 # 设备发布到自己的主题
-mosquitto_pub -h 你的IP -p 42883 \
+mosquitto_pub -h 你的IP -p 48883 \
   -u "switch-001&device_001" \
   -P "设备密钥" \
   -t "/sys/switch-001/device_001/status" \
@@ -196,7 +196,7 @@ mosquitto_pub -h 你的IP -p 42883 \
 
 ```bash
 # 设备尝试发布到其他设备的主题
-mosquitto_pub -h 你的IP -p 42883 \
+mosquitto_pub -h 你的IP -p 48883 \
   -u "switch-001&device_001" \
   -P "设备密钥" \
   -t "/sys/switch-001/device_002/status" \

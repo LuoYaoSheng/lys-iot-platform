@@ -5,15 +5,12 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"iot-platform-core/internal/model"
-	"iot-platform-core/internal/mqtt"
 	"iot-platform-core/internal/repository"
 	"iot-platform-core/internal/service"
 	"iot-platform-core/pkg/response"
@@ -24,7 +21,7 @@ import (
 type DeviceHandler struct {
 	deviceService *service.DeviceService
 	authLogRepo   *repository.MQTTAuthLogRepository
-	mqttBroker    *mqtt.Broker
+	mqttService   *service.MQTTService
 }
 
 func NewDeviceHandler(
@@ -48,21 +45,7 @@ func (h *DeviceHandler) Activate(c *gin.Context) {
 
 	log.Printf("[Activate] ProductKey=%s, DeviceSN=%s", req.ProductKey, req.DeviceSN)
 
-	// 从请求中提取主机名作为 MQTT Broker 地址
-	// 优先使用 X-Forwarded-Host（反向代理场景），其次使用 Host
-	host := c.GetHeader("X-Forwarded-Host")
-	if host == "" {
-		host = c.GetHeader("X-Real-IP")
-	}
-	if host == "" {
-		host = c.Request.Host
-	}
-
-	// 移除端口号，使用默认 MQTT 端口
-	mqttHost := extractHostWithoutPort(host)
-	log.Printf("[Activate] MQTT Broker host: %s (from %s)", mqttHost, host)
-
-	resp, isAlreadyActivated, err := h.deviceService.ActivateWithHost(&req, mqttHost)
+	resp, isAlreadyActivated, err := h.deviceService.Activate(&req)
 	if err != nil {
 		switch err.Error() {
 		case "invalid_product_key":
@@ -88,19 +71,22 @@ func (h *DeviceHandler) Activate(c *gin.Context) {
 
 // MQTTAuthRequest MQTT认证请求
 type MQTTAuthRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	ClientID string `json:"clientid"`
+	Username string `json:"username" form:"username"`
+	Password string `json:"password" form:"password"`
+	ClientID string `json:"clientid" form:"clientid"`
 }
 
 // MQTTAuth MQTT认证接口 (EMQX HTTP Auth)
 // POST /api/v1/mqtt/auth
 func (h *DeviceHandler) MQTTAuth(c *gin.Context) {
 	var req MQTTAuthRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("[MQTTAuth] Invalid request: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"result": "deny"})
-		return
+	if err := c.ShouldBind(&req); err != nil {
+		// Fall back to JSON-only binding for older EMQX POST templates.
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Printf("[MQTTAuth] Invalid request: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"result": "deny"})
+			return
+		}
 	}
 
 	log.Printf("[MQTTAuth] Username=%s, ClientID=%s", req.Username, req.ClientID)
@@ -270,9 +256,9 @@ func (h *DeviceHandler) GetDevice(c *gin.Context) {
 
 // ========== 设备控制 ==========
 
-// SetMQTTBroker 设置 MQTT Broker（供 main.go 调用）
-func (h *DeviceHandler) SetMQTTBroker(broker *mqtt.Broker) {
-	h.mqttBroker = broker
+// SetMQTTService 设置 MQTT 服务（供 main.go 调用）
+func (h *DeviceHandler) SetMQTTService(mqttService *service.MQTTService) {
+	h.mqttService = mqttService
 }
 
 // ControlDevice 控制设备
@@ -290,16 +276,15 @@ func (h *DeviceHandler) ControlDevice(c *gin.Context) {
 		return
 	}
 
-	if h.mqttBroker == nil {
-		log.Println("[ControlDevice] MQTT broker not initialized")
-		response.InternalError(c, "mqtt_broker_unavailable")
+	if h.mqttService == nil {
+		log.Println("[ControlDevice] MQTT service not initialized")
+		response.InternalError(c, "mqtt_service_unavailable")
 		return
 	}
 
 	log.Printf("[ControlDevice] DeviceID=%s, Switch=%v, Angle=%v", deviceID, req.Switch, req.Angle)
 
-	// 构建控制消息并发布
-	topic, payload, err := h.deviceService.BuildControlMessage(deviceID, &req)
+	err := h.deviceService.ControlDevice(deviceID, &req, h.mqttService)
 	if err != nil {
 		switch err.Error() {
 		case "device_not_found":
@@ -314,14 +299,6 @@ func (h *DeviceHandler) ControlDevice(c *gin.Context) {
 			log.Printf("[ControlDevice] Error: %v", err)
 			response.InternalError(c, "control_failed: "+err.Error())
 		}
-		return
-	}
-
-	// 通过内置Broker发布消息
-	data, _ := json.Marshal(payload)
-	if err := h.mqttBroker.Publish(topic, data, false); err != nil {
-		log.Printf("[ControlDevice] Publish error: %v", err)
-		response.InternalError(c, "publish_failed")
 		return
 	}
 
@@ -385,13 +362,4 @@ func (h *DeviceHandler) DeleteDevice(c *gin.Context) {
 	response.Success(c, gin.H{
 		"message": "device_deleted",
 	})
-}
-
-// extractHostWithoutPort 从主机地址中移除端口号
-// 例如: "192.168.21.77:48080" -> "192.168.21.77"
-func extractHostWithoutPort(host string) string {
-	if idx := strings.Index(host, ":"); idx != -1 {
-		return host[:idx]
-	}
-	return host
 }

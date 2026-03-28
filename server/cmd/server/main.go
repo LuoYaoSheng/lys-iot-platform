@@ -1,20 +1,17 @@
-// IoT Platform Core - 主入口 (简化版 - 内置MQTT Broker)
+// IoT Platform Core - 主入口
 // 作者: 罗耀生
 // 日期: 2025-12-13
-// 更新: 2026-01-06 - 内置MQTT Broker，移除EMQX依赖
+// 更新: 2025-12-14 - 添加 Project 和 Webhook 支持
 
 package main
 
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"iot-platform-core/internal/config"
 	"iot-platform-core/internal/handler"
 	"iot-platform-core/internal/model"
-	"iot-platform-core/internal/mqtt"
-	"iot-platform-core/internal/redis"
 	"iot-platform-core/internal/repository"
 	"iot-platform-core/internal/service"
 
@@ -25,15 +22,16 @@ import (
 )
 
 func main() {
-	log.Println("Starting IoT Platform Core (Embedded MQTT + Redis)...")
+	log.Println("Starting IoT Platform Core...")
 
 	// 加载配置
 	cfg := config.Load()
-	log.Printf("Config loaded: DB=%s:%s, Server=:%s, MQTT Port=%d, Redis=%s:%s",
-		cfg.Database.Host, cfg.Database.Port, cfg.Server.Port, cfg.MQTT.Port, cfg.Redis.Host, cfg.Redis.Port)
+	log.Printf("Config loaded: DB=%s:%s, Server=:%s, MQTT=%s:%d",
+		cfg.Database.Host, cfg.Database.Port, cfg.Server.Port,
+		cfg.MQTT.Broker, cfg.MQTT.Port)
 
 	// 连接数据库
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&collation=utf8mb4_unicode_ci",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		cfg.Database.User,
 		cfg.Database.Password,
 		cfg.Database.Host,
@@ -48,10 +46,6 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	log.Println("Database connected")
-
-	// 设置连接字符集为 utf8mb4
-	sqlDB, _ := db.DB()
-	sqlDB.Exec("SET NAMES utf8mb4")
 
 	// 自动迁移数据库表
 	if err := autoMigrate(db); err != nil {
@@ -71,13 +65,14 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	apiKeyRepo := repository.NewAPIKeyRepository(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
-	resetTokenRepo := repository.NewPasswordResetTokenRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
 
 	// 初始化服务
 	deviceService := service.NewDeviceService(
 		deviceRepo,
 		productRepo,
+		cfg.MQTT.Broker,
+		cfg.MQTT.BrokerExternal,
 		cfg.MQTT.Port,
 	)
 
@@ -85,73 +80,57 @@ func main() {
 		userRepo,
 		apiKeyRepo,
 		refreshTokenRepo,
-		resetTokenRepo,
 		cfg.JWT.Secret,
-		cfg.JWT.ExpireHours,
 	)
 
 	productService := service.NewProductService(productRepo)
 	projectService := service.NewProjectService(projectRepo, deviceRepo)
 
-	// 初始化 Redis 客户端
-	redisClient, err := redis.NewClient(&redis.Config{
-		Host: cfg.Redis.Host,
-		Port: cfg.Redis.Port,
-	}, cfg.Redis.DeviceOnlineTTL)
-	if err != nil {
-		log.Printf("[Redis] Failed to connect: %v (continuing without Redis)", err)
-		redisClient = nil
-	}
-	defer func() {
-		if redisClient != nil {
-			redisClient.Close()
-		}
-	}()
+	// 初始化 MQTT 服务（用于发布控制指令）
+	mqttService := service.NewMQTTService(
+		cfg.MQTT.Broker,
+		cfg.MQTT.Port,
+		"iot-platform-core",
+		"", // MQTT 用户名（平台内部使用，可留空）
+		"", // MQTT 密码
+	)
 
-// 启动内置 MQTT Broker
-	mqttBroker := mqtt.NewBroker(func(clientID, username, password string) bool {
-		// 平台内部客户端直接放行
-		if clientID == "iot-platform-core" {
-			return true
-		}
-		// 验证设备认证
-		_, err := deviceService.ValidateMQTTAuth(username, password, clientID)
-		return err == nil
-	})
-
-	// 设置 Redis 客户端到 Broker
-	if redisClient != nil {
-		mqttBroker.SetRedisClient(redisClient)
+	// 尝试连接 MQTT Broker
+	if err := mqttService.Connect(); err != nil {
+		log.Printf("Warning: MQTT connection failed: %v (device control will be unavailable)", err)
+	} else {
+		log.Println("MQTT connected")
 	}
 
-	// 设置设备状态更新回调（当设备连接/断开时更新数据库）
-	mqttBroker.SetStatusUpdate(func(deviceID string, online bool) {
-		if err := deviceService.UpdateDeviceOnline(deviceID, online); err != nil {
-			log.Printf("[MQTT] Failed to update device status: %s, %v", deviceID, err)
-		} else {
-			log.Printf("[MQTT] Device status updated: %s -> %v", deviceID, map[bool]string{true: "online", false: "offline"}[online])
-		}
-	})
-	// 启动定时检查离线设备的任务（每30秒检查一次）
-	// 使用 Redis 实时状态对比数据库状态，找出真正离线的设备
-	go func() {
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-		for range ticker.C {
-			checkOfflineDevices(deviceRepo, redisClient)
-		}
-	}()
+	// 初始化 EMQX API 服务（用于查询在线设备）
+	emqxService := service.NewEMQXService(
+		cfg.EMQX.APIUrl,
+		cfg.EMQX.APIUsername,
+		cfg.EMQX.APIPassword,
+	)
 
-	tcpAddr := fmt.Sprintf(":%d", cfg.MQTT.Port)
-	wsAddr := fmt.Sprintf(":%d", cfg.MQTT.WSPort)
-	if err := mqttBroker.Start(tcpAddr, wsAddr); err != nil {
-		log.Fatalf("Failed to start MQTT Broker: %v", err)
+	// 测试 EMQX API 连接
+	if err := emqxService.TestConnection(); err != nil {
+		log.Printf("Warning: EMQX API connection failed: %v (device status sync will be unavailable)", err)
+	} else {
+		log.Println("EMQX API connected")
+
+		// 初始化设备同步服务
+		deviceSyncService := service.NewDeviceSyncService(db, deviceRepo, emqxService)
+
+		// 启动时同步设备在线状态
+		log.Println("Syncing device online status from EMQX...")
+		if err := deviceSyncService.SyncDeviceStatusOnStartup(); err != nil {
+			log.Printf("Warning: Device status sync failed: %v", err)
+		}
+
+		// 启动定时同步任务
+		deviceSyncService.StartHeartbeatMonitor(cfg.EMQX.SyncInterval)
 	}
-	log.Printf("MQTT Broker started on TCP %s, WS %s", tcpAddr, wsAddr)
 
 	// 初始化处理器
 	deviceHandler := handler.NewDeviceHandler(deviceService, authLogRepo)
-	deviceHandler.SetMQTTBroker(mqttBroker)
+	deviceHandler.SetMQTTService(mqttService)
 	userHandler := handler.NewUserHandler(userService)
 	productHandler := handler.NewProductHandler(productService)
 	projectHandler := handler.NewProjectHandler(projectService)
@@ -184,8 +163,6 @@ func main() {
 			users.POST("/register", userHandler.Register)
 			users.POST("/login", userHandler.Login)
 			users.POST("/refresh-token", userHandler.RefreshToken)
-			users.POST("/password/reset/request", userHandler.RequestPasswordReset)
-			users.POST("/password/reset/confirm", userHandler.ResetPassword)
 		}
 
 		// ========== 用户相关（需要认证） ==========
@@ -242,7 +219,9 @@ func main() {
 		// ========== MQTT 认证（内部接口，无需用户认证） ==========
 		mqtt := v1.Group("/mqtt")
 		{
+			mqtt.GET("/auth", deviceHandler.MQTTAuth)
 			mqtt.POST("/auth", deviceHandler.MQTTAuth)
+			mqtt.GET("/acl", deviceHandler.MQTTACL)
 			mqtt.POST("/acl", deviceHandler.MQTTACL)
 		}
 
@@ -268,7 +247,6 @@ func autoMigrate(db *gorm.DB) error {
 		&model.User{},
 		&model.APIKey{},
 		&model.RefreshToken{},
-		&model.PasswordResetToken{},
 		&model.Project{},
 		&model.ProjectMember{},
 		&model.Product{},
@@ -279,125 +257,70 @@ func autoMigrate(db *gorm.DB) error {
 	)
 }
 
-// initDefaultData 初始化默认数据（仅在数据为空时执行，或更新缺失字段）
+// initDefaultData 初始化默认数据（仅在数据为空时执行）
 func initDefaultData(db *gorm.DB) error {
 	log.Println("Checking default data...")
 
-	// 默认产品配置
+	// 检查产品表是否为空
+	var productCount int64
+	if err := db.Model(&model.Product{}).Count(&productCount).Error; err != nil {
+		return fmt.Errorf("failed to count products: %w", err)
+	}
+
 	defaultProducts := []model.Product{
 		{
 			ProductKey:   "SW-SERVO-001",
-			Name:         "Smart Servo Switch",
-			Description:  "ESP32 Smart Servo Switch with BLE provisioning",
+			Name:         "智能开关(舵机版)",
+			Description:  "ESP32智能舵机开关，支持BLE配网和MQTT控制",
 			Category:     "switch",
-			ControlMode:  "pulse",     // 脉冲触发模式
-			UITemplate:   "servo",     // 舵机UI模板
-			IconName:     "bolt",      // 闪电图标
-			IconColor:    "#FF6B35",   // 橙色
-			Manufacturer: "SmartLink",
-			Model:        "ESP32-Servo-Switch-v1",
+			ControlMode:  "toggle",
+			UITemplate:   "switch_toggle",
+			IconName:     "power_settings_new",
+			IconColor:    "#2F855A",
+			NodeType:     "device",
+			Capabilities: `{"positions":["up","middle","down"]}`,
 			Status:       1,
 		},
-		{
-			ProductKey:   "USB-WAKEUP-S3",
-			Name:         "USB Wakeup Device",
-			Description:  "ESP32-S3 USB HID Wakeup Device with BLE provisioning",
-			ControlMode:  "trigger",
-			UITemplate:   "wakeup",
-			IconName:     "keyboard",
-			IconColor:    "#6C63FF",
-			Manufacturer: "SmartLink",
-			Model:        "ESP32-S3-N16R8",
-			Status:       1,
-		},
-}
+	}
 
-	for _, defaultProduct := range defaultProducts {
-		var existingProduct model.Product
-		if err := db.Where("product_key = ?", defaultProduct.ProductKey).First(&existingProduct).Error; err != nil {
-			// 产品不存在，创建新记录
-			if err := db.Create(&defaultProduct).Error; err != nil {
-				log.Printf("Failed to create product %s: %v", defaultProduct.ProductKey, err)
+	if productCount == 0 {
+		log.Println("Product table is empty, initializing default products...")
+	} else {
+		log.Printf("Product table already has %d products, ensuring default product metadata is up to date", productCount)
+	}
+
+	for _, defaults := range defaultProducts {
+		var product model.Product
+		err := db.Where("product_key = ?", defaults.ProductKey).First(&product).Error
+		if err != nil {
+			if err := db.Create(&defaults).Error; err != nil {
+				log.Printf("Failed to create product %s: %v", defaults.ProductKey, err)
 			} else {
-				log.Printf("✓ Created product: %s (%s)", defaultProduct.ProductKey, defaultProduct.Name)
+				log.Printf("✓ Created product: %s (%s)", defaults.ProductKey, defaults.Name)
 			}
+			continue
+		}
+
+		updates := map[string]interface{}{
+			"name":         defaults.Name,
+			"description":  defaults.Description,
+			"category":     defaults.Category,
+			"control_mode": defaults.ControlMode,
+			"ui_template":  defaults.UITemplate,
+			"icon_name":    defaults.IconName,
+			"icon_color":   defaults.IconColor,
+			"node_type":    defaults.NodeType,
+			"capabilities": defaults.Capabilities,
+			"status":       defaults.Status,
+		}
+		if err := db.Model(&product).Updates(updates).Error; err != nil {
+			log.Printf("Failed to update product %s metadata: %v", defaults.ProductKey, err)
 		} else {
-			// 产品存在，更新缺失字段
-			updated := false
-			updates := map[string]interface{}{}
-
-			if existingProduct.ControlMode == "" {
-				updates["control_mode"] = defaultProduct.ControlMode
-				updated = true
-			}
-			if existingProduct.UITemplate == "" {
-				updates["ui_template"] = defaultProduct.UITemplate
-				updated = true
-			}
-			if existingProduct.IconName == "" {
-				updates["icon_name"] = defaultProduct.IconName
-				updated = true
-			}
-			if existingProduct.IconColor == "" {
-				updates["icon_color"] = defaultProduct.IconColor
-				updated = true
-			}
-			if existingProduct.Manufacturer == "" {
-				updates["manufacturer"] = defaultProduct.Manufacturer
-				updated = true
-			}
-			if existingProduct.Model == "" {
-				updates["model"] = defaultProduct.Model
-				updated = true
-			}
-
-			if updated {
-				if err := db.Model(&existingProduct).Updates(updates).Error; err != nil {
-					log.Printf("Failed to update product %s: %v", defaultProduct.ProductKey, err)
-				} else {
-					log.Printf("✓ Updated product fields: %s", defaultProduct.ProductKey)
-				}
-			} else {
-				log.Printf("Product %s already up to date", defaultProduct.ProductKey)
-			}
+			log.Printf("✓ Ensured product metadata: %s (%s)", defaults.ProductKey, defaults.Name)
 		}
 	}
 
-	log.Println("Default products check completed")
+	log.Println("Default products initialized successfully")
+
 	return nil
-}
-
-// checkOfflineDevices 检查离线设备
-// 逻辑: 查询数据库中状态为在线的设备，对比 Redis 中的实际在线状态
-// 如果 Redis 中不存在该设备（TTL 过期），则标记为离线
-func checkOfflineDevices(deviceRepo *repository.DeviceRepository, redisClient *redis.Client) {
-	// 如果 Redis 未启用，不执行检查
-	if redisClient == nil {
-		return
-	}
-
-	// 获取数据库中所有在线设备
-	onlineDevices, err := deviceRepo.FindByStatus(model.DeviceStatusOnline)
-	if err != nil {
-		log.Printf("[Device] Failed to query online devices: %v", err)
-		return
-	}
-
-	// 检查每个在线设备在 Redis 中的状态
-	offlineCount := 0
-	for _, device := range onlineDevices {
-		// 如果 Redis 中不存在该设备（TTL 过期或从未连接），说明已离线
-		if !redisClient.IsDeviceOnline(device.DeviceID) {
-			if err := deviceRepo.UpdateStatus(device.DeviceID, model.DeviceStatusOffline); err != nil {
-				log.Printf("[Device] Failed to mark offline: %s, %v", device.DeviceID, err)
-			} else {
-				log.Printf("[Device] Device %s marked offline (not in Redis)", device.DeviceID)
-				offlineCount++
-			}
-		}
-	}
-
-	if offlineCount > 0 {
-		log.Printf("[Device] Marked %d device(s) offline", offlineCount)
-	}
 }

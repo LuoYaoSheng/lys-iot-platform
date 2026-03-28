@@ -7,10 +7,9 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"strings"
 	"time"
 
 	"iot-platform-core/internal/model"
@@ -54,30 +53,31 @@ type TopicsConfig struct {
 
 // DeviceService 设备服务
 type DeviceService struct {
-	deviceRepo  *repository.DeviceRepository
-	productRepo *repository.ProductRepository
-	mqttPort    int
+	deviceRepo         *repository.DeviceRepository
+	productRepo        *repository.ProductRepository
+	mqttBroker         string // 内部地址
+	mqttBrokerExternal string // 外部地址 (设备连接用)
+	mqttPort           int
 }
 
 func NewDeviceService(
 	deviceRepo *repository.DeviceRepository,
 	productRepo *repository.ProductRepository,
+	mqttBroker string,
+	mqttBrokerExternal string,
 	mqttPort int,
 ) *DeviceService {
 	return &DeviceService{
-		deviceRepo:  deviceRepo,
-		productRepo: productRepo,
-		mqttPort:    mqttPort,
+		deviceRepo:         deviceRepo,
+		productRepo:        productRepo,
+		mqttBroker:         mqttBroker,
+		mqttBrokerExternal: mqttBrokerExternal,
+		mqttPort:           mqttPort,
 	}
 }
 
-// Activate 设备激活（向后兼容方法，使用默认主机名）
+// Activate 设备激活
 func (s *DeviceService) Activate(req *ActivationRequest) (*ActivationResponse, bool, error) {
-	return s.ActivateWithHost(req, "")
-}
-
-// ActivateWithHost 设备激活（指定主机名）
-func (s *DeviceService) ActivateWithHost(req *ActivationRequest, mqttHost string) (*ActivationResponse, bool, error) {
 	// 1. 验证产品是否存在
 	product, err := s.productRepo.FindByProductKey(req.ProductKey)
 	if err != nil {
@@ -99,7 +99,7 @@ func (s *DeviceService) ActivateWithHost(req *ActivationRequest, mqttHost string
 
 	// 3. 如果设备已存在且已激活，返回现有配置
 	if existingDevice != nil && existingDevice.Status != model.DeviceStatusInactive {
-		resp := s.buildActivationResponse(existingDevice, mqttHost)
+		resp := s.buildActivationResponse(existingDevice)
 		return resp, true, nil // isAlreadyActivated = true
 	}
 
@@ -127,65 +127,28 @@ func (s *DeviceService) ActivateWithHost(req *ActivationRequest, mqttHost string
 	now := time.Now()
 	device.ActivatedAt = &now
 
-	// 保存设备（处理并发导致的唯一约束冲突）
+	// 保存设备
 	if existingDevice != nil {
 		err = s.deviceRepo.Update(device)
 	} else {
 		err = s.deviceRepo.Create(device)
-		// 如果遇到唯一约束冲突（MySQL 1062），说明并发创建了相同设备
-		// 重新查询并更新
-		if err != nil && isDuplicateKeyError(err) {
-			log.Printf("[Activate] Duplicate key detected for %s/%s, re-querying...", req.ProductKey, req.DeviceSN)
-			existingDevice, err = s.deviceRepo.FindByDeviceSN(req.ProductKey, req.DeviceSN)
-			if err != nil {
-				return nil, false, err
-			}
-			// 使用已存在的设备
-			device = existingDevice
-			// 更新凭证
-			device.DeviceSecret = s.generateSecret()
-			device.MQTTUsername = fmt.Sprintf("%s&%s", req.ProductKey, device.DeviceID)
-			device.MQTTPassword = s.generateToken()
-			device.MQTTClientID = fmt.Sprintf("%s&%s", req.ProductKey, device.DeviceID)
-			device.FirmwareVersion = req.FirmwareVersion
-			device.ChipModel = req.ChipModel
-			device.Status = model.DeviceStatusOffline
-			device.ActivatedAt = &now
-			err = s.deviceRepo.Update(device)
-		}
 	}
 
 	if err != nil {
 		return nil, false, err
 	}
 
-	resp := s.buildActivationResponse(device, mqttHost)
+	resp := s.buildActivationResponse(device)
 	return resp, false, nil
 }
 
-// isDuplicateKeyError 检查是否是唯一约束冲突错误
-func isDuplicateKeyError(err error) bool {
-	if err == nil {
-		return false
-	}
-	// MySQL duplicate key error code is 1062
-	return strings.Contains(err.Error(), "Error 1062") ||
-		strings.Contains(err.Error(), "duplicate key") ||
-		strings.Contains(err.Error(), "Duplicate entry")
-}
-
 // buildActivationResponse 构建激活响应
-func (s *DeviceService) buildActivationResponse(device *model.Device, mqttHost string) *ActivationResponse {
-	// 如果未指定主机名，使用 localhost（默认情况）
-	if mqttHost == "" {
-		mqttHost = "localhost"
-	}
-
+func (s *DeviceService) buildActivationResponse(device *model.Device) *ActivationResponse {
 	return &ActivationResponse{
 		DeviceID:     device.DeviceID,
 		DeviceSecret: device.DeviceSecret,
 		MQTT: MQTTConfig{
-			Server:    mqttHost, // 使用传入的主机名
+			Server:    s.mqttBrokerExternal, // 使用外部地址
 			Port:      s.mqttPort,
 			PortTLS:   8883,
 			Username:  device.MQTTUsername,
@@ -277,43 +240,6 @@ func (s *DeviceService) UpdateDeviceOnline(deviceID string, online bool) error {
 	return s.deviceRepo.UpdateStatus(deviceID, status)
 }
 
-// UpdateLastOnline 更新设备最后在线时间
-func (s *DeviceService) UpdateLastOnline(deviceID string) error {
-	return s.deviceRepo.UpdateLastOnline(deviceID)
-}
-
-// CheckOfflineDevices 检查离线设备（超过 timeout 时间未活动的设备标记为离线）
-func (s *DeviceService) CheckOfflineDevices(timeout time.Duration) ([]string, error) {
-	// 获取所有在线设备
-	devices, err := s.deviceRepo.FindByStatus(model.DeviceStatusOnline)
-	if err != nil {
-		return nil, err
-	}
-
-	now := time.Now()
-	offlineDevices := make([]string, 0)
-
-	for _, device := range devices {
-		// 检查最后在线时间
-		if device.LastOnlineAt == nil {
-			// 没有最后在线时间记录，标记为离线
-			offlineDevices = append(offlineDevices, device.DeviceID)
-			s.deviceRepo.UpdateStatus(device.DeviceID, model.DeviceStatusOffline)
-			log.Printf("[Device] Device %s marked offline (no last_online)", device.DeviceID)
-			continue
-		}
-
-		// 如果超过 timeout 时间未活动，标记为离线
-		if now.Sub(*device.LastOnlineAt) > timeout {
-			offlineDevices = append(offlineDevices, device.DeviceID)
-			s.deviceRepo.UpdateStatus(device.DeviceID, model.DeviceStatusOffline)
-			log.Printf("[Device] Device %s marked offline (inactive for %v)", device.DeviceID, now.Sub(*device.LastOnlineAt))
-		}
-	}
-
-	return offlineDevices, nil
-}
-
 // ========== 新增：设备列表和详情 ==========
 
 // DeviceListResponse 设备列表响应
@@ -327,19 +253,32 @@ type DeviceListResponse struct {
 
 // DeviceInfo 设备信息
 type DeviceInfo struct {
-	DeviceID        string        `json:"deviceId"`
-	DeviceSN        string        `json:"deviceSN"` // 与 SDK Device 模型一致
-	ProductKey      string        `json:"productKey"`
-	ProjectID       string        `json:"projectId"`
-	Name            string        `json:"name"`
-	Status          string        `json:"status"` // 字符串类型: inactive/online/offline/disabled
-	StatusText      string        `json:"statusText"`
-	FirmwareVersion string        `json:"firmwareVersion"`
-	ChipModel       string        `json:"chipModel"`
-	LastOnlineAt    *string       `json:"lastOnlineAt"`
-	ActivatedAt     *string       `json:"activatedAt"`
-	CreatedAt       string        `json:"createdAt"`
-	Product         *ProductInfo  `json:"product,omitempty"` // v0.2.0: 产品信息
+	DeviceID        string          `json:"deviceId"`
+	DeviceSN        string          `json:"deviceSN"` // 与 SDK Device 模型一致
+	ProductKey      string          `json:"productKey"`
+	Name            string          `json:"name"`
+	Product         *ProductSummary `json:"product,omitempty"`
+	Status          string          `json:"status"` // 字符串类型: inactive/online/offline/disabled
+	StatusText      string          `json:"statusText"`
+	FirmwareVersion string          `json:"firmwareVersion"`
+	ChipModel       string          `json:"chipModel"`
+	LastOnlineAt    *string         `json:"lastOnlineAt"`
+	ActivatedAt     *string         `json:"activatedAt"`
+	CreatedAt       string          `json:"createdAt"`
+}
+
+type ProductSummary struct {
+	ProductKey   string                 `json:"productKey"`
+	Name         string                 `json:"name"`
+	Description  string                 `json:"description,omitempty"`
+	Category     string                 `json:"category"`
+	ControlMode  string                 `json:"controlMode,omitempty"`
+	UITemplate   string                 `json:"uiTemplate,omitempty"`
+	IconName     string                 `json:"iconName,omitempty"`
+	IconColor    string                 `json:"iconColor,omitempty"`
+	Capabilities map[string]interface{} `json:"capabilities,omitempty"`
+	NodeType     string                 `json:"nodeType,omitempty"`
+	Status       int                    `json:"status"`
 }
 
 // GetDeviceList 获取设备列表
@@ -364,10 +303,10 @@ func (s *DeviceService) GetDeviceList(productKey string, status *model.DeviceSta
 	}
 
 	return &DeviceListResponse{
-		Total:   total,
-		Page:    page,
-		Size:    size,
-		List: deviceInfos,
+		Total: total,
+		Page:  page,
+		Size:  size,
+		List:  deviceInfos,
 	}, nil
 }
 
@@ -391,43 +330,56 @@ func (s *DeviceService) toDeviceInfo(d *model.Device) DeviceInfo {
 		DeviceID:        d.DeviceID,
 		DeviceSN:        d.DeviceSN,
 		ProductKey:      d.ProductKey,
-		ProjectID:       d.ProjectID,
 		Name:            d.Name,
 		Status:          s.getStatusString(d.Status), // 返回字符串状态
 		StatusText:      s.getStatusText(d.Status),
 		FirmwareVersion: d.FirmwareVersion,
 		ChipModel:       d.ChipModel,
-		CreatedAt:       d.CreatedAt.Format(time.RFC3339),
+		CreatedAt:       d.CreatedAt.Format("2006-01-02 15:04:05"),
 	}
 
-	if d.LastOnlineAt != nil {
-		t := d.LastOnlineAt.Format(time.RFC3339)
-		info.LastOnlineAt = &t
-	}
-	if d.ActivatedAt != nil {
-		t := d.ActivatedAt.Format(time.RFC3339)
-		info.ActivatedAt = &t
-	}
-
-	// 查询产品信息
-	product, err := s.productRepo.FindByProductKey(d.ProductKey)
-	if err == nil {
-		info.Product = &ProductInfo{
-			ID:           product.ID,
-			ProductKey:   product.ProductKey,
-			Name:         product.Name,
-			Description:  product.Description,
-			Category:     product.Category,
-			ControlMode:  product.ControlMode,
-			UITemplate:   product.UITemplate,
-			IconName:     product.IconName,
-			IconColor:    product.IconColor,
-			Manufacturer: product.Manufacturer,
-			Model:        product.Model,
+	if d.Product != nil {
+		info.Product = toProductSummary(d.Product)
+	} else if s.productRepo != nil {
+		if product, err := s.productRepo.FindByProductKey(d.ProductKey); err == nil {
+			info.Product = toProductSummary(product)
 		}
 	}
 
+	if d.LastOnlineAt != nil {
+		t := d.LastOnlineAt.Format("2006-01-02 15:04:05")
+		info.LastOnlineAt = &t
+	}
+	if d.ActivatedAt != nil {
+		t := d.ActivatedAt.Format("2006-01-02 15:04:05")
+		info.ActivatedAt = &t
+	}
+
 	return info
+}
+
+func toProductSummary(product *model.Product) *ProductSummary {
+	summary := &ProductSummary{
+		ProductKey:  product.ProductKey,
+		Name:        product.Name,
+		Description: product.Description,
+		Category:    product.Category,
+		ControlMode: product.ControlMode,
+		UITemplate:  product.UITemplate,
+		IconName:    product.IconName,
+		IconColor:   product.IconColor,
+		NodeType:    product.NodeType,
+		Status:      product.Status,
+	}
+
+	if product.Capabilities != "" {
+		var capabilities map[string]interface{}
+		if err := json.Unmarshal([]byte(product.Capabilities), &capabilities); err == nil {
+			summary.Capabilities = capabilities
+		}
+	}
+
+	return summary
 }
 
 // getStatusString 获取状态字符串 (SDK 格式)
@@ -476,23 +428,23 @@ type ControlRequest struct {
 	Angle  *int  `json:"angle"`
 }
 
-// BuildControlMessage 构建控制消息（返回topic和payload）
-func (s *DeviceService) BuildControlMessage(deviceID string, req *ControlRequest) (string, map[string]interface{}, error) {
+// ControlDevice 控制设备（通过 MQTT 发布指令）
+func (s *DeviceService) ControlDevice(deviceID string, req *ControlRequest, mqttService *MQTTService) error {
 	// 1. 验证设备存在
 	device, err := s.deviceRepo.FindByDeviceID(deviceID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", nil, errors.New("device_not_found")
+			return errors.New("device_not_found")
 		}
-		return "", nil, err
+		return err
 	}
 
 	// 2. 验证设备状态
 	if device.Status == model.DeviceStatusInactive {
-		return "", nil, errors.New("device_not_activated")
+		return errors.New("device_not_activated")
 	}
 	if device.Status == model.DeviceStatusDisabled {
-		return "", nil, errors.New("device_disabled")
+		return errors.New("device_disabled")
 	}
 
 	// 3. 构建控制参数
@@ -500,20 +452,17 @@ func (s *DeviceService) BuildControlMessage(deviceID string, req *ControlRequest
 
 	// 新协议：支持 action 参数
 	if req.Action != nil {
-		// trigger 操作转换为 wakeup 命令（USB唤醒设备）
-		if *req.Action == "trigger" {
-			params["wakeup"] = true
-		} else {
-			params["action"] = *req.Action
+		params["action"] = *req.Action
 
-			if *req.Action == "toggle" && req.Position != nil {
-				params["position"] = *req.Position
-			} else if *req.Action == "pulse" {
-				if req.Duration != nil {
-					params["duration"] = *req.Duration
-				} else {
-					params["duration"] = 500
-				}
+		if *req.Action == "toggle" && req.Position != nil {
+			// toggle 模式：切换到指定位置
+			params["position"] = *req.Position
+		} else if *req.Action == "pulse" {
+			// pulse 模式：触发动作
+			if req.Duration != nil {
+				params["duration"] = *req.Duration
+			} else {
+				params["duration"] = 500 // 默认500ms
 			}
 		}
 	} else {
@@ -533,18 +482,11 @@ func (s *DeviceService) BuildControlMessage(deviceID string, req *ControlRequest
 	}
 
 	if len(params) == 0 {
-		return "", nil, errors.New("no_control_params")
+		return errors.New("no_control_params")
 	}
 
-	// 4. 构建topic和payload
-	topic := fmt.Sprintf("/sys/%s/%s/thing/service/property/set", device.ProductKey, device.DeviceID)
-	payload := map[string]interface{}{
-		"method": "thing.service.property.set",
-		"id":     fmt.Sprintf("%d", time.Now().UnixMilli()),
-		"params": params,
-	}
-
-	return topic, payload, nil
+	// 4. 发布 MQTT 消息
+	return mqttService.PublishDeviceControl(device.ProductKey, device.DeviceID, params)
 }
 
 // GetDeviceStatus 获取设备状态
@@ -562,7 +504,11 @@ func (s *DeviceService) GetDeviceStatus(deviceID string) (map[string]interface{}
 	property, err := s.deviceRepo.GetDeviceProperty(deviceID, "position")
 	position := "middle" // 默认值
 	if err == nil && property != nil {
-		position = property.Value
+		if decoded, ok := decodeStoredStringValue(property.Value); ok && decoded != "" {
+			position = decoded
+		} else if property.Value != "" {
+			position = property.Value
+		}
 	}
 
 	// 3. 构建响应
@@ -579,6 +525,14 @@ func (s *DeviceService) GetDeviceStatus(deviceID string) (map[string]interface{}
 	}
 
 	return status, nil
+}
+
+func decodeStoredStringValue(raw string) (string, bool) {
+	var decoded string
+	if err := json.Unmarshal([]byte(raw), &decoded); err == nil {
+		return decoded, true
+	}
+	return "", false
 }
 
 // UpdateDeviceProperty 更新设备属性

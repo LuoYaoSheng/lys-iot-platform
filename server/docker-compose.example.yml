@@ -1,0 +1,151 @@
+# ========================================
+# IoT Platform Core - Docker Compose 配置示例
+# 作者: 罗耀生
+# 日期: 2025-12-16
+# ========================================
+#
+# 使用说明:
+# 1. 复制此文件为 docker-compose.yml（如需自定义）
+# 2. 默认可直接使用现有的 docker-compose.yml
+# 3. 端口规范: 全部使用 4 开头，避免端口冲突
+#
+# 快速启动:
+# docker compose up -d              # 启动所有服务
+# docker compose ps                 # 查看服务状态
+# docker compose logs -f            # 查看日志
+# docker compose down               # 停止并删除容器
+#
+# ========================================
+
+name: iot-platform
+
+services:
+  # ==================== MySQL 数据库 ====================
+  mysql:
+    image: mysql:8.0
+    container_name: iot-platform_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456      # root密码
+      MYSQL_DATABASE: iot_platform         # 自动创建数据库
+      MYSQL_USER: iot_user                 # 应用用户
+      MYSQL_PASSWORD: iot123456            # 应用密码（建议修改）
+    ports:
+      - "48306:3306"    # 主机端口:容器端口
+    volumes:
+      - mysql_data:/var/lib/mysql                           # 数据持久化
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql  # 初始化SQL
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # ==================== Redis 缓存 ====================
+  redis:
+    image: redis:7-alpine
+    container_name: iot-platform_redis
+    ports:
+      - "48379:6379"    # 主机端口:容器端口
+    volumes:
+      - redis_data:/data    # 数据持久化
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+  # ==================== EMQX MQTT Broker ====================
+  emqx:
+    image: emqx/emqx:5.3.0
+    container_name: iot-platform_emqx
+    environment:
+      EMQX_NAME: iot-emqx
+      EMQX_HOST: 127.0.0.1
+
+      # HTTP 认证配置（连接后端API进行设备认证）
+      EMQX_AUTHENTICATION__1__MECHANISM: password_based
+      EMQX_AUTHENTICATION__1__BACKEND: http
+      EMQX_AUTHENTICATION__1__ENABLE: "true"
+      EMQX_AUTHENTICATION__1__METHOD: get
+      EMQX_AUTHENTICATION__1__URL: http://host.docker.internal:48080/api/v1/mqtt/auth?username=$${username}&password=$${password}&clientid=$${clientid}
+
+      # 开发模式: 允许未匹配的 ACL（生产环境改为 deny）
+      EMQX_AUTHORIZATION__NO_MATCH: allow
+
+    ports:
+      - "48883:1883"    # MQTT TCP 端口
+      - "48803:8083"    # MQTT WebSocket 端口
+      - "48884:18083"   # Dashboard管理界面 (用户名/密码: admin/public)
+    volumes:
+      - emqx_data:/opt/emqx/data    # 数据持久化
+    extra_hosts:
+      # 允许容器内访问宿主机（用于HTTP认证回调）
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iot-network
+    restart: unless-stopped
+
+# ==================== 数据卷 ====================
+volumes:
+  mysql_data:
+    name: iot-platform_mysql_data
+  redis_data:
+    name: iot-platform_redis_data
+  emqx_data:
+    name: iot-platform_emqx_data
+
+# ==================== 网络 ====================
+networks:
+  iot-network:
+    driver: bridge
+    name: iot-platform_network
+
+# ========================================
+# 常用命令参考
+# ========================================
+#
+# 启动服务:
+#   docker compose up -d
+#
+# 查看状态:
+#   docker compose ps
+#
+# 查看日志:
+#   docker compose logs -f [服务名]
+#   docker compose logs -f mysql
+#
+# 停止服务:
+#   docker compose stop
+#
+# 重启服务:
+#   docker compose restart [服务名]
+#
+# 删除服务（保留数据）:
+#   docker compose down
+#
+# 删除服务和数据:
+#   docker compose down -v
+#
+# 进入容器:
+#   docker compose exec mysql bash
+#   docker compose exec redis redis-cli
+#
+# 访问地址:
+#   MySQL:    localhost:48306
+#   Redis:    localhost:48379
+#   EMQX:     localhost:48883 (MQTT)
+#   Dashboard: http://localhost:48884
+#
+# ========================================

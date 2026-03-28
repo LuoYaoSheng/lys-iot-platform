@@ -20,25 +20,25 @@ const (
 
 // Product 产品
 type Product struct {
-	ID          int64     `gorm:"primaryKey" json:"id"`
-	ProductKey  string    `gorm:"uniqueIndex;size:64" json:"productKey"`
-	Name        string    `gorm:"size:128" json:"name"`
-	Description string    `gorm:"type:text" json:"description"`
-	Category    string    `gorm:"size:64" json:"category"`
-
-	// v0.2.0 UI控制相关字段
-	ControlMode  string `gorm:"size:32" json:"controlMode"`           // toggle/pulse/dimmer/readonly/generic
-	UITemplate   string `gorm:"size:64" json:"uiTemplate"`            // UI模板名称
-	IconName     string `gorm:"size:64" json:"iconName"`              // 图标名称(Material Icons)
-	IconColor    string `gorm:"size:16" json:"iconColor"`             // 图标颜色(HEX，如 #FF6B35)
-	Capabilities string `gorm:"type:text" json:"capabilities"`        // 产品能力定义(JSON)
-	MQTTTopics   string `gorm:"type:text" json:"mqttTopics"`          // MQTT主题配置(JSON)
-	Manufacturer string `gorm:"size:128" json:"manufacturer"`         // 制造商
-	Model        string `gorm:"size:64" json:"model"`                 // 硬件型号
-
-	Status    int       `gorm:"default:1" json:"status"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID           int64     `gorm:"primaryKey" json:"id"`
+	ProductKey   string    `gorm:"uniqueIndex;size:64" json:"productKey"`
+	Name         string    `gorm:"size:128" json:"name"`
+	Description  string    `gorm:"type:text" json:"description"`
+	Category     string    `gorm:"size:64" json:"category"`
+	ControlMode  string    `gorm:"size:32" json:"controlMode"`
+	UITemplate   string    `gorm:"size:64" json:"uiTemplate"`
+	IconName     string    `gorm:"size:64" json:"iconName"`
+	IconColor    string    `gorm:"size:16" json:"iconColor"`
+	Capabilities string    `gorm:"type:text" json:"capabilities"`
+	MQTTTopics   string    `gorm:"type:text" json:"mqttTopics"`
+	Manufacturer string    `gorm:"size:128" json:"manufacturer"`
+	Model        string    `gorm:"size:128" json:"model"`
+	NodeType     string    `gorm:"size:32;default:device" json:"nodeType"`
+	DataFormat   string    `gorm:"size:32" json:"dataFormat"`
+	Protocol     string    `gorm:"size:32" json:"protocol"`
+	Status       int       `gorm:"default:1" json:"status"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 func (Product) TableName() string {
@@ -49,9 +49,9 @@ func (Product) TableName() string {
 type Device struct {
 	ID              int64        `gorm:"primaryKey" json:"id"`
 	DeviceID        string       `gorm:"uniqueIndex;size:64" json:"deviceId"`
-	DeviceSN        string       `gorm:"size:64;uniqueIndex:idx_product_device" json:"deviceSN"`
+	DeviceSN        string       `gorm:"index;size:64" json:"deviceSN"`
 	DeviceSecret    string       `gorm:"size:128" json:"-"`
-	ProductKey      string       `gorm:"size:64;uniqueIndex:idx_product_device" json:"productKey"`
+	ProductKey      string       `gorm:"index;size:64" json:"productKey"`
 	ProjectID       string       `gorm:"index;size:64" json:"projectId"` // 所属项目
 	Name            string       `gorm:"size:128" json:"name"`
 	Status          DeviceStatus `gorm:"default:0" json:"status"`
@@ -64,6 +64,7 @@ type Device struct {
 	ActivatedAt     *time.Time   `json:"activatedAt"`
 	CreatedAt       time.Time    `json:"createdAt"`
 	UpdatedAt       time.Time    `json:"updatedAt"`
+	Product         *Product     `gorm:"foreignKey:ProductKey;references:ProductKey" json:"product,omitempty"`
 }
 
 func (Device) TableName() string {

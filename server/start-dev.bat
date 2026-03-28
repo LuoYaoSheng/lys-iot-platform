@@ -33,10 +33,10 @@ echo ==========================================
 echo Services started successfully!
 echo ==========================================
 echo.
-echo MySQL:    localhost:3306 (user: iot_user, pass: iot123456)
-echo Redis:    localhost:6379
-echo EMQX:     localhost:1883 (MQTT)
-echo          localhost:18083 (Dashboard - admin/public)
+echo MySQL:    localhost:48306 (user: iot_user, pass: iot123456)
+echo Redis:    localhost:48379
+echo EMQX:     localhost:48883 (MQTT)
+echo          localhost:48884 (Dashboard - admin/public)
 echo.
 echo Next steps:
 echo   1. Run Go service: go run ./cmd/server

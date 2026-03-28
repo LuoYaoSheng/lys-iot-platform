@@ -469,7 +469,7 @@ gunzip -t /opt/backups/mysql/latest.sql.gz
 
 ### EMQX Dashboard监控
 
-访问：`http://localhost:18083`
+访问：`http://localhost:48884`
 
 **主要监控页面**：
 
@@ -495,16 +495,16 @@ gunzip -t /opt/backups/mysql/latest.sql.gz
 
 ```bash
 # 获取节点信息
-curl -u "<API_KEY>:<SECRET>" http://localhost:18083/api/v5/nodes
+curl -u "<API_KEY>:<SECRET>" http://localhost:48884/api/v5/nodes
 
 # 获取连接统计
-curl -u "<API_KEY>:<SECRET>" http://localhost:18083/api/v5/stats
+curl -u "<API_KEY>:<SECRET>" http://localhost:48884/api/v5/stats
 
 # 获取指标
-curl -u "<API_KEY>:<SECRET>" http://localhost:18083/api/v5/metrics
+curl -u "<API_KEY>:<SECRET>" http://localhost:48884/api/v5/metrics
 
 # 查询特定客户端
-curl -u "<API_KEY>:<SECRET>" "http://localhost:18083/api/v5/clients?clientid=ESP32_001"
+curl -u "<API_KEY>:<SECRET>" "http://localhost:48884/api/v5/clients?clientid=ESP32_001"
 ```
 
 ### 关键MQTT指标

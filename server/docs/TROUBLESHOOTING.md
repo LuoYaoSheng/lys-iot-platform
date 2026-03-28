@@ -145,7 +145,7 @@ sudo systemctl status emqx
 telnet localhost 1883
 
 # Dashboard端口18083
-curl http://localhost:18083
+curl http://localhost:48884
 ```
 
 **3. 检查配置**：
@@ -163,7 +163,7 @@ MQTT_PORT=1883
 mosquitto_pub -h localhost -p 1883 -t "test/topic" -m "test"
 
 # 查看EMQX Dashboard
-# http://localhost:18083
+# http://localhost:48884
 # 检查 Monitoring → Connections 是否有连接
 ```
 
@@ -194,7 +194,7 @@ Warning: EMQX API connection failed: EMQX API认证失败: 401
 参考 [ENV_CONFIG.md](./ENV_CONFIG.md#如何获取emqx-api-key) 创建API Key
 
 **快速步骤**：
-1. 登录EMQX Dashboard：`http://localhost:18083`（注意端口18083）
+1. 登录EMQX Dashboard：`http://localhost:48884`
 2. 点击：**System（系统）** → **API Keys（API密钥）** → **+ Create（创建）**
 3. 填写Name，点击创建
 4. **立即复制**API Key和Secret Key（只显示一次！）
@@ -208,7 +208,7 @@ Warning: EMQX API connection failed: EMQX API认证失败: 401
 **验证配置**：
 ```bash
 # 测试API连接
-curl -u "<API_KEY>:<SECRET_KEY>" http://localhost:18083/api/v5/nodes
+curl -u "<API_KEY>:<SECRET_KEY>" http://localhost:48884/api/v5/nodes
 
 # 应该返回节点信息，而不是401错误
 ```
@@ -306,7 +306,7 @@ curl -X POST http://localhost:8080/api/v1/webhook/mqtt/client-event \
 ```
 
 **3. 查看EMQX Webhook状态**：
-- 访问EMQX Dashboard：http://localhost:18083
+- 访问EMQX Dashboard：http://localhost:48884
 - Integration → Webhook → 检查状态
 - 查看Success/Failed计数
 
@@ -348,7 +348,7 @@ MQTT连接失败，返回码：-1 → 网络连接失败
 **服务端排查**：
 
 **1. 查看EMQX Dashboard**：
-- http://localhost:18083
+- http://localhost:48884
 - Monitoring → Connections → 搜索ClientID
 - 查看连接失败原因
 

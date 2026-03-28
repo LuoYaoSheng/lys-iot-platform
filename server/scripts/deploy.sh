@@ -203,7 +203,7 @@ health_check() {
 
     # 检查 EMQX Dashboard
     log_info "检查 EMQX Dashboard..."
-    EMQX_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:49084 2>/dev/null || echo "000")
+    EMQX_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:48884 2>/dev/null || echo "000")
 
     if [ "$EMQX_STATUS" == "200" ] || [ "$EMQX_STATUS" == "302" ]; then
         log_success "EMQX Dashboard 正常 (HTTP $EMQX_STATUS)"
@@ -258,16 +258,16 @@ show_deployment_info() {
     echo "📋 服务访问地址:"
     echo "  - API 服务:        http://localhost:48080"
     echo "  - API 文档:        http://localhost:48080/swagger/index.html"
-    echo "  - EMQX Dashboard:  http://localhost:49084"
+    echo "  - EMQX Dashboard:  http://localhost:48884"
     echo "  - EMQX 默认账号:   admin / public"
     echo ""
     echo "🔌 端口映射:"
-    echo "  - MySQL:    44306"
-    echo "  - Redis:    47379"
-    echo "  - MQTT:     42883"
+    echo "  - MySQL:    48306"
+    echo "  - Redis:    48379"
+    echo "  - MQTT:     48883"
     echo "  - API:      48080"
-    echo "  - EMQX WS:  49083"
-    echo "  - EMQX UI:  49084"
+    echo "  - EMQX WS:  48803"
+    echo "  - EMQX UI:  48884"
     echo ""
     echo "📝 常用命令:"
     echo "  - 查看日志:    docker-compose logs -f"

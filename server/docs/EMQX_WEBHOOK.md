@@ -13,7 +13,7 @@
 
 ### 第1步：创建设备上线 Webhook
 
-1. 登录 EMQX：`http://localhost:49084`（admin/public）
+1. 登录 EMQX：`http://localhost:48884`（admin/public）
 
 2. 点击：**Integration（集成）** → **Webhook** → **+ 创建**
 

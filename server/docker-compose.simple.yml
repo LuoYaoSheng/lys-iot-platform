@@ -1,0 +1,95 @@
+# ========================================
+# IoT 平台 - 极简部署配置 (宝塔环境)
+# 作者: 罗耀生
+# ========================================
+#
+# 一键部署步骤:
+# 1. 复制 .env.simple 为 .env，修改里面的IP地址
+# 2. 运行: docker compose -f docker-compose.simple.yml up -d
+# 3. 完成！
+#
+# 访问地址:
+# - API服务: http://你的IP:48080
+# - MQTT端口: 48883
+# - EMQX控制台: http://你的IP:48884 (账号: admin / 密码: public)
+#
+# ========================================
+
+name: iot-platform
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: iot_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "48306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: always
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: iot_redis
+    ports:
+      - "48379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+  # IoT 后端服务 (直接拉取镜像)
+  iot-core:
+    image: luoyaosheng/iot-platform-core:latest
+    container_name: iot_core
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MQTT_BROKER: emqx
+      MQTT_PORT: 1883
+      MQTT_BROKER_EXTERNAL: ${SERVER_IP}:48883
+      JWT_SECRET: ${JWT_SECRET}
+      EMQX_API_URL: http://emqx:18083
+      EMQX_API_USERNAME: ${EMQX_API_USERNAME}
+      EMQX_API_PASSWORD: ${EMQX_API_PASSWORD}
+    ports:
+      - "48080:48080"
+    depends_on:
+      - mysql
+      - redis
+    restart: always
+
+  # MQTT 服务器
+  emqx:
+    image: emqx/emqx:5.3.0
+    container_name: iot_emqx
+    environment:
+      EMQX_NAME: iot-emqx
+      # HTTP 认证配置（设备连接时验证）
+      EMQX_AUTHENTICATION__1__MECHANISM: password_based
+      EMQX_AUTHENTICATION__1__BACKEND: http
+      EMQX_AUTHENTICATION__1__ENABLE: "true"
+      EMQX_AUTHENTICATION__1__METHOD: get
+      EMQX_AUTHENTICATION__1__URL: http://iot-core:48080/api/v1/mqtt/auth?username=$${username}&password=$${password}&clientid=$${clientid}
+      EMQX_AUTHORIZATION__NO_MATCH: allow
+    ports:
+      - "48883:1883"      # MQTT端口
+      - "48884:18083"     # Web控制台
+    volumes:
+      - emqx_data:/opt/emqx/data
+    depends_on:
+      - iot-core
+    restart: always
+
+volumes:
+  mysql_data:
+  redis_data:
+  emqx_data:

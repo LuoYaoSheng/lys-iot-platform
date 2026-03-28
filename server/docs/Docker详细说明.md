@@ -45,10 +45,10 @@ docker compose up -d
 | 服务 | 端口 | 访问地址 |
 |------|------|---------|
 | 后端API | 48080 | http://localhost:48080 |
-| MySQL | 44306 | localhost:44306 |
-| Redis | 47379 | localhost:47379 |
-| MQTT (EMQX) | 42883 | localhost:42883 |
-| EMQX Dashboard | 49084 | http://localhost:49084 |
+| MySQL | 48306 | localhost:48306 |
+| Redis | 48379 | localhost:48379 |
+| MQTT (EMQX) | 48883 | localhost:48883 |
+| EMQX Dashboard | 48884 | http://localhost:48884 |
 
 **EMQX Dashboard 登录：**
 - 用户名：`admin`
@@ -117,7 +117,7 @@ netstat -ano | findstr "48080"
 ### 问题2：设备无法连接MQTT
 
 1. 确认 `.env` 中的 `MQTT_BROKER_EXTERNAL` 配置正确
-2. 确认防火墙开放了42883端口
+2. 确认防火墙开放了48883端口
 3. 查看EMQX日志：`docker compose logs emqx`
 
 ### 问题3：App无法连接

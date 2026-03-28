@@ -31,7 +31,7 @@ func (r *DeviceRepository) FindByDeviceSN(productKey, deviceSN string) (*model.D
 // FindByDeviceID 根据设备ID查找
 func (r *DeviceRepository) FindByDeviceID(deviceID string) (*model.Device, error) {
 	var device model.Device
-	err := r.db.Where("device_id = ?", deviceID).First(&device).Error
+	err := r.db.Preload("Product").Where("device_id = ?", deviceID).First(&device).Error
 	if err != nil {
 		return nil, err
 	}
@@ -82,16 +82,6 @@ func (r *DeviceRepository) UpdateLastOnline(deviceID string) error {
 		Update("last_online_at", gorm.Expr("NOW()")).Error
 }
 
-// FindByStatus 根据状态获取设备列表
-func (r *DeviceRepository) FindByStatus(status model.DeviceStatus) ([]model.Device, error) {
-	var devices []model.Device
-	err := r.db.Where("status = ?", status).Find(&devices).Error
-	if err != nil {
-		return nil, err
-	}
-	return devices, nil
-}
-
 // FindAll 获取设备列表
 func (r *DeviceRepository) FindAll(productKey string, status *model.DeviceStatus, limit, offset int) ([]model.Device, int64, error) {
 	var devices []model.Device
@@ -112,7 +102,7 @@ func (r *DeviceRepository) FindAll(productKey string, status *model.DeviceStatus
 	}
 
 	// 分页查询
-	if err := query.Order("created_at DESC").Limit(limit).Offset(offset).Find(&devices).Error; err != nil {
+	if err := query.Preload("Product").Order("created_at DESC").Limit(limit).Offset(offset).Find(&devices).Error; err != nil {
 		return nil, 0, err
 	}
 

@@ -6,7 +6,6 @@ package service
 
 import (
 	"errors"
-	"time"
 
 	"iot-platform-core/internal/model"
 	"iot-platform-core/internal/repository"
@@ -33,25 +32,26 @@ type CreateProductRequest struct {
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description"`
 	Category    string `json:"category" binding:"required"`
+	ControlMode string `json:"controlMode"`
+	UITemplate  string `json:"uiTemplate"`
+	IconName    string `json:"iconName"`
+	IconColor   string `json:"iconColor"`
 }
 
 // ProductInfo 产品信息
 type ProductInfo struct {
-	ID           int64  `json:"id"`
-	ProductKey   string `json:"productKey"`
-	Name         string `json:"name"`
-	Description  string `json:"description,omitempty"`
-	Category     string `json:"category,omitempty"`
-	DeviceCount  int64  `json:"deviceCount,omitempty"`
-	Status       int    `json:"status,omitempty"`
-	CreatedAt    string `json:"createdAt,omitempty"`
-	// v0.2.0: UI控制相关字段
-	ControlMode  string `json:"controlMode,omitempty"`  // toggle/pulse/dimmer/readonly/generic
-	UITemplate   string `json:"uiTemplate,omitempty"`   // UI模板名称
-	IconName     string `json:"iconName,omitempty"`     // 图标名称(Material Icons)
-	IconColor    string `json:"iconColor,omitempty"`    // 图标颜色(HEX，如 #FF6B35)
-	Manufacturer string `json:"manufacturer,omitempty"` // 制造商
-	Model        string `json:"model,omitempty"`        // 硬件型号
+	ID          int64  `json:"id"`
+	ProductKey  string `json:"productKey"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	ControlMode string `json:"controlMode,omitempty"`
+	UITemplate  string `json:"uiTemplate,omitempty"`
+	IconName    string `json:"iconName,omitempty"`
+	IconColor   string `json:"iconColor,omitempty"`
+	DeviceCount int64  `json:"deviceCount"`
+	Status      int    `json:"status"`
+	CreatedAt   string `json:"createdAt"`
 }
 
 // CreateProduct 创建产品
@@ -70,6 +70,11 @@ func (s *ProductService) CreateProduct(req *CreateProductRequest) (*ProductInfo,
 		Name:        req.Name,
 		Description: req.Description,
 		Category:    req.Category,
+		ControlMode: req.ControlMode,
+		UITemplate:  req.UITemplate,
+		IconName:    req.IconName,
+		IconColor:   req.IconColor,
+		NodeType:    "device",
 		Status:      1,
 	}
 
@@ -83,8 +88,12 @@ func (s *ProductService) CreateProduct(req *CreateProductRequest) (*ProductInfo,
 		Name:        product.Name,
 		Description: product.Description,
 		Category:    product.Category,
+		ControlMode: product.ControlMode,
+		UITemplate:  product.UITemplate,
+		IconName:    product.IconName,
+		IconColor:   product.IconColor,
 		Status:      product.Status,
-		CreatedAt:   product.CreatedAt.Format(time.RFC3339),
+		CreatedAt:   product.CreatedAt.Format("2006-01-02 15:04:05"),
 	}, nil
 }
 
@@ -115,20 +124,18 @@ func (s *ProductService) GetProductList(category string, status *int, page, size
 	for i, p := range products {
 		deviceCount, _ := s.productRepo.CountDevices(p.ProductKey)
 		productInfos[i] = ProductInfo{
-			ID:           p.ID,
-			ProductKey:   p.ProductKey,
-			Name:         p.Name,
-			Description:  p.Description,
-			Category:     p.Category,
-			DeviceCount:  deviceCount,
-			Status:       p.Status,
-			CreatedAt:    p.CreatedAt.Format(time.RFC3339),
-			ControlMode:  p.ControlMode,
-			UITemplate:   p.UITemplate,
-			IconName:     p.IconName,
-			IconColor:    p.IconColor,
-			Manufacturer: p.Manufacturer,
-			Model:        p.Model,
+			ID:          p.ID,
+			ProductKey:  p.ProductKey,
+			Name:        p.Name,
+			Description: p.Description,
+			Category:    p.Category,
+			ControlMode: p.ControlMode,
+			UITemplate:  p.UITemplate,
+			IconName:    p.IconName,
+			IconColor:   p.IconColor,
+			DeviceCount: deviceCount,
+			Status:      p.Status,
+			CreatedAt:   p.CreatedAt.Format("2006-01-02 15:04:05"),
 		}
 	}
 
@@ -153,20 +160,18 @@ func (s *ProductService) GetProductByKey(productKey string) (*ProductInfo, error
 	deviceCount, _ := s.productRepo.CountDevices(productKey)
 
 	return &ProductInfo{
-		ID:           product.ID,
-		ProductKey:   product.ProductKey,
-		Name:         product.Name,
-		Description:  product.Description,
-		Category:     product.Category,
-		DeviceCount:  deviceCount,
-		Status:       product.Status,
-		CreatedAt:    product.CreatedAt.Format(time.RFC3339),
-		ControlMode:  product.ControlMode,
-		UITemplate:   product.UITemplate,
-		IconName:     product.IconName,
-		IconColor:    product.IconColor,
-		Manufacturer: product.Manufacturer,
-		Model:        product.Model,
+		ID:          product.ID,
+		ProductKey:  product.ProductKey,
+		Name:        product.Name,
+		Description: product.Description,
+		Category:    product.Category,
+		ControlMode: product.ControlMode,
+		UITemplate:  product.UITemplate,
+		IconName:    product.IconName,
+		IconColor:   product.IconColor,
+		DeviceCount: deviceCount,
+		Status:      product.Status,
+		CreatedAt:   product.CreatedAt.Format("2006-01-02 15:04:05"),
 	}, nil
 }
 
@@ -174,6 +179,10 @@ func (s *ProductService) GetProductByKey(productKey string) (*ProductInfo, error
 type UpdateProductRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	ControlMode string `json:"controlMode"`
+	UITemplate  string `json:"uiTemplate"`
+	IconName    string `json:"iconName"`
+	IconColor   string `json:"iconColor"`
 	Status      *int   `json:"status"`
 }
 
@@ -194,6 +203,18 @@ func (s *ProductService) UpdateProduct(productKey string, req *UpdateProductRequ
 	if req.Description != "" {
 		product.Description = req.Description
 	}
+	if req.ControlMode != "" {
+		product.ControlMode = req.ControlMode
+	}
+	if req.UITemplate != "" {
+		product.UITemplate = req.UITemplate
+	}
+	if req.IconName != "" {
+		product.IconName = req.IconName
+	}
+	if req.IconColor != "" {
+		product.IconColor = req.IconColor
+	}
 	if req.Status != nil {
 		product.Status = *req.Status
 	}
@@ -205,20 +226,18 @@ func (s *ProductService) UpdateProduct(productKey string, req *UpdateProductRequ
 	deviceCount, _ := s.productRepo.CountDevices(productKey)
 
 	return &ProductInfo{
-		ID:           product.ID,
-		ProductKey:   product.ProductKey,
-		Name:         product.Name,
-		Description:  product.Description,
-		Category:     product.Category,
-		DeviceCount:  deviceCount,
-		Status:       product.Status,
-		CreatedAt:    product.CreatedAt.Format(time.RFC3339),
-		ControlMode:  product.ControlMode,
-		UITemplate:   product.UITemplate,
-		IconName:     product.IconName,
-		IconColor:    product.IconColor,
-		Manufacturer: product.Manufacturer,
-		Model:        product.Model,
+		ID:          product.ID,
+		ProductKey:  product.ProductKey,
+		Name:        product.Name,
+		Description: product.Description,
+		Category:    product.Category,
+		ControlMode: product.ControlMode,
+		UITemplate:  product.UITemplate,
+		IconName:    product.IconName,
+		IconColor:   product.IconColor,
+		DeviceCount: deviceCount,
+		Status:      product.Status,
+		CreatedAt:   product.CreatedAt.Format("2006-01-02 15:04:05"),
 	}, nil
 }
 

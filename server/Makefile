@@ -2,7 +2,7 @@
 # 作者: 罗耀生
 # 日期: 2025-12-13
 
-.PHONY: help build run docker-up docker-down docker-logs test clean
+.PHONY: help build run docker-up docker-down docker-logs test clean dev-infra-up dev-infra-down run-device-sim
 
 # 默认目标
 help:
@@ -13,6 +13,9 @@ help:
 	@echo "  make docker-down - Stop all services"
 	@echo "  make docker-logs - View service logs"
 	@echo "  make test        - Run tests"
+	@echo "  make dev-infra-up   - Start local MySQL/Redis/EMQX only"
+	@echo "  make dev-infra-down - Stop local MySQL/Redis/EMQX only"
+	@echo "  make run-device-sim - Activate and run a local simulated device"
 	@echo "  make clean       - Clean build artifacts"
 
 # 构建
@@ -35,9 +38,20 @@ docker-down:
 docker-logs:
 	docker-compose logs -f
 
+# 本地开发基础设施
+dev-infra-up:
+	docker-compose -f docker-compose.dev.yml up -d
+
+dev-infra-down:
+	docker-compose -f docker-compose.dev.yml down
+
 # 测试
 test:
 	go test -v ./...
+
+# 启动本地模拟设备
+run-device-sim:
+	bash ./scripts/run-device-sim.sh
 
 # 清理
 clean:

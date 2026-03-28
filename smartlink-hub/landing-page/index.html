@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="IoT SmartLink Hub - 让你的 ESP32 和舵机秒变智能设备,手机远程控制">
-    <meta name="keywords" content="IoT,物联网,智能开关,ESP32,舵机,手机控制,SmartLink">
+    <meta name="description" content="IoT 智能设备管理平台 - 让你的 ESP32 和舵机秒变智能设备,手机远程控制">
+    <meta name="keywords" content="IoT,物联网,智能开关,ESP32,舵机,手机控制">
     <meta name="author" content="罗耀生">
-    <title>IoT SmartLink Hub - 让你的硬件变智能</title>
+    <title>IoT Platform - 让你的硬件变智能</title>
 
     <style>
         * {
@@ -16,15 +16,12 @@
         }
 
         :root {
-            --primary-color: #3B82F6;
-            --primary-dark: #2563EB;
+            --primary-color: #2563EB;
+            --primary-dark: #1E40AF;
             --secondary-color: #10B981;
-            --text-dark: #F9FAFB;
-            --text-light: #9CA3AF;
-            --bg-dark: #0F172A;
-            --bg-card: #1E293B;
-            --bg-card-hover: #334155;
-            --border-color: #334155;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+            --bg-light: #F9FAFB;
         }
 
         body {
@@ -32,7 +29,6 @@
                          'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
             line-height: 1.6;
             color: var(--text-dark);
-            background: var(--bg-dark);
             overflow-x: hidden;
         }
 
@@ -41,11 +37,10 @@
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             z-index: 1000;
-            border-bottom: 1px solid var(--border-color);
         }
 
         nav .container {
@@ -84,11 +79,10 @@
         /* Hero Section */
         .hero {
             margin-top: 60px;
-            background: linear-gradient(135deg, #1E3A5F 0%, #0F172A 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 6rem 2rem;
             text-align: center;
-            border-bottom: 1px solid var(--border-color);
         }
 
         .hero h1 {
@@ -134,24 +128,23 @@
         }
 
         .btn-primary {
-            background: var(--primary-color);
-            color: white;
+            background: white;
+            color: var(--primary-color);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
-            background: var(--primary-dark);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
         .btn-secondary {
-            background: transparent;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
         }
 
         .btn-secondary:hover {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(255,255,255,0.3);
         }
 
         /* Container */
@@ -177,7 +170,7 @@
 
         /* What You Need */
         .requirements {
-            background: var(--bg-dark);
+            background: white;
         }
 
         .req-grid {
@@ -187,18 +180,17 @@
         }
 
         .req-card {
-            background: var(--bg-card);
+            background: var(--bg-light);
             padding: 2rem;
             border-radius: 12px;
             text-align: center;
-            border: 1px solid var(--border-color);
+            border: 2px solid transparent;
             transition: all 0.3s;
         }
 
         .req-card:hover {
             border-color: var(--primary-color);
             transform: translateY(-5px);
-            background: var(--bg-card-hover);
         }
 
         .req-icon {
@@ -225,7 +217,7 @@
 
         /* How It Works */
         .how-it-works {
-            background: var(--bg-card);
+            background: var(--bg-light);
         }
 
         .steps {
@@ -236,12 +228,11 @@
         }
 
         .step {
-            background: var(--bg-dark);
+            background: white;
             padding: 2.5rem 2rem;
             border-radius: 12px;
             text-align: center;
             position: relative;
-            border: 1px solid var(--border-color);
         }
 
         .step-number {
@@ -270,7 +261,7 @@
 
         /* Downloads */
         .downloads {
-            background: var(--bg-dark);
+            background: white;
         }
 
         .download-grid {
@@ -280,12 +271,12 @@
         }
 
         .download-card {
-            background: var(--bg-card);
+            background: var(--bg-light);
             padding: 3rem 2rem;
             border-radius: 12px;
             text-align: center;
             transition: transform 0.3s;
-            border: 1px solid var(--border-color);
+            border: 3px solid transparent;
         }
 
         .download-card:hover {
@@ -320,7 +311,7 @@
 
         /* Tutorials */
         .tutorials {
-            background: var(--bg-card);
+            background: var(--bg-light);
         }
 
         .tutorial-grid {
@@ -330,18 +321,18 @@
         }
 
         .tutorial-card {
-            background: var(--bg-dark);
+            background: white;
             padding: 2.5rem 2rem;
             border-radius: 12px;
             text-align: center;
             transition: all 0.3s;
-            border: 1px solid var(--border-color);
+            border: 2px solid transparent;
         }
 
         .tutorial-card:hover {
             border-color: var(--primary-color);
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.15);
         }
 
         .tutorial-icon {
@@ -361,7 +352,7 @@
 
         /* Server Setup */
         .server-setup {
-            background: var(--bg-card);
+            background: var(--bg-light);
         }
 
         .option-grid {
@@ -372,22 +363,21 @@
         }
 
         .option-card {
-            background: var(--bg-dark);
+            background: white;
             padding: 2.5rem 2rem;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             position: relative;
             transition: all 0.3s;
-            border: 1px solid var(--border-color);
         }
 
         .option-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
 
         .option-card.recommended {
-            border: 2px solid var(--primary-color);
+            border: 3px solid var(--primary-color);
         }
 
         .option-badge {
@@ -434,7 +424,7 @@
         .option-action {
             text-align: center;
             padding: 1rem;
-            background: var(--bg-card);
+            background: var(--bg-light);
             border-radius: 8px;
             font-weight: 500;
         }
@@ -458,7 +448,7 @@
 
         .deploy-step {
             padding: 2rem;
-            background: var(--bg-card);
+            background: var(--bg-light);
             border-radius: 12px;
             border-left: 4px solid var(--primary-color);
         }
@@ -505,10 +495,9 @@
             justify-content: space-between;
             align-items: center;
             padding: 1rem;
-            background: var(--bg-dark);
+            background: white;
             border-radius: 8px;
             margin-bottom: 0.5rem;
-            border: 1px solid var(--border-color);
         }
 
         .port-num {
@@ -524,7 +513,7 @@
 
         /* Contact */
         .contact {
-            background: var(--bg-dark);
+            background: white;
             text-align: center;
         }
 
@@ -532,9 +521,8 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 2rem;
-            background: var(--bg-card);
+            background: var(--bg-light);
             border-radius: 12px;
-            border: 1px solid var(--border-color);
         }
 
         .contact-info h3 {
@@ -556,11 +544,10 @@
 
         /* Footer */
         footer {
-            background: #020617;
-            color: var(--text-light);
+            background: var(--text-dark);
+            color: white;
             padding: 2rem;
             text-align: center;
-            border-top: 1px solid var(--border-color);
         }
 
         footer p {
@@ -604,7 +591,7 @@
     <!-- Navigation -->
     <nav>
         <div class="container">
-            <a href="#" class="logo">🌐 IoT SmartLink Hub</a>
+            <a href="#" class="logo">🌐 IoT Platform</a>
             <ul>
                 <li><a href="#requirements">准备材料</a></li>
                 <li><a href="#how">使用步骤</a></li>
@@ -664,10 +651,10 @@
                     <div class="price">免费 APP</div>
                 </div>
             </div>
-            <div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid var(--border-color);">
-                <p style="color: var(--text-light); font-size: 1.1rem;">
-                    💡 <strong style="color: var(--text-dark);">在哪里买?</strong> 淘宝、京东、立创商城搜索对应型号即可<br>
-                    总成本约 <strong style="color: var(--primary-color);">30-60 元</strong>,一次购买可反复使用
+            <div style="text-align: center; margin-top: 2rem; padding: 1.5rem; background: #FEF3C7; border-radius: 8px;">
+                <p style="color: #92400E; font-size: 1.1rem;">
+                    💡 <strong>在哪里买?</strong> 淘宝、京东、立创商城搜索对应型号即可<br>
+                    总成本约 <strong>30-60 元</strong>,一次购买可反复使用
                 </p>
             </div>
         </div>
@@ -732,9 +719,9 @@
             <h2 class="section-title">☁️ 部署云端服务</h2>
             <p class="section-subtitle">让你的设备可以远程控制,需要一个"云大脑"</p>
 
-            <div style="max-width: 800px; margin: 0 auto 3rem; padding: 2rem; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border-left: 4px solid var(--primary-color);">
+            <div style="max-width: 800px; margin: 0 auto 3rem; padding: 2rem; background: #DBEAFE; border-radius: 12px; border-left: 4px solid var(--primary-color);">
                 <h3 style="color: var(--primary-color); margin-bottom: 1rem;">💡 为什么需要云端服务?</h3>
-                <p style="color: var(--text-light); line-height: 1.8; margin-bottom: 1rem;">
+                <p style="color: var(--text-dark); line-height: 1.8; margin-bottom: 1rem;">
                     想象一下:你的 ESP32 和手机 APP 就像两个人,他们要互相通话,就需要一个"中转站"(云服务器)。<br>
                     这个中转站负责:<br>
                     • 📝 记录你有哪些设备<br>
@@ -742,7 +729,7 @@
                     • 🔐 管理账号和权限<br>
                     • 💾 保存设备状态
                 </p>
-                <p style="color: var(--primary-color); font-weight: 600;">
+                <p style="color: #1E40AF; font-weight: 600;">
                     <strong>简单说:</strong> 没有这个"云大脑",你的手机和 ESP32 就联系不上!
                 </p>
             </div>
@@ -794,50 +781,31 @@
             </div>
 
             <!-- Deploy Guide -->
-            <div id="deploy-guide" class="deploy-guide" style="margin-top: 4rem; padding: 3rem; background: var(--bg-dark); border-radius: 12px; border: 1px solid var(--border-color);">
+            <div id="deploy-guide" class="deploy-guide" style="margin-top: 4rem; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                 <h3 style="font-size: 2rem; margin-bottom: 1.5rem; color: var(--primary-color);">📦 Docker 一键部署教程</h3>
-                <p style="color: var(--text-light); margin-bottom: 2rem;">支持 Windows / macOS / Linux，3 个命令搞定（简化架构，内置 MQTT Broker）</p>
+                <p style="color: var(--text-light); margin-bottom: 2rem;">适合有服务器的玩家,3 个命令搞定</p>
 
                 <div class="deploy-steps">
                     <div class="deploy-step">
                         <div class="deploy-step-number">1</div>
-                        <h4>选择部署环境</h4>
-                        <p>Docker 支持 Windows、macOS 和 Linux，均可部署：</p>
-                        <div style="margin: 1.5rem 0;">
-                            <div style="padding: 1rem; background: var(--bg-card); border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-color);">
-                                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">🏠 个人电脑 (适合测试体验)</h5>
-                                <p style="color: var(--text-light); font-size: 0.9rem; margin: 0;">
-                                    Windows / macOS / Linux 均可安装 Docker Desktop<br>
-                                    ⚠️ <strong>不适合长期运行</strong>：电脑关机服务就停了
-                                </p>
-                            </div>
-                            <div style="padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid var(--primary-color);">
-                                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">🖥️ 服务器设备 (推荐长期运行)</h5>
-                                <p style="color: var(--text-dark); font-size: 0.9rem; margin: 0;">
-                                    • 阿里云/腾讯云 ECS (最低配 1核2G)<br>
-                                    • 家里的 NAS 设备<br>
-                                    • 树莓派4 (4G 内存版本)<br>
-                                    💰 成本参考: 云服务器约 60-100元/月,树莓派4约 400元一次性
-                                </p>
-                            </div>
-                        </div>
+                        <h4>准备服务器</h4>
+                        <p>需要一台 Linux 服务器,比如:</p>
+                        <ul>
+                            <li>• 阿里云/腾讯云 ECS (最低配 1核2G)</li>
+                            <li>• 家里的 NAS 设备</li>
+                            <li>• 树莓派4 (4G 内存版本)</li>
+                        </ul>
+                        <p style="margin-top: 1rem; color: var(--text-light); font-size: 0.9rem;">
+                            💰 成本参考: 云服务器约 60-100元/月,树莓派4约 400元一次性
+                        </p>
                     </div>
 
                     <div class="deploy-step">
                         <div class="deploy-step-number">2</div>
                         <h4>安装 Docker</h4>
-                        <p>根据你的系统选择安装方式:</p>
-                        <div style="margin: 1.5rem 0;">
-                            <div style="padding: 1rem; background: var(--bg-card); border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border-color);">
-                                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">🪟 Windows / 🍎 macOS</h5>
-                                <p style="color: var(--text-light); font-size: 0.9rem; margin: 0 0 0.5rem 0;">
-                                    下载 <a href="https://www.docker.com/products/docker-desktop/" target="_blank" style="color: var(--primary-color);">Docker Desktop</a> 安装包，双击安装即可
-                                </p>
-                            </div>
-                            <div style="padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
-                                <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">🐧 Linux 服务器</h5>
-                                <p style="color: var(--text-light); font-size: 0.9rem; margin: 0 0 0.5rem 0;">SSH 登录服务器,执行:</p>
-                                <pre style="background: var(--bg-dark); padding: 0.8rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; color: #a5b4fc;"># 安装 Docker (Ubuntu/Debian)
+                        <p>SSH 登录服务器,执行以下命令:</p>
+                        <div class="code-block">
+# 安装 Docker (Ubuntu/Debian)
 curl -fsSL https://get.docker.com | bash
 
 # 启动 Docker
@@ -845,28 +813,28 @@ sudo systemctl start docker
 sudo systemctl enable docker
 
 # 验证安装
-docker --version</pre>
-                            </div>
+docker --version
                         </div>
                     </div>
 
                     <div class="deploy-step">
                         <div class="deploy-step-number">3</div>
-                        <h4>克隆代码并启动</h4>
-                        <p>项目完全开源，从 GitHub 或 Gitee 克隆后一键启动:</p>
-                        <pre style="background: var(--bg-dark); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: #a5b4fc; line-height: 1.6;"># 克隆完整项目 (选择其中一个)
-git clone https://gitee.com/luoyaosheng/open-iot-platform.git
-# 或 GitHub
-git clone https://github.com/LuoYaoSheng/open-iot-platform.git
-
-# 进入服务端目录
-cd open-iot-platform/server
-
-# 一键启动 (内置 MySQL + Redis + MQTT Broker)
-docker compose up -d</pre>
-                        <p style="margin-top: 1rem; color: var(--text-light); font-size: 0.9rem;">
-                            💡 首次启动会自动拉取镜像并构建服务，请耐心等待约 2-3 分钟
-                        </p>
+                        <h4>获取服务端代码</h4>
+                        <p>服务端代码为独立项目,需要联系作者获取:</p>
+                        <div style="padding: 2rem; background: #DBEAFE; border-radius: 8px; margin: 1rem 0;">
+                            <p style="color: var(--text-dark); line-height: 1.8; margin-bottom: 1rem;">
+                                📧 <strong>获取方式:</strong><br>
+                                • 提交 Issue 说明部署需求<br>
+                                • 作者会提供服务端部署包<br>
+                                • 包含完整的 Docker Compose 配置<br>
+                                • 支持一键部署(MySQL + Redis + EMQX + 后端服务)
+                            </p>
+                            <p style="color: #1E40AF; font-weight: 600;">
+                                <a href="https://gitee.com/luoyaosheng/iot-smartlink-hub/issues" style="color: var(--primary-color); text-decoration: none;">
+                                    👉 点击这里提交部署需求
+                                </a>
+                            </p>
+                        </div>
                     </div>
 
                     <div class="deploy-step">
@@ -879,12 +847,12 @@ docker compose up -d</pre>
                                 <span class="port-desc">后端 API 服务</span>
                             </div>
                             <div class="port-row">
-                                <span class="port-num">1883</span>
-                                <span class="port-desc">MQTT TCP 通信</span>
+                                <span class="port-num">48883</span>
+                                <span class="port-desc">MQTT 设备通信</span>
                             </div>
                             <div class="port-row">
-                                <span class="port-num">8083</span>
-                                <span class="port-desc">MQTT WebSocket</span>
+                                <span class="port-num">48884</span>
+                                <span class="port-desc">EMQX 管理后台</span>
                             </div>
                         </div>
                     </div>
@@ -896,7 +864,7 @@ docker compose up -d</pre>
                         <div class="code-block">
 服务器地址: http://你的服务器IP:48080
 MQTT 地址: 你的服务器IP
-MQTT 端口: 1883
+MQTT 端口: 48883
                         </div>
                         <p style="margin-top: 1rem;">
                             <strong>大功告成!</strong> 现在你的设备会连接到自己的服务器了 🎉
@@ -904,15 +872,15 @@ MQTT 端口: 1883
                     </div>
                 </div>
 
-                <div style="margin-top: 3rem; padding: 2rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <h4 style="color: var(--primary-color); margin-bottom: 1rem;">💡 常见问题</h4>
-                    <ul style="color: var(--text-light); line-height: 2; list-style: none; padding: 0;">
-                        <li><strong style="color: var(--text-dark);">Q: 部署失败怎么办?</strong><br>
+                <div style="margin-top: 3rem; padding: 2rem; background: #FEF3C7; border-radius: 8px;">
+                    <h4 style="color: #92400E; margin-bottom: 1rem;">💡 常见问题</h4>
+                    <ul style="color: #92400E; line-height: 2;">
+                        <li><strong>Q: 部署失败怎么办?</strong><br>
                             A: 检查 Docker 是否安装成功,服务器内存是否足够(至少 2G)</li>
-                        <li style="margin-top: 1rem;"><strong style="color: var(--text-dark);">Q: APP 连不上服务器?</strong><br>
+                        <li><strong>Q: APP 连不上服务器?</strong><br>
                             A: 确认防火墙端口已开放,服务器 IP 填写正确</li>
-                        <li style="margin-top: 1rem;"><strong style="color: var(--text-dark);">Q: 部署后如何升级?</strong><br>
-                            A: 执行 <code style="background: var(--bg-card); padding: 0.2rem 0.5rem; border-radius: 4px;">docker compose pull && docker compose up -d</code></li>
+                        <li><strong>Q: 部署后如何升级?</strong><br>
+                            A: 执行 <code>git pull && bash deploy.sh</code></li>
                     </ul>
                 </div>
             </div>
@@ -924,21 +892,6 @@ MQTT 端口: 1883
         <div class="container">
             <h2 class="section-title">下载专区</h2>
             <p class="section-subtitle">免费下载 APP 和固件,开始你的智能之旅</p>
-
-            <div style="max-width: 600px; margin: 0 auto 3rem; padding: 1.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid var(--border-color); text-align: center;">
-                <p style="color: var(--text-light); font-size: 1rem; margin-bottom: 1rem;">
-                    🌐 <strong style="color: var(--text-dark);">选择下载源:</strong>
-                </p>
-                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                    <a href="https://gitee.com/luoyaosheng/open-iot-platform/releases" target="_blank" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.95rem;">
-                        🇨🇳 Gitee (国内)
-                    </a>
-                    <a href="https://github.com/LuoYaoSheng/open-iot-platform/releases" target="_blank" class="btn btn-secondary" style="padding: 0.6rem 1.5rem; font-size: 0.95rem;">
-                        🌍 GitHub (国际)
-                    </a>
-                </div>
-            </div>
-
             <div class="download-grid">
                 <div class="download-card">
                     <div class="download-icon">📱</div>
@@ -947,9 +900,9 @@ MQTT 端口: 1883
                         用于配网和控制设备<br>
                         支持 Android 7.0 及以上
                     </div>
-                    <div class="size">版本: v0.3.0</div>
-                    <a href="https://gitee.com/luoyaosheng/open-iot-platform/releases/tag/v0.3.0" class="btn btn-primary" target="_blank">
-                        📥 前往下载
+                    <div class="size">大小: 51.4 MB | 版本: v0.1.0</div>
+                    <a href="../releases/v0.1.0/iot-config-app-v0.1.0.apk" class="btn btn-primary" target="_blank">
+                        📥 下载 APK
                     </a>
                 </div>
                 <div class="download-card">
@@ -957,11 +910,11 @@ MQTT 端口: 1883
                     <h3>ESP32 固件</h3>
                     <div class="desc">
                         烧写到 ESP32 开发板<br>
-                        支持 ESP32-WROOM-32E / ESP32-S3
+                        支持 ESP32-WROOM-32E
                     </div>
-                    <div class="size">版本: v0.3.0</div>
-                    <a href="https://gitee.com/luoyaosheng/open-iot-platform/releases/tag/v0.3.0" class="btn btn-primary" target="_blank">
-                        📥 前往下载
+                    <div class="size">大小: 1.7 MB | 版本: v0.1.0</div>
+                    <a href="../releases/v0.1.0/esp32-firmware-v0.1.0.bin" class="btn btn-primary" target="_blank">
+                        📥 下载固件
                     </a>
                 </div>
             </div>
@@ -1006,39 +959,27 @@ MQTT 端口: 1883
     <section id="contact" class="contact">
         <div class="container">
             <h2 class="section-title">需要帮助?</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto;">
-                <div class="contact-info">
-                    <h3>📮 联系我们</h3>
-                    <p>遇到问题或有建议?欢迎联系!</p>
-                    <p style="margin-top: 1rem;">
-                        <a href="https://gitee.com/luoyaosheng/open-iot-platform/issues" target="_blank">
-                            Gitee 提交反馈
-                        </a>
-                        <span style="margin: 0 0.5rem; color: var(--text-light);">|</span>
-                        <a href="https://github.com/LuoYaoSheng/open-iot-platform/issues" target="_blank">
-                            GitHub 提交反馈
-                        </a>
-                    </p>
-                    <p style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                        <strong>常见问题:</strong><br>
-                        • 配网失败? 检查 WiFi 密码是否正确<br>
-                        • 设备离线? 确保 ESP32 已通电<br>
-                        • 无法控制? 查看视频教程完整操作
-                    </p>
-                </div>
-                <div class="contact-info" style="text-align: center;">
-                    <h3>💬 关注公众号</h3>
-                    <p style="color: var(--text-light); margin-bottom: 1.5rem;">获取最新动态和技术分享</p>
-                    <img src="wechat-qrcode.jpg" alt="微信公众号二维码" style="width: 200px; height: 200px; border-radius: 8px; border: 2px solid var(--border-color);">
-                    <p style="margin-top: 1rem; color: var(--primary-color); font-weight: 600;">落落在厦</p>
-                </div>
+            <div class="contact-info">
+                <h3>📮 联系我们</h3>
+                <p>遇到问题或有建议?欢迎联系!</p>
+                <p>
+                    <a href="https://gitee.com/luoyaosheng/iot-smartlink-hub/issues" target="_blank">
+                        提交反馈
+                    </a>
+                </p>
+                <p style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #E5E7EB;">
+                    <strong>常见问题:</strong><br>
+                    • 配网失败? 检查 WiFi 密码是否正确<br>
+                    • 设备离线? 确保 ESP32 已通电<br>
+                    • 无法控制? 查看视频教程完整操作
+                </p>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
     <footer>
-        <p>&copy; 2026 IoT SmartLink Hub. 作者: 罗耀生</p>
+        <p>&copy; 2025 IoT Platform. 作者: 罗耀生</p>
         <p>本平台允许免费使用 · 教程视频请访问 B站</p>
     </footer>
 
