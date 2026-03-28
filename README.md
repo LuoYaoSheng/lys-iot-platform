@@ -4,7 +4,6 @@
 
 **作者**: 罗耀生
 **协议**: GPL v3
-
 **📍 仓库地址**:
 - [Gitee](https://gitee.com/luoyaosheng/open-iot-platform) - 国内访问推荐
 - [GitHub](https://github.com/LuoYaoSheng/open-iot-platform) - 国际访问
@@ -30,7 +29,7 @@
 
 ```
 open-iot-platform/
-├── server/              # 后端服务 (Go + Gin + MySQL + Redis + 内置MQTT)
+├── server/              # 后端服务 (Go + Gin + MySQL + Redis + EMQX)
 ├── mobile-app/          # 移动端配网 APP (Flutter)
 ├── iot-libs-common/     # 公共库 (Flutter SDK + 嵌入式库)
 ├── smartlink-hub/       # SmartLink 配网服务
@@ -52,15 +51,24 @@ cd open-iot-platform/server
 docker compose up -d
 ```
 
+### 本地模拟联调
+
+如果你要在 Android 模拟器里跑完整本地链路，请先看：
+
+- [本地联调 Runbook](docs/LOCAL_EMULATOR_RUNBOOK.md)
+- [配置链路说明](docs/CONFIGURATION_CHAIN.md)
+- [仓库结构说明](docs/REPOSITORY_ARCHITECTURE.md)
+
 ### 服务地址
 
 | 服务 | 地址 | 说明 |
 |------|------|------|
-| Core API | http://localhost:48080 | 核心 API |
-| MQTT TCP | localhost:1883 | MQTT 服务 |
-| MQTT WebSocket | localhost:8083 | MQTT WebSocket |
-| MySQL | localhost:44306 | 数据库 (root/root123456) |
-| Redis | localhost:47379 | 缓存服务 |
+| Core API | http://localhost:48080 | 设备引擎 API |
+| EMQX Dashboard | http://localhost:48884 | MQTT 管理 (admin/public) |
+| MySQL | localhost:48306 | 数据库 (root/root123456) |
+| Redis | localhost:48379 | 缓存服务 |
+| MQTT TCP | localhost:48883 | MQTT 服务 |
+| MQTT WebSocket | localhost:48803 | MQTT WebSocket |
 
 ---
 
@@ -149,7 +157,7 @@ pio run --target upload
 | 后端 | Go + Gin + GORM |
 | 数据库 | MySQL |
 | 缓存 | Redis |
-| MQTT | 内置 Broker (mochi-mqtt) |
+| MQTT | EMQX |
 | 移动端 | Flutter + Dart |
 | 固件 | ESP32/ESP32-S3 (PlatformIO + Arduino) |
 | 部署 | Docker + Docker Compose |
@@ -199,10 +207,6 @@ curl -X POST http://localhost:48080/api/v1/devices/register \
 ## 许可证
 
 GNU General Public License v3.0
-
----
-
-## 联系方式
 
 **Issues 反馈**:
 - [Gitee Issues](https://gitee.com/luoyaosheng/open-iot-platform/issues)

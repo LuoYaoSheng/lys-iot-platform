@@ -88,11 +88,30 @@ iot-platform-core/
 ### 本地开发
 
 ```bash
-# 1. 复制配置文件
+# 1. 启动基础设施
+make dev-infra-up
+
+# 2. 如需首次生成本地配置
 cp .env.example .env
 
-# 2. 启动服务
-go run cmd/server/main.go
+# 3. 启动后端
+go run ./cmd/server
+```
+
+### 本地设备模拟
+
+用于模拟一个持续在线的 MQTT 设备，方便 Android 模拟器和后端做联调：
+
+```bash
+# 默认会激活一个唯一的 SIM-EMU-* 设备并保持在线
+make run-device-sim
+
+# 也可以覆盖参数
+API_BASE_URL=http://127.0.0.1:48080 \
+PRODUCT_KEY=SW-SERVO-001 \
+DEVICE_SN=SIM-EMU-002 \
+BROKER_URL=tcp://127.0.0.1:48883 \
+bash ./scripts/run-device-sim.sh
 ```
 
 ### 生产部署（极简版）

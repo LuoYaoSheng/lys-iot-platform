@@ -51,6 +51,17 @@
 
 ---
 
+### [本地模拟联调 Runbook](../../docs/LOCAL_EMULATOR_RUNBOOK.md) ⭐ 推荐
+**适用场景**: Android 模拟器 + 本地后端 + 本地模拟设备联调
+
+**内容**:
+- 本地端口与启动顺序
+- `10.0.2.2` 模拟器访问方式
+- 测试账号与设备模拟器
+- 控制面板与状态联调验证
+
+---
+
 ## 📔 运维文档
 
 ### [安全配置](./安全配置.md)
@@ -134,7 +145,7 @@ docker compose -f docker-compose.simple.yml down      # 停止服务
 ### 服务访问地址
 
 - API 服务: `http://你的IP:48080`
-- EMQX 控制台: `http://你的IP:49084`
+- EMQX 控制台: `http://你的IP:48884`
   - 账号: `admin`
   - 密码: `public`
 

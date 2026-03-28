@@ -137,9 +137,7 @@ smartlink-hub/
 
 如果你有自己的服务器(VPS/NAS/树莓派),可以自行部署。
 
-**服务端代码为独立项目,需要联系作者获取:**
-
-👉 [提交 Issue 说明部署需求](https://gitee.com/luoyaosheng/open-iot-platform/issues)
+当前仓库已包含服务端代码,位于 `../server/`。本地开发或自建部署时,请直接参考该目录下的 `README.md`、`Makefile` 和 `docs/`。
 
 详细教程请查看[落地页-部署服务](landing-page/index.html#server)
 
