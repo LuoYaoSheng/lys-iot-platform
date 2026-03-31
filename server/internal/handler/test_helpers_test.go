@@ -38,6 +38,7 @@ func newHandlerTestDB(t *testing.T) *gorm.DB {
 		&model.User{},
 		&model.APIKey{},
 		&model.RefreshToken{},
+		&model.PasswordResetToken{},
 		&model.Project{},
 		&model.ProjectMember{},
 		&model.Product{},
@@ -57,7 +58,9 @@ func newUserServiceForHandlerTests(db *gorm.DB) *service.UserService {
 		repository.NewUserRepository(db),
 		repository.NewAPIKeyRepository(db),
 		repository.NewRefreshTokenRepository(db),
+		repository.NewPasswordResetTokenRepository(db),
 		"handler-test-secret",
+		2,
 	)
 }
 

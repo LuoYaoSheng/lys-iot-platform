@@ -65,6 +65,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	apiKeyRepo := repository.NewAPIKeyRepository(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
+	resetTokenRepo := repository.NewPasswordResetTokenRepository(db)
 	projectRepo := repository.NewProjectRepository(db)
 
 	// 初始化服务
@@ -80,7 +81,9 @@ func main() {
 		userRepo,
 		apiKeyRepo,
 		refreshTokenRepo,
+		resetTokenRepo,
 		cfg.JWT.Secret,
+		cfg.JWT.ExpireHours,
 	)
 
 	productService := service.NewProductService(productRepo)

@@ -28,6 +28,7 @@ func newTestDB(t *testing.T) *gorm.DB {
 		&model.User{},
 		&model.APIKey{},
 		&model.RefreshToken{},
+		&model.PasswordResetToken{},
 		&model.Project{},
 		&model.ProjectMember{},
 		&model.Product{},
@@ -47,7 +48,9 @@ func newUserServiceForTest(db *gorm.DB) *UserService {
 		repository.NewUserRepository(db),
 		repository.NewAPIKeyRepository(db),
 		repository.NewRefreshTokenRepository(db),
+		repository.NewPasswordResetTokenRepository(db),
 		"test-jwt-secret",
+		2,
 	)
 }
 

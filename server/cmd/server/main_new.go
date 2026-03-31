@@ -1,3 +1,6 @@
+//go:build ignore
+// +build ignore
+
 // IoT Platform Core - 主入口 (简化版 - 内置MQTT Broker)
 // 作者: 罗耀生
 // 日期: 2025-12-13
