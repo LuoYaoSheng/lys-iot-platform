@@ -89,7 +89,7 @@ git push gitee v0.x.x
 
 ### 6. 发布 Gitee Release
 
-1. 访问: https://gitee.com/luoyaosheng/open-iot-platform/releases/new
+1. 访问: https://gitee.com/luoyaosheng/lys-iot-platform/releases/new
 2. 选择 tag: `v0.x.x`
 3. 标题: `Open IoT Platform v0.x.x`
 4. 复制 release notes
@@ -169,7 +169,7 @@ open-iot-platform-v0.x.x.zip
 ## 🔗 相关链接
 
 - GitHub Releases: https://github.com/LuoYaoSheng/open-iot-platform/releases
-- Gitee Releases: https://gitee.com/luoyaosheng/open-iot-platform/releases
+- Gitee Releases: https://gitee.com/luoyaosheng/lys-iot-platform/releases
 
 ---
 

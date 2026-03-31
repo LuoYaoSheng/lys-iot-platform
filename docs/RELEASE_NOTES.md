@@ -86,11 +86,11 @@ docker compose up -d
 
 ## 📖 文档链接
 
-- [产品需求文档 (PRD)](https://gitee.com/luoyaosheng/open-iot-platform/blob/master/docs/PRD.md)
-- [移动端功能需求](https://gitee.com/luoyaosheng/open-iot-platform/blob/master/docs/PRD_MOBILE.md)
-- [服务端功能需求](https://gitee.com/luoyaosheng/open-iot-platform/blob/master/docs/PRD_SERVER.md)
-- [API 接口文档](https://gitee.com/luoyaosheng/open-iot-platform/blob/master/docs/API_REFERENCE.md)
-- [设备统一规范](https://gitee.com/luoyaosheng/open-iot-platform/blob/master/docs/DEVICE_UNIFIED_SPEC.md)
+- [产品需求文档 (PRD)](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/PRD.md)
+- [移动端功能需求](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/PRD_MOBILE.md)
+- [服务端功能需求](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/PRD_SERVER.md)
+- [API 接口文档](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/API_REFERENCE.md)
+- [设备统一规范](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/DEVICE_UNIFIED_SPEC.md)
 
 ---
 
@@ -104,10 +104,10 @@ docker compose up -d
 
 ## 🔄 版本历史
 
-- [v0.2.0](https://gitee.com/luoyaosheng/open-iot-platform/releases/tag/v0.2.0) - USB 唤醒设备支持
-- [v0.1.0](https://gitee.com/luoyaosheng/open-iot-platform/releases/tag/v0.1.0) - 初始版本
+- [v0.2.0](https://gitee.com/luoyaosheng/lys-iot-platform/releases/tag/v0.2.0) - USB 唤醒设备支持
+- [v0.1.0](https://gitee.com/luoyaosheng/lys-iot-platform/releases/tag/v0.1.0) - 初始版本
 
 ---
 
 **作者**: 罗耀生
-**仓库**: https://gitee.com/luoyaosheng/open-iot-platform
+**仓库**: https://gitee.com/luoyaosheng/lys-iot-platform

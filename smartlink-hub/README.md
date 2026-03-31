@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/Platform-ESP32-red.svg)](https://www.espressif.com/en/products/socs/esp32)
 
 **📍 仓库地址**:
-- [Gitee](https://gitee.com/luoyaosheng/open-iot-platform) - 国内访问推荐
+- [Gitee](https://gitee.com/luoyaosheng/lys-iot-platform) - 国内访问推荐
 - [GitHub](https://github.com/LuoYaoSheng/open-iot-platform) - 国际访问
 
 ---
@@ -42,7 +42,7 @@
 ### v0.2.0 (2026-01-10) ✨ 最新
 
 **下载地址**:
-- **Gitee Release**: https://gitee.com/luoyaosheng/open-iot-platform/releases/v0.2.0
+- **Gitee Release**: https://gitee.com/luoyaosheng/lys-iot-platform/releases/v0.2.0
 - **GitHub Release**: https://github.com/LuoYaoSheng/open-iot-platform/releases/v0.2.0
 
 | 文件 | 大小 | 说明 |
@@ -61,9 +61,9 @@
 
 ### 历史版本
 
-**v0.1.0** (2025-12-19) - [Gitee](https://gitee.com/luoyaosheng/open-iot-platform/releases/v0.1.0) / [GitHub](https://github.com/LuoYaoSheng/open-iot-platform/releases/v0.1.0)
+**v0.1.0** (2025-12-19) - [Gitee](https://gitee.com/luoyaosheng/lys-iot-platform/releases/v0.1.0) / [GitHub](https://github.com/LuoYaoSheng/open-iot-platform/releases/v0.1.0)
 
-**更多版本**: [Gitee Releases](https://gitee.com/luoyaosheng/open-iot-platform/releases) / [GitHub Releases](https://github.com/LuoYaoSheng/open-iot-platform/releases)
+**更多版本**: [Gitee Releases](https://gitee.com/luoyaosheng/lys-iot-platform/releases) / [GitHub Releases](https://github.com/LuoYaoSheng/open-iot-platform/releases)
 
 ---
 
@@ -169,7 +169,7 @@ A: 如果使用自建服务器,确认防火墙端口已开放
 ### 反馈问题
 
 遇到问题或有建议?欢迎提交反馈:
-- [Gitee Issues](https://gitee.com/luoyaosheng/open-iot-platform/issues)
+- [Gitee Issues](https://gitee.com/luoyaosheng/lys-iot-platform/issues)
 - [GitHub Issues](https://github.com/LuoYaoSheng/open-iot-platform/issues)
 
 ---

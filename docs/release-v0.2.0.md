@@ -5,7 +5,7 @@
 ### Android APP
 - **文件**: iot-config-app-v0.2.0.apk
 - **大小**: 97 MB
-- **下载**: [smartlink-hub/releases/v0.2.0/iot-config-app-v0.2.0.apk](https://gitee.com/luoyaosheng/open-iot-platform/raw/feature/embedded-mqtt/smartlink-hub/releases/v0.2.0/iot-config-app-v0.2.0.apk)
+- **下载**: [smartlink-hub/releases/v0.2.0/iot-config-app-v0.2.0.apk](https://gitee.com/luoyaosheng/lys-iot-platform/raw/feature/embedded-mqtt/smartlink-hub/releases/v0.2.0/iot-config-app-v0.2.0.apk)
 
 ### ESP32 舵机开关固件
 - **芯片**: ESP32-WROOM-32E
@@ -53,4 +53,4 @@
 
 ## 📂 完整文件列表
 
-访问 [smartlink-hub/releases/v0.2.0/](https://gitee.com/luoyaosheng/open-iot-platform/tree/feature/embedded-mqtt/smartlink-hub/releases/v0.2.0/) 下载所有文件
+访问 [smartlink-hub/releases/v0.2.0/](https://gitee.com/luoyaosheng/lys-iot-platform/tree/feature/embedded-mqtt/smartlink-hub/releases/v0.2.0/) 下载所有文件

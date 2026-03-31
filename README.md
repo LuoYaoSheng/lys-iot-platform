@@ -5,7 +5,7 @@
 **作者**: 罗耀生
 **协议**: GPL v3
 **📍 仓库地址**:
-- [Gitee](https://gitee.com/luoyaosheng/open-iot-platform) - 国内访问推荐
+- [Gitee](https://gitee.com/luoyaosheng/lys-iot-platform) - 国内访问推荐
 - [GitHub](https://github.com/LuoYaoSheng/open-iot-platform) - 国际访问
 
 ---
@@ -46,7 +46,7 @@ open-iot-platform/
 ### Docker 一键部署
 
 ```bash
-git clone https://gitee.com/luoyaosheng/open-iot-platform.git
+git clone https://gitee.com/luoyaosheng/lys-iot-platform.git
 cd open-iot-platform/server
 docker compose up -d
 ```
@@ -209,5 +209,5 @@ curl -X POST http://localhost:48080/api/v1/devices/register \
 GNU General Public License v3.0
 
 **Issues 反馈**:
-- [Gitee Issues](https://gitee.com/luoyaosheng/open-iot-platform/issues)
+- [Gitee Issues](https://gitee.com/luoyaosheng/lys-iot-platform/issues)
 - [GitHub Issues](https://github.com/LuoYaoSheng/open-iot-platform/issues)
