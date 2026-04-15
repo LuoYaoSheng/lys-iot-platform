@@ -64,7 +64,7 @@ docker compose up -d
 | 服务 | 地址 | 说明 |
 |------|------|------|
 | Core API | http://localhost:48080 | 设备引擎 API |
-| EMQX Dashboard | http://localhost:48884 | MQTT 管理 (admin/public) |
+| MQTT Dashboard | http://localhost:48884 | MQTT 管理 (admin/public) |
 | MySQL | localhost:48306 | 数据库 (root/root123456) |
 | Redis | localhost:48379 | 缓存服务 |
 | MQTT TCP | localhost:48883 | MQTT 服务 |
@@ -157,7 +157,7 @@ pio run --target upload
 | 后端 | Go + Gin + GORM |
 | 数据库 | MySQL |
 | 缓存 | Redis |
-| MQTT | EMQX |
+| MQTT | 内置 MQTT Broker (mochi-mqtt) |
 | 移动端 | Flutter + Dart |
 | 固件 | ESP32/ESP32-S3 (PlatformIO + Arduino) |
 | 部署 | Docker + Docker Compose |

@@ -72,8 +72,8 @@ docker compose up -d
 
 服务地址：
 - API: http://localhost:48080
-- MQTT TCP: localhost:1883
-- MQTT WebSocket: localhost:8083
+- MQTT TCP: localhost:48883
+- MQTT WebSocket: localhost:48803
 
 ### 4. BLE 配网
 
@@ -86,11 +86,11 @@ docker compose up -d
 
 ## 📖 文档链接
 
-- [产品需求文档 (PRD)](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/PRD.md)
-- [移动端功能需求](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/PRD_MOBILE.md)
-- [服务端功能需求](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/PRD_SERVER.md)
-- [API 接口文档](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/API_REFERENCE.md)
-- [设备统一规范](https://gitee.com/luoyaosheng/lys-iot-platform/blob/master/docs/DEVICE_UNIFIED_SPEC.md)
+- [产品需求文档 (PRD)](/PRD)
+- [移动端功能需求](/PRD_MOBILE)
+- [服务端功能需求](/PRD_SERVER)
+- [API 接口文档](/API_REFERENCE)
+- [设备统一规范](/DEVICE_UNIFIED_SPEC)
 
 ---
 

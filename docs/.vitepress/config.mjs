@@ -31,7 +31,7 @@ export default defineConfig({
       provider: 'local',
     },
     editLink: {
-      pattern: 'https://github.com/LuoYaoSheng/lys-iot-platform/edit/master/docs/:path',
+      pattern: 'https://github.com/LuoYaoSheng/open-iot-platform/edit/master/docs/:path',
       text: '在 GitHub 上编辑此页',
     },
     lastUpdated: {
@@ -40,8 +40,14 @@ export default defineConfig({
     nav: [
       { text: '首页', link: '/' },
       { text: '快速开始', link: '/START_HERE' },
-      { text: '架构', link: '/REPOSITORY_ARCHITECTURE' },
       { text: 'API', link: '/API_REFERENCE' },
+      {
+        text: 'GitHub',
+        items: [
+          { text: 'GitHub', link: 'https://github.com/LuoYaoSheng/open-iot-platform' },
+          { text: 'Gitee (国内)', link: 'https://gitee.com/luoyaosheng/lys-iot-platform' },
+        ],
+      },
     ],
     sidebar: [
       {
@@ -50,12 +56,12 @@ export default defineConfig({
           { text: '快速开始', link: '/START_HERE' },
           { text: 'Docker 一键部署', link: '/QUICK_START_DOCKER' },
           { text: '仓库架构', link: '/REPOSITORY_ARCHITECTURE' },
-          { text: '数据流架构', link: '/ARCHITECTURE_DATA_FLOW' },
         ],
       },
       {
-        text: '设计文档',
+        text: '架构与设计',
         items: [
+          { text: '数据流架构', link: '/ARCHITECTURE_DATA_FLOW' },
           { text: '产品需求 PRD', link: '/PRD' },
           { text: '服务端 PRD', link: '/PRD_SERVER' },
           { text: '移动端 PRD', link: '/PRD_MOBILE' },
@@ -64,18 +70,34 @@ export default defineConfig({
         ],
       },
       {
+        text: '模块指南',
+        items: [
+          { text: '服务端开发指南', link: '/SERVER_GUIDE' },
+          { text: '固件开发指南', link: '/FIRMWARE_GUIDE' },
+          { text: '移动端配网指南', link: '/MOBILE_APP_GUIDE' },
+          { text: 'API 参考', link: '/API_REFERENCE' },
+        ],
+      },
+      {
         text: '运维与发布',
         items: [
           { text: '本地模拟器 Runbook', link: '/LOCAL_EMULATOR_RUNBOOK' },
+          { text: '部署与运维', link: '/DEPLOYMENT_GUIDE' },
+          { text: '故障排查', link: '/TROUBLESHOOTING' },
           { text: '发布指南', link: '/RELEASE_GUIDE' },
           { text: '发布记录', link: '/RELEASE_NOTES' },
           { text: 'v0.2.0 发布', link: '/release-v0.2.0' },
         ],
       },
+      {
+        text: '贡献与社区',
+        items: [
+          { text: '贡献指南', link: '/CONTRIBUTING' },
+        ],
+      },
     ],
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/LuoYaoSheng/lys-iot-platform' },
-      { icon: 'github', link: 'https://gitee.com/luoyaosheng/lys-iot-platform', ariaLabel: 'Gitee' },
+      { icon: 'github', link: 'https://github.com/LuoYaoSheng/open-iot-platform' },
     ],
   },
 });
