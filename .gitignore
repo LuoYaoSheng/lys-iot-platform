@@ -106,3 +106,9 @@ mobile-app/android/keystore/*.jks
 # 设计原型（HTML 原型文件，不提交到仓库）
 # ========================================
 design-system/prototype/
+
+# ========================================
+# VitePress 构建产物
+# ========================================
+docs/.vitepress/dist/
+docs/.vitepress/cache/
