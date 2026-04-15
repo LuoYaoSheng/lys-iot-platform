@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress';
+import { withMermaid } from 'vitepress-plugin-mermaid';
 
-export default defineConfig({
+export default defineConfig(withMermaid({
   title: 'Open IoT Platform',
   description: '从设备接入、配网到控制管理的一体化 IoT 平台',
   lang: 'zh-CN',
@@ -101,4 +102,7 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/LuoYaoSheng/open-iot-platform' },
     ],
   },
-});
+  mermaid: {
+    // https://mermaid.js.org/config/setup/modules/mermaidAPI.html#mermaidapi-configuration-defaults
+  },
+}));
