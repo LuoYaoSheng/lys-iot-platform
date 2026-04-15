@@ -6,8 +6,8 @@ hero:
   tagline: 设备接入 → BLE 配网 → MQTT 通信 → 服务端管理 → App 控制，完整闭环
   actions:
     - theme: brand
-      text: 快速开始
-      link: /START_HERE
+      text: 使用教程
+      link: /TUTORIAL
     - theme: alt
       text: Docker 一键部署
       link: /QUICK_START_DOCKER
@@ -55,7 +55,7 @@ features:
       <div class="step-desc">打开 APP → 扫描 → 配网 → 控制</div>
     </div>
   </div>
-  <a class="quick-start-btn" href="/START_HERE.html">查看详细指南 →</a>
+  <a class="quick-start-btn" href="/TUTORIAL.html">查看完整使用教程 →</a>
 </div>
 
 <div class="project-highlights">

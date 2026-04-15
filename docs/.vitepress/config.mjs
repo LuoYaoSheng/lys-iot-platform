@@ -39,7 +39,7 @@ export default defineConfig({
     },
     nav: [
       { text: '首页', link: '/' },
-      { text: '快速开始', link: '/START_HERE' },
+      { text: '使用教程', link: '/TUTORIAL' },
       { text: 'API', link: '/API_REFERENCE' },
       {
         text: 'GitHub',
@@ -53,6 +53,7 @@ export default defineConfig({
       {
         text: '入门',
         items: [
+          { text: '📖 使用教程', link: '/TUTORIAL' },
           { text: '快速开始', link: '/START_HERE' },
           { text: 'Docker 一键部署', link: '/QUICK_START_DOCKER' },
           { text: '仓库架构', link: '/REPOSITORY_ARCHITECTURE' },
