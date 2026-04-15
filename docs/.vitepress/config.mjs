@@ -4,9 +4,27 @@ export default defineConfig({
   title: 'Open IoT Platform',
   description: '从设备接入、配网到控制管理的一体化 IoT 平台',
   lang: 'zh-CN',
+  base: '/',
   cleanUrls: true,
   ignoreDeadLinks: true,
-  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }]],
+
+  // ═══ SEO 与社交元数据 ═══
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    ['meta', { name: 'author', content: 'LuoYaoSheng' }],
+    ['meta', { name: 'keywords', content: 'IoT平台,设备配网,MQTT,BLE配网,智能家居,开源IoT,物联网,Open IoT Platform' }],
+    ['meta', { property: 'og:type',        content: 'website' }],
+    ['meta', { property: 'og:site_name',   content: 'Open IoT Platform' }],
+    ['meta', { property: 'og:title',       content: 'Open IoT Platform — 一体化 IoT 平台' }],
+    ['meta', { property: 'og:description', content: '从设备接入、BLE 配网、MQTT 通信到服务端管理的完整 IoT 解决方案。' }],
+    ['meta', { property: 'og:url',         content: 'https://iot.open.i2kai.com/' }],
+    ['meta', { property: 'og:locale',      content: 'zh_CN' }],
+    ['meta', { name: 'twitter:card',        content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title',       content: 'Open IoT Platform — 一体化 IoT 平台' }],
+    ['meta', { name: 'twitter:description', content: '从设备接入到控制管理的完整 IoT 解决方案。' }],
+    ['meta', { name: 'theme-color', content: '#646cff' }],
+  ],
+
   themeConfig: {
     nav: [
       { text: '首页', link: '/' },
