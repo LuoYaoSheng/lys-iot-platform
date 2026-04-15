@@ -14,7 +14,7 @@
 
 如果你还没有 BLE 基础，建议先看：
 
-- `Smart BLE`
+- [Smart BLE](https://gitee.com/luoyaosheng/lys-smart-ble)
 
 ---
 
@@ -24,31 +24,36 @@
 
 先理解这套项目到底包含哪些部分：
 
-- 服务端
-- 移动端
-- 固件
-- 公共库
-- SmartLink 包装层
+- 服务端（Go + Gin + MySQL + Redis + MQTT）
+- 移动端（Flutter 跨平台配网 APP）
+- 固件（ESP32 / ESP32-S3 设备固件）
+- 公共库（Flutter SDK + 嵌入式库）
+- SmartLink 配网包装层
+
+> 根 README 位于仓库根目录，请到 [Gitee 仓库](https://gitee.com/luoyaosheng/lys-iot-platform) 或 [GitHub 仓库](https://github.com/LuoYaoSheng/lys-iot-platform) 查看。
 
 ### 2. 再看仓库结构文档
 
 建议下一步看：
 
-- [REPOSITORY_ARCHITECTURE.md](./REPOSITORY_ARCHITECTURE.md)
+- [仓库架构](./REPOSITORY_ARCHITECTURE)
 
 ### 3. 再看本地联调 Runbook
 
 如果你要真的跑起来，请继续看：
 
-- [LOCAL_EMULATOR_RUNBOOK.md](./LOCAL_EMULATOR_RUNBOOK.md)
-- [CONFIGURATION_CHAIN.md](./CONFIGURATION_CHAIN.md)
+- [Docker 一键部署](./QUICK_START_DOCKER) — 最快的体验方式
+- [本地模拟器 Runbook](./LOCAL_EMULATOR_RUNBOOK)
+- [配置链路说明](./CONFIGURATION_CHAIN)
 
 ### 4. 最后按模块进入
 
-- 服务端：[`../server/`](../server/)
-- 移动端：[`../mobile-app/`](../mobile-app/)
-- 固件：[`../firmware/`](../firmware/)
-- 公共库：[`../iot-libs-common/`](../iot-libs-common/)
+各模块的 README 位于仓库对应目录中，请到仓库页面查看：
+
+- **服务端**：`server/` — 后端 API、MQTT Broker、设备管理
+- **移动端**：`mobile-app/` — Flutter BLE 配网 APP
+- **固件**：`firmware/` — ESP32 智能开关 / ESP32-S3 USB 唤醒
+- **公共库**：`iot-libs-common/` — Flutter SDK + 嵌入式公共库
 
 ---
 
@@ -58,33 +63,35 @@
 
 先看：
 
-- 根 README
-- 架构文档
-- 本地联调 Runbook
+- [Docker 一键部署](./QUICK_START_DOCKER) — 5 分钟跑起来
+- [仓库架构](./REPOSITORY_ARCHITECTURE)
+- [数据流架构](./ARCHITECTURE_DATA_FLOW)
+- [本地模拟器 Runbook](./LOCAL_EMULATOR_RUNBOOK)
 
 ### 我想先跑服务端
 
 先看：
 
-- `server/README.md`
+- [Docker 一键部署](./QUICK_START_DOCKER)
 
 ### 我想先看移动端配网
 
 先看：
 
-- `mobile-app/README.md`
+- 移动端 README（位于仓库 `mobile-app/` 目录）
 
 ### 我想先看设备和固件
 
 先看：
 
-- `firmware/switch/README.md`
-- `firmware/usb-wakeup/README.md`
+- 固件 README（位于仓库 `firmware/switch/` 和 `firmware/usb-wakeup/` 目录）
 
 ---
 
 ## 下一步
 
-- [REPOSITORY_ARCHITECTURE.md](./REPOSITORY_ARCHITECTURE.md)
-- [LOCAL_EMULATOR_RUNBOOK.md](./LOCAL_EMULATOR_RUNBOOK.md)
-- [CONFIGURATION_CHAIN.md](./CONFIGURATION_CHAIN.md)
+- [Docker 一键部署](./QUICK_START_DOCKER)
+- [仓库架构](./REPOSITORY_ARCHITECTURE)
+- [数据流架构](./ARCHITECTURE_DATA_FLOW)
+- [本地模拟器 Runbook](./LOCAL_EMULATOR_RUNBOOK)
+- [配置链路说明](./CONFIGURATION_CHAIN)

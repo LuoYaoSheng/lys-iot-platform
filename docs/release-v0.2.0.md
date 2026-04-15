@@ -1,6 +1,6 @@
-# IoT SmartLink Hub v0.2.0 发布
+# Open IoT Platform v0.2.0 发布
 
-## 📦 下载文件
+## 下载文件
 
 ### Android APP
 - **文件**: iot-config-app-v0.2.0.apk
@@ -21,16 +21,16 @@
 
 ---
 
-## ✨ 更新内容
+## 更新内容
 
 ### 新增
-- 🆕 支持 ESP32-S3 USB 唤醒设备
-- 🎨 APP 新增 USB 唤醒专用控制面板
+- 支持 ESP32-S3 USB 唤醒设备
+- APP 新增 USB 唤醒专用控制面板
 
 ### 修复
-- 🐛 修复舵机启动大幅度旋转问题
-- 🐛 修复设备列表加载类型转换错误
-- 🐛 修复 USB HID 初始化问题
+- 修复舵机启动大幅度旋转问题
+- 修复设备列表加载类型转换错误
+- 修复 USB HID 初始化问题
 
 ### 服务端
 - 集成 Redis 实现设备在线状态实时管理
@@ -38,7 +38,7 @@
 
 ---
 
-## 📖 快速开始
+## 快速开始
 
 ### 1. 安装 APP
 下载 APK 安装到 Android 手机
@@ -51,6 +51,6 @@
 
 ---
 
-## 📂 完整文件列表
+## 完整文件列表
 
 访问 [smartlink-hub/releases/v0.2.0/](https://gitee.com/luoyaosheng/lys-iot-platform/tree/feature/embedded-mqtt/smartlink-hub/releases/v0.2.0/) 下载所有文件
