@@ -24,7 +24,7 @@ features:
     details: 移动端 APP 通过 BLE 扫描、连接设备，一键完成 WiFi 配网与平台绑定
   - icon: 📨
     title: MQTT 通信
-    details: 内置 MQTT Broker (mochi-mqtt)，设备认证、消息路由、实时状态推送，无需外部依赖
+    details: 当前部署链路基于 EMQX，负责设备认证、消息路由和实时状态推送
   - icon: 🖥️
     title: 服务端管理
     details: Go + Gin 构建，设备生命周期管理、物模型定义、Redis 在线状态缓存

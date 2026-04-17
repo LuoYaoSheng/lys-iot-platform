@@ -1,49 +1,80 @@
 # Open IoT Platform
 
-> 开源 IoT 设备管理平台 - 完整的物联网解决方案
+> 开源 IoT 设备管理平台，目标是打通设备固件、BLE 配网、平台后端和移动端控制的完整链路。
 
 **作者**: 罗耀生
 **协议**: GPL v3
-**📍 仓库地址**:
-- [Gitee](https://gitee.com/luoyaosheng/lys-iot-platform) - 国内访问推荐
-- [GitHub](https://github.com/LuoYaoSheng/open-iot-platform) - 国际访问
+**仓库**:
+- [Gitee](https://gitee.com/luoyaosheng/lys-iot-platform)
+- [GitHub](https://github.com/LuoYaoSheng/open-iot-platform)
 
 ---
 
-## 项目简介
+## 这是什么
 
-一个轻量级的开源 IoT 平台，提供从硬件固件、云端服务到移动端配网的完整解决方案。
+`open-iot-platform` 不是单一服务仓库，而是一个 IoT monorepo。
 
-### 核心功能
+它当前关注的是一条可跑通的真实链路：
 
-- **设备管理**: 设备注册、激活、生命周期管理
-- **产品管理**: 定义设备型号和物模型
-- **MQTT 服务**: 设备认证与消息路由
-- **物模型**: 属性、服务、事件定义
-- **移动配网**: BLE 蓝牙配网 APP
-- **硬件固件**: ESP32/ESP32-S3 设备固件
+1. 设备通过 BLE 获取 WiFi 和平台地址
+2. 设备激活到 `server/`
+3. 设备通过 MQTT 接入平台
+4. `mobile-app/` 通过 API + MQTT 查看和控制设备
+
+如果你第一次进入这个仓库，建议先把它理解为“系统入口”，而不是单独看某个子目录。
 
 ---
 
-## 项目结构
+## 第一次进入先看这里
 
-```
+- 想快速理解整个仓库：看 [docs/START_HERE.md](docs/START_HERE.md)
+- 想看模块边界：看 [docs/REPOSITORY_ARCHITECTURE.md](docs/REPOSITORY_ARCHITECTURE.md)
+- 想直接跑本地链路：看 [docs/LOCAL_EMULATOR_RUNBOOK.md](docs/LOCAL_EMULATOR_RUNBOOK.md)
+- 想最快用 Docker 跑起来：看 [docs/QUICK_START_DOCKER.md](docs/QUICK_START_DOCKER.md)
+
+---
+
+## 模块结构
+
+```text
 open-iot-platform/
-├── server/              # 后端服务 (Go + Gin + MySQL + Redis + EMQX)
-├── mobile-app/          # 移动端配网 APP (Flutter)
-├── iot-libs-common/     # 公共库 (Flutter SDK + 嵌入式库)
-├── smartlink-hub/       # SmartLink 配网服务
-├── firmware/            # 硬件固件
-│   ├── switch/         # ESP32 智能开关固件
-│   └── usb-wakeup/     # ESP32-S3 USB 键盘唤醒固件
-└── docs/               # 文档
+├── server/              # 平台核心：API、设备激活、MQTT 鉴权、数据落库
+├── mobile-app/          # Flutter 移动端：BLE 配网、设备列表、基础控制
+├── iot-libs-common/     # 公共库：Flutter SDK 和后续可复用能力
+├── firmware/            # 设备固件：ESP32 / ESP32-S3 示例
+├── smartlink-hub/       # 落地页、发布物、非开发者说明和包装层
+└── docs/                # 项目文档
 ```
+
+需要特别说明：
+
+- `server/` 是平台核心，不是演示脚本目录
+- `mobile-app/` 是通用配网与控制客户端，不应承载后端规则
+- `smartlink-hub/` 当前更接近产品化包装层和发布资源目录，不应被描述成成熟独立服务
+
+---
+
+## 当前技术栈
+
+| 模块 | 当前现实 |
+|------|----------|
+| 后端 | Go + Gin + GORM |
+| 数据层 | MySQL + Redis |
+| MQTT 基础设施 | EMQX |
+| 移动端 | Flutter |
+| 固件 | PlatformIO + Arduino on ESP32 / ESP32-S3 |
+| 部署 | Docker Compose |
+
+说明：
+
+- `server/` 中仍保留部分 `mochi-mqtt` 相关代码和依赖，但当前主部署链路已经围绕 `EMQX` 组织
+- 对外文档默认应按当前部署现实描述，而不是按历史实现描述
 
 ---
 
 ## 快速开始
 
-### Docker 一键部署
+### 1. 跑服务端基础设施
 
 ```bash
 git clone https://gitee.com/luoyaosheng/lys-iot-platform.git
@@ -51,156 +82,57 @@ cd open-iot-platform/server
 docker compose up -d
 ```
 
-### 本地模拟联调
+不同 compose 文件的端口映射略有差异，启动后请以当前 `server/README.md` 和对应 compose 文件为准。
 
-如果你要在 Android 模拟器里跑完整本地链路，请先看：
-
-- [本地联调 Runbook](docs/LOCAL_EMULATOR_RUNBOOK.md)
-- [配置链路说明](docs/CONFIGURATION_CHAIN.md)
-- [仓库结构说明](docs/REPOSITORY_ARCHITECTURE.md)
-
-### 服务地址
-
-| 服务 | 地址 | 说明 |
-|------|------|------|
-| Core API | http://localhost:48080 | 设备引擎 API |
-| MQTT Dashboard | http://localhost:48884 | MQTT 管理 (admin/public) |
-| MySQL | localhost:48306 | 数据库 (root/root123456) |
-| Redis | localhost:48379 | 缓存服务 |
-| MQTT TCP | localhost:48883 | MQTT 服务 |
-| MQTT WebSocket | localhost:48803 | MQTT WebSocket |
-
----
-
-## 移动端 APP
-
-### 安装依赖
+### 2. 跑移动端
 
 ```bash
 cd mobile-app
 flutter pub get
-```
-
-### 运行 APP
-
-```bash
-# Android 真机/模拟器
 flutter run
-
-# iOS 模拟器 (需要 macOS)
-flutter run -d iPhone
 ```
 
-### 构建 APK
-
-```bash
-flutter build apk --release
-```
-
-详细说明请查看 [mobile-app/README.md](mobile-app/README.md)
-
----
-
-## 硬件固件
-
-### 1. ESP32 智能开关
+### 3. 编译固件
 
 ```bash
 cd firmware/switch
 pio run
-pio run --target upload
 ```
 
-### 2. ESP32-S3 USB 唤醒设备
-
-通过 MQTT 命令模拟键盘唤醒休眠的电脑。
+或：
 
 ```bash
 cd firmware/usb-wakeup
 pio run
-pio run --target upload
-```
-
-详细说明请查看:
-- [firmware/switch/README.md](firmware/switch/README.md)
-- [firmware/usb-wakeup/README.md](firmware/usb-wakeup/README.md)
-
----
-
-## 配网流程
-
-### BLE 蓝牙配网
-
-1. 设备上电进入配网模式（LED 五次快闪）
-2. 打开移动端 APP，扫描蓝牙设备
-3. 选择设备并配置 WiFi 信息
-4. 设备自动连接 WiFi 并激活到平台
-5. 配网完成，可远程控制设备
-
-**设备蓝牙名称格式**: `IoT-Wakeup-XXXX` 或 `IoT-Switch-XXXX`
-
-**配置数据格式**:
-```json
-{
-  "ssid": "YourWiFi",
-  "password": "YourPassword",
-  "apiUrl": "http://192.168.1.100:48080"
-}
 ```
 
 ---
 
-## 技术栈
+## 当前推荐阅读顺序
 
-| 组件 | 技术选型 |
-|------|---------|
-| 后端 | Go + Gin + GORM |
-| 数据库 | MySQL |
-| 缓存 | Redis |
-| MQTT | 内置 MQTT Broker (mochi-mqtt) |
-| 移动端 | Flutter + Dart |
-| 固件 | ESP32/ESP32-S3 (PlatformIO + Arduino) |
-| 部署 | Docker + Docker Compose |
+1. [docs/START_HERE.md](docs/START_HERE.md)
+2. [docs/REPOSITORY_ARCHITECTURE.md](docs/REPOSITORY_ARCHITECTURE.md)
+3. [docs/CONFIGURATION_CHAIN.md](docs/CONFIGURATION_CHAIN.md)
+4. [docs/LOCAL_EMULATOR_RUNBOOK.md](docs/LOCAL_EMULATOR_RUNBOOK.md)
+
+如果只想先体验 Docker 方式，直接看 [docs/QUICK_START_DOCKER.md](docs/QUICK_START_DOCKER.md)。
 
 ---
 
-## API 示例
+## 当前边界
 
-### 创建产品
+这个仓库当前已经有：
 
-```bash
-curl -X POST http://localhost:48080/api/v1/products \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "智能开关",
-    "description": "ESP32 智能开关设备"
-  }'
-```
+- 设备激活与基础设备管理
+- MQTT 鉴权与接入链路
+- BLE 配网移动端
+- ESP32 / ESP32-S3 示例固件
 
-### 注册设备
+这个仓库当前还没有优先做重：
 
-```bash
-curl -X POST http://localhost:48080/api/v1/devices/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "product_key": "switch_v1",
-    "device_sn": "SN001"
-  }'
-```
-
----
-
-## 开发路线图
-
-- [x] 设备引擎核心功能
-- [x] MQTT 认证与消息路由
-- [x] 物模型管理
-- [x] BLE 配网
-- [x] 移动端 APP
-- [x] ESP32 智能开关固件
-- [x] ESP32-S3 USB 唤醒固件
-- [ ] Web 管理界面
-- [ ] 更多硬件支持
+- 完整 Web 管理后台
+- 面向所有硬件形态的统一前端控制台
+- 过早拆成多个“独立成熟子项目”
 
 ---
 
@@ -208,6 +140,6 @@ curl -X POST http://localhost:48080/api/v1/devices/register \
 
 GNU General Public License v3.0
 
-**Issues 反馈**:
+Issues：
 - [Gitee Issues](https://gitee.com/luoyaosheng/lys-iot-platform/issues)
 - [GitHub Issues](https://github.com/LuoYaoSheng/open-iot-platform/issues)

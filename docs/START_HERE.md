@@ -28,9 +28,9 @@
 - 移动端（Flutter 跨平台配网 APP）
 - 固件（ESP32 / ESP32-S3 设备固件）
 - 公共库（Flutter SDK + 嵌入式库）
-- SmartLink 配网包装层
+- SmartLink 落地页与发布包装层
 
-> 根 README 位于仓库根目录，请到 [Gitee 仓库](https://gitee.com/luoyaosheng/lys-iot-platform) 或 [GitHub 仓库](https://github.com/LuoYaoSheng/lys-iot-platform) 查看。
+> 根 README 位于仓库根目录，请到 [Gitee 仓库](https://gitee.com/luoyaosheng/lys-iot-platform) 或 [GitHub 仓库](https://github.com/LuoYaoSheng/open-iot-platform) 查看。
 
 ### 2. 再看仓库结构文档
 

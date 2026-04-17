@@ -153,10 +153,10 @@ pio device monitor    # 串口监控
 
 ```
 open-iot-platform/
-├── server/              # 后端服务 (Go)
+├── server/              # 平台核心后端 (Go)
 ├── mobile-app/          # 移动端 APP (Flutter)
-├── iot-libs-common/     # 公共库 (Go/Flutter SDK)
-├── smartlink-hub/       # SmartLink 配网服务
+├── iot-libs-common/     # 公共库 (Flutter SDK 等)
+├── smartlink-hub/       # 落地页 / 发布物 / 包装层
 ├── firmware/            # 硬件固件
 │   ├── switch/         # ESP32 智能开关
 │   └── usb-wakeup/     # ESP32-S3 USB 唤醒
